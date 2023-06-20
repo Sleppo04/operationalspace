@@ -1,25 +1,5 @@
 #include "parser.h"
 
-// This function does report an error to the user
-int _Parser_ReportError(ubcparser_t* parser, const char* filename, int line, const char* message, enum UbcParserErrorType type)
-{
-    parser->config.report_return = parser->config.error_report(parser->config.userdata, filename, line, message, type);
-
-    return parser->config.report_return;
-}
-
-int _Parser_ReportLexerTraceback(ubcparser_t* parser)
-{
-    lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
-    _Parser_ReportError(parser, top_lexer.file, top_lexer.line, "Error occured in file", UBCPARSERERROR_TRACEBACK);
-
-    // Skip first file
-    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index + 1 != 0 ; lexer_index--) {
-        lexer_t* lexer = parser->lexer_stack.lexers + lexer_index;
-        _Parser_ReportError(parser, lexer->file, lexer->line, "File was included in", UBCPARSERERROR_TRACEBACK);
-    }
-}
-
 
 // This function does not report errors to the user
 void* _Parser_Malloc(ubcparser_t* parser, size_t size)
@@ -90,6 +70,62 @@ char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
     dupstr[strnlen] = '\0';
 
     return dupstr;
+}
+
+// This function does report an error to the user
+int _Parser_ReportError(ubcparser_t* parser, const char* filename, int line, const char* message, enum UbcParserErrorType type)
+{
+    parser->config.report_return = parser->config.error_report(parser->config.userdata, filename, line, message, type);
+
+    return parser->config.report_return;
+}
+
+int _Parser_ReportLexerTraceback(ubcparser_t* parser)
+{
+    lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
+    _Parser_ReportError(parser, top_lexer.file, top_lexer.line, "in file", UBCPARSERERROR_TRACEBACK);
+
+    // Skip first file
+    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index + 1 != 0 ; lexer_index--) {
+        lexer_t* lexer = parser->lexer_stack.lexers + lexer_index;
+        _Parser_ReportError(parser, lexer->file, lexer->line, "included by", UBCPARSERERROR_TRACEBACK);
+    }
+}
+
+void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
+{
+    if (parser->lexer_stack.stack_size == 0) {
+        _Parser_ReportError(parser, "No file", -1, message, UBCPARSERERROR_ERRORMESSAGE);
+        return;
+    }
+
+    lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
+    _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_ERRORMESSAGE);
+    _Parser_ReportLexerTraceback(parser);
+
+}
+
+int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, const char* expected, token_t* unexpected)
+{
+	size_t unexpected_length = unexpected->value.length > 64 ? 64 : unexpected->value.length;
+	size_t expected_length   = strlen(expected);
+	size_t message_length    = strlen(message);
+	char* format = "%s\nExpected \"%s\" but found \"%.64s%s\".";
+	size_t result_length = strlen(format) + unexpected_length + expected_length + message_length + 4;
+
+	char* result_string = _Parser_Malloc(parser, result_length);
+	if (result_string != NULL) {
+		snprintf(result_string, result_length, format, message, expected, unexpected->ptr, unexpected->value.length > 64 ? "..." : "");
+
+    		lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
+		_Parser_ReportError(parser, top_lexer.file, unexpected->line, result_string, UBCPARSERERROR_ERRORMESSAGE);
+		_Parser_ReportLexerTraceback(parser);
+		_Parser_Free(parser, result_string, result_length);
+	} else {
+		_Parser_ReportTopTracebackError(parser, "Unable to allocate memory for a detailed error message: parser encountered an unexpected token.");
+	}
+
+	return EXIT_SUCCESS;
 }
 
 bool _Parser_IsBuiltInTypename(char* typename, int32_t name_length)
@@ -298,6 +334,19 @@ int _Parser_FillLookahead(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+// This function will inform the user
+int _Parser_AssumeLookaheadFill(ubcparser_t* parser)
+{
+    int lookahead_code = _Parser_FillLookahead(parser);
+    if (lookahead_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to generate the next token.");
+        _Parser_ReportLexerTraceback(parser);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_ConsumeToken(ubcparser_t* parser)
 {
     if (parser->lookahead.available < 1) {
@@ -310,34 +359,7 @@ int _Parser_ConsumeToken(ubcparser_t* parser)
     }
     parser->lookahead.available--;
 
-    _Parser_FillLookahead(parser);
-    // TODO: Think about the Lookahead return here
-
-    return EXIT_SUCCESS;
-}
-
-void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
-{
-    if (parser->lexer_stack.stack_size == 0) {
-        _Parser_ReportError(parser, "No file", -1, message, UBCPARSERERROR_ERRORMESSAGE);
-        return;
-    }
-
-    lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
-    _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_ERRORMESSAGE);
-    _Parser_ReportLexerTraceback(parser);
-
-}
-
-// This function will inform the user
-int _Parser_AssumeLookaheadFill(ubcparser_t* parser)
-{
-    int lookahead_code = _Parser_FillLookahead(parser);
-    if (lookahead_code) {
-        _Parser_ReportTopTracebackError(parser, "Unable to generate the next token.");
-        _Parser_ReportLexerTraceback(parser);
-        return EXIT_FAILURE;
-    }
+    _Parser_AssumeLookaheadFill(parser);
 
     return EXIT_SUCCESS;
 }
