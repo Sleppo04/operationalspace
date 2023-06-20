@@ -110,9 +110,9 @@ void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
 
 }
 
-int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, const char* expected, token_t* unexpected)
+int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, const char* expected, token_t unexpected)
 {
-	size_t unexpected_length = unexpected->value.length > 64 ? 64 : unexpected->value.length;
+	size_t unexpected_length = unexpected.value.length > 64 ? 64 : unexpected.value.length;
 	size_t expected_length   = strlen(expected);
 	size_t message_length    = strlen(message);
 	char* format = "%s\nExpected \"%s\" but found \"%.64s%s\".";
@@ -120,10 +120,10 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 
 	char* result_string = _Parser_Malloc(parser, result_length);
 	if (result_string != NULL) {
-		snprintf(result_string, result_length, format, message, expected, unexpected->ptr, unexpected->value.length > 64 ? "..." : "");
+		snprintf(result_string, result_length, format, message, expected, unexpected.ptr, unexpected.value.length > 64 ? "..." : "");
 
     		lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
-		_Parser_ReportError(parser, top_lexer.file, unexpected->line, result_string, UBCPARSERERROR_ERRORMESSAGE);
+		_Parser_ReportError(parser, top_lexer.file, unexpected.line, result_string, UBCPARSERERROR_ERRORMESSAGE);
 		_Parser_ReportLexerTraceback(parser);
 		_Parser_Free(parser, result_string, result_length);
 	} else {
@@ -476,12 +476,11 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     
     // No token available
     if (lookahead_code == ERANGE) {
-        _Parser_ReportTopTracebackError(parser, "Expected token");
         return ECANCELED;
     }
 
     if (include_token.type != TT_UBC_INCLUDE) {
-        _Parser_ReportTopTracebackError(parser, "Expected Include keyword at start of include statement");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 0 of include statement", "include", include_token);
         return ECANCELED;
     }
 
@@ -495,11 +494,10 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     lookahead_code = _Parser_LookAhead(parser, 0, &filename_token);
 
     if (lookahead_code) {
-        _Parser_ReportTopTracebackError(parser, "Unable to get token, expected STRING_LITERAL");
         return ECANCELED;
     }
     if (filename_token.type != TT_STRING_LITERAL) {
-        _Parser_ReportTopTracebackError(parser, "Expected String literal token at position 2 of include statement");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 1 of include statement", "string literal", filename_token);
         return ECANCELED;
     }
     _Parser_ConsumeToken(parser);
@@ -509,11 +507,10 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     _Parser_AssumeLookaheadFill(parser);
 
     if (lookahead_code) {
-        _Parser_ReportTopTracebackError(parser, "Unable to get next token, expected TOKEN_SEMICOLON");
         return ECANCELED;
     }
     if (semicolon_token.type != TT_SEMICOLON) {
-        _Parser_ReportTopTracebackError(parser, "Expected semicolon token at position 3 of include statement");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 2 of include statement", ";", semicolon_token);
         return ECANCELED;
     }
     _Parser_ConsumeToken(parser);
@@ -521,9 +518,12 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     // All tokens were extracted successfully
 
     int add_code = _Parser_AddParseFile(parser, filename_token.ptr, filename_token.value.length);
-    if (add_code) {
+    if (add_code == EXIT_FAILURE) {
         _Parser_ReportTopTracebackError(parser, "Unable to find file referenced in include statement");
         return ECANCELED;
+    } else {
+        // ENOMEM
+        _Parser_ReportTopTracebackError(parser, "Unable to add included file to lexer queue because of insufficient memory");
     }
     
     return EXIT_SUCCESS;
@@ -539,7 +539,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     }
 
     if (type_token.type != TT_UBC_TYPE) {
-        _Parser_ReportTopTracebackError(parser, "Expected type keyword token.");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 0 of type definition", "type", type_token);
         return EXIT_FAILURE;
     }
     _Parser_ConsumeToken(parser);
@@ -548,7 +548,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &typename_token)) return EXIT_FAILURE;
     if (typename_token.type != TT_IDENTIFIER) {
-        _Parser_ReportTopTracebackError(parser, "Expected type identifer token after type keyword.");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 1 of type definition", "identifier", typename_token);
         return EXIT_FAILURE;
     }
     _Parser_ConsumeToken(parser);
@@ -563,7 +563,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &left_brace_token)) return EXIT_FAILURE;
     if (left_brace_token.type != TT_LEFT_BRACE) {
-        _Parser_ReportTopTracebackError(parser, "Expected left brace token after type identifier in type definition.");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 2 in type definition", "{", left_brace_token);
         return EXIT_FAILURE;
     }
     _Parser_ConsumeToken(parser);
@@ -593,7 +593,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
             return EXIT_FAILURE;
         }
         if (!_IsTypenameIdentifierToken(&member_type)) {
-            _Parser_ReportTopTracebackError(parser, "Expected type identifier token at the beginning of the member declaration");
+            _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 0 of member declaration in type definition", "typename", typename_token);
             _Parser_DestroyCustomType(parser, &new_type);
             return EXIT_FAILURE;
         }
@@ -613,7 +613,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
             return EXIT_FAILURE;
         }
         if (member_name.type != TT_IDENTIFIER) {
-            _Parser_ReportTopTracebackError(parser, "Expected name identifier token after typename identifier token in member declaration.");
+            _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 1 of member declaration in type definition", "identifier", member_name);
             _Parser_DestroyCustomType(parser, &new_type);
             return EXIT_FAILURE;
         }
@@ -625,7 +625,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
             return EXIT_FAILURE;
         }
         if (semicolon.type != TT_SEMICOLON) {
-            _Parser_ReportTopTracebackError(parser, "Expected semicolon after type identifier and name identifer in member declaration.");
+            _Parser_ReportUnexpectedToken(parser, "Unexpected token at position 2 of member declaration in type definition", ";", semicolon);
             _Parser_DestroyCustomType(parser, &new_type);
             return EXIT_FAILURE;
         }
@@ -660,7 +660,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
         return EXIT_FAILURE;
     }
     if (right_brace_token.type != TT_RIGHT_BRACE) {
-        _Parser_ReportTopTracebackError(parser, "Expected right brace token after member declarations of type definition.");
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token after member declarations in type definition", "}", right_brace_token);
         return EXIT_FAILURE;
     }
     _Parser_ConsumeToken(parser);
@@ -708,25 +708,25 @@ int _Parser_ParseAssignment(ubcparser_t* parser)
 
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
 {
-    int fill_code = _Parser_FillLookahead(parser);
-    if (fill_code) {
-        _Parser_ReportTopTracebackError(parser, "Unable to fill lookahead, needed at least 3 tokens to parse a top level statement.");
+    _Parser_AssumeLookaheadFill(parser);
+    token_t lookahead_token;
+    if (_Parser_LookAhead(parser, 0, &lookahead_token)) {
         return EXIT_FAILURE;
     }
 
-    if (parser->lookahead.tokens[0].type == TT_UBC_VAR) {
+    if (lookahead_token.type == TT_UBC_VAR) {
         return _Parser_ParseVariableDefinition(parser);
     }
-    else if (parser->lookahead.tokens[0].type == TT_UBC_PERSIST) {
+    else if (lookahead_token.type == TT_UBC_PERSIST) {
         return _Parser_ParsePersist(parser);
     }
-    else if (parser->lookahead.tokens[0].type == TT_UBC_TYPE) {
+    else if (lookahead_token.type == TT_UBC_TYPE) {
         return _Parser_ParseTypeDefinition(parser);
     } 
-    else if (parser->lookahead.tokens[0].type == TT_UBC_FUNCTION) {
+    else if (lookahead_token.type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
     } 
-    else if (parser->lookahead.tokens[0].type == TT_UBC_DISCARD) {
+    else if (lookahead_token.type == TT_UBC_DISCARD) {
         return _Parser_ParseDiscardExpression(parser);
     } else {
         return _Parser_ParseAssignment(parser);
