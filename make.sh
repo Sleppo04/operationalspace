@@ -5,7 +5,7 @@ mkdir -p bin
 
 # Make wren libraries
 current_directory=`pwd`
-cd src/3rdparty/wren/projects/make/
+cd src/3rdparty/os-wren/projects/make/
 make
 cd $current_directory
 
