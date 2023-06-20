@@ -1,6 +1,8 @@
 #include "parser.h"
 
 
+// Function group dealing with memory allocations
+
 // This function does not report errors to the user
 void* _Parser_Malloc(ubcparser_t* parser, size_t size)
 {
@@ -72,6 +74,9 @@ char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
     return dupstr;
 }
 
+
+// Group of error reporting functions
+
 // This function does report an error to the user
 int _Parser_ReportError(ubcparser_t* parser, const char* filename, int line, const char* message, enum UbcParserErrorType type)
 {
@@ -128,6 +133,7 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 	return EXIT_SUCCESS;
 }
 
+// Type registering and request functions
 bool _Parser_IsBuiltInTypename(char* typename, int32_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
@@ -359,7 +365,7 @@ int _Parser_ConsumeToken(ubcparser_t* parser)
     }
     parser->lookahead.available--;
 
-    _Parser_AssumeLookaheadFill(parser);
+    _Parser_FillLookahead(parser);
 
     return EXIT_SUCCESS;
 }
