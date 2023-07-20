@@ -1,0 +1,26 @@
+All actions of any player are executed via scripts
+
+Players control spaceships and spacestations
+
+Spaceships
+They are defined as a modular set of:
+    Engines
+    Utilities (mining laser, storage place, starport)
+    Weapons
+    Armor
+
+They modify the ships "stats". There are 5 stats in total:
+    Hull     (health)
+    Shield   (reloadable health)
+    Speed    (speed in tiles)
+    Battery  (max energy capacity)
+    Storage  (max cargo space)
+
+Around in space, there are resource deposits
+Each game objects size is exactly one tile
+
+The map is limited
+
+It is possible to move less than 1 tile per round
+
+There are enemies scattered in spacehu
