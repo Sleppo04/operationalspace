@@ -5,10 +5,10 @@
 
 #include "tile.h"
 
+#define SECTOR_SIZE 16 // Sector edge length in tiles
+
 typedef struct Sector {
-    size_t tile_rows;
-    size_t tile_cols;
-    tile_t** tiles;
+    tile_t tiles[SECTOR_SIZE][SECTOR_SIZE];
 } sector_t;
 
 #endif

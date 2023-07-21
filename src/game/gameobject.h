@@ -25,7 +25,7 @@ typedef struct GameObject {
     int32_t current_energy;
 
     // Rendering stuff
-    char tile_image;
+    char glyph;
     char color;
 } gameobject_t;
 

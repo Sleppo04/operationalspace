@@ -6,11 +6,9 @@
 #include <stdint.h>
 
 typedef struct Module {
-    // module members
     /** stat modifiers **/
     int32_t hull_mod;
     int32_t shield_mod;
-    //int32_t weight_mod;
     int32_t speed_mod;
     int32_t storage_mod;
     int32_t battery_mod;
@@ -36,8 +34,16 @@ typedef struct EngineModule {
     // engine module members
 } engine_module_t;
 
+typedef enum UtilityModuleTypes {
+    UMODULE_SOLAR,
+    UMODULE_MINING_LASER,
+    UMODULE_HANGAR_BAY,
+    UMODULE_PORT
+} utility_module_type;
+
 typedef struct UtilityModule {
     module_t base;
+    utility_module_type type;
     // members
 } utility_module_t;
 
