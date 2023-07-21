@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include "squirrel/include/squirrel.h"
+
 int main(int argc, char** argv)
 {
     printf(":3 Hewwo Wowld uwu\n");
