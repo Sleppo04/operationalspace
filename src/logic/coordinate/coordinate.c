@@ -35,7 +35,7 @@ int coordinate_find_nearest(coordinate_t *destination_array, size_t array_length
     for (size_t i = 0; i < source_list->size; i++) {
         coordinate_t* current;
         arrayListGet(source_list, i, (void**) &current);
-        insertion_position = array_length + 1;
+        insertion_position = coordinates_found;
         coordinate_manhattan_distance(current, &position, &distance);
         
 
@@ -50,12 +50,12 @@ int coordinate_find_nearest(coordinate_t *destination_array, size_t array_length
             }
         }
 
-        if (insertion_position != array_length + 1) {
+        if (insertion_position != array_length) {
             if (coordinates_found != array_length) {
                 coordinates_found++;
             }
             coordinate_t* insertion_address = destination_array + insertion_position;
-            size_t move_bytes = sizeof(coordinate_t) * (array_length - insertion_position);
+            size_t move_bytes = sizeof(coordinate_t) * (array_length - insertion_position - 1);
             memmove(insertion_address + 1, insertion_address, move_bytes);
 
             destination_array[insertion_position] = current[0];
