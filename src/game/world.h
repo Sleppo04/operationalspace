@@ -6,6 +6,7 @@
 
 #include "sector.h"
 #include "../logic/arraylist/arraylist.h"
+#include "../logic/coordinate/coordinate.h"
 
 typedef struct World {
     size_t sector_rows;
@@ -52,7 +53,7 @@ int world_get_sector(world_t* world, size_t row, size_t col, sector_t** destinat
 /// @param col what col is the sector in
 /// @param features what features are available for placement
 /// @param feature_count how many features are there
-/// @param placed_features where have which features been placed already
+/// @param placed_features where have which features been placed already (array of arraylist_t, so multiple ones)
 /// @return int, error codes (EINVAL, EDESTADDRREQ)
 int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* features, size_t feature_count, arraylist_t* placed_features)
 

@@ -11,6 +11,18 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     if (placed_features == NULL) {
         return EINVAL;
     }
+
+    coordinate_t sector_mid = {.x = col * SECTOR_SIZE + SECTOR_SIZE / 2,
+                               .y = row * SECTOR_SIZE + SECTOR_SIZE / 2};
+
+    size_t nearest_array_length = 10;
+    coordinate_t nearest_features[feature_count][nearest_array_length]; // Coordinates of the ten nearest features for each feature, measured from the middle of the sector
+    for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
+        arraylist_t* feature_arraylist = placed_features + feature_index;
+        coordinate_t nearest_array[nearest_array_length] = nearest_features[feature_index];
+        coordinate_find_nearest(nearest_array, nearest_array_length, feature_arraylist->array, sector_mid);
+    }
+
 }
 
 int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination)
