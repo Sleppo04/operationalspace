@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "squirrel/include/squirrel.h"
+#include "squirrel.h"
 
 int main(int argc, char** argv)
 {
