@@ -9,4 +9,4 @@ typedef struct Tile {
     char color;
 } tile_t;
 
-#endif TILE_H
+#endif // TILE_H
