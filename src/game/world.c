@@ -72,14 +72,14 @@ int get_place_feature_index(coordinate_t** nearby_feature_coordinates, feature_t
 
     	feature_probability  = feature->base_probability;
     	feature_probability += feature->probability_mod * self_distance;
-    	feature_probability *= feature->probability_growth * self_distance;
+        feature_probability *= pow(feature->probability_growth, (double) self_distance);
 
     	feature_probability  = max(feature->min_probability, feature_probability);
     	feature_probability  = min(feature->max_probability, feature_probability);
 
     	feature_probability -= random_number;
 
-    	if (feature_probability < best_probability) {
+    	if (feature_probability < best_probability && feature_probability > 0) {
     		best_probability = feature_probability;
     		best_index       = feature_index;
     	}
@@ -183,8 +183,11 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
             	return rc;
             }
 
+            tile_t* tile = &(sector->tiles[coordinate_row][coordinate_col]);
+            tile->color  = 15;
+            tile->glyph  = ' ';
+
             if (place_feature_index != feature_count) {
-            	tile_t* tile = &(sector->tiles[coordinate_row][coordinate_col]);
             	int place_code = place_feature(features + place_feature_index, tile, absolute_coordinate, placed_features + place_feature_index);
             	if (place_code) {
                 	free(nearby_array_inner);
