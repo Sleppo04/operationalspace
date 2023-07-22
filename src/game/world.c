@@ -1,6 +1,6 @@
 #include "world.h"
 
-#define NEAREST_ARRAY_LENGTH 10
+#define NEARBY_ARRAY_LENGTH 10
 
 int get_place_feature_index(coordinate_t** nearest_features, feature_t* features, size_t feature_count, coordinate_t absolute_coordinate, struct drand48_data* rng_buffer, size_t* destination)
 {
@@ -24,7 +24,7 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
     coordinate_t* best_coordinate;
     for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
         best_coordinate = nearest_coordinates + feature_index;
-        for (size_t i = 0; i < NEAREST_ARRAY_LENGTH; i++) {
+        for (size_t i = 0; i < NEARBY_ARRAY_LENGTH; i++) {
             coordinate_t* nearest_feature_coordinate = nearest_features[feature_index] + i;
             size_t self_distance;
             size_t best_distance;
@@ -71,7 +71,7 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
 
     	feature_probability  = feature->base_probability;
     	feature_probability += feature->probability_mod * self_distance;
-    	feature_probability *= feature->probablity_growth * self_distance;
+    	feature_probability *= feature->probability_growth * self_distance;
 
     	feature_probability  = max(feature->min_probability, feature_probability);
     	feature_probability  = min(feature->max_probability, feature_probability);
@@ -120,6 +120,7 @@ int place_feature(feature_t* feature, tile_t* tile, coordinate_t coordinate, arr
 	if (m_coordinate == NULL) {
 		return ENOMEM;
 	}
+	m_coordinate[0] = coordinate;
 
 	int append_code = arrayListAppend(feature_placement_list, m_coordinate);
 	if (append_code) {
@@ -146,12 +147,30 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     coordinate_t sector_mid = {.x = col * SECTOR_SIZE + SECTOR_SIZE / 2,
                                .y = row * SECTOR_SIZE + SECTOR_SIZE / 2};
 
-    coordinate_t nearest_features[feature_count][NEAREST_ARRAY_LENGTH]; // Coordinates of the ten nearest features for each feature, measured from the middle of the sector
+    coordinate_t** nearby_features = malloc(sizeof(coordinate_t*) * feature_count);// Coordinates of the ten nearest features for each feature, measured from the middle of the sector
+    if (nearby_features == NULL) {
+    	return ENOMEM;
+    }
+    coordinate_t* nearby_array_inner = malloc(sizeof(coordinate_t) * feature_count * NEARBY_ARRAY_LENGTH);
+    if (nearby_array_inner == NULL) {
+    	free(nearby_features);
+    	return ENOMEM;
+    }
+    for (size_t i = 0; i < feature_count; i++) {
+    	nearby_features[i] = nearby_array_inner + (i * NEARBY_ARRAY_LENGTH);
+    }
+
+    for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
+    	for (size_t i = 0; i < NEARBY_ARRAY_LENGTH; i++) {
+    		nearby_features[feature_index][i].x = SIZE_MAX;
+    		nearby_features[feature_index][i].y = SIZE_MAX;
+    	}
+    }
     
     for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
         arraylist_t*  feature_arraylist = placed_features + feature_index;
-        coordinate_t* nearest_array = nearest_features[feature_index];
-        coordinate_find_nearest(nearest_array, NEAREST_ARRAY_LENGTH, feature_arraylist, sector_mid);
+        coordinate_t* nearby_array = nearby_features[feature_index];
+        coordinate_find_nearest(nearby_array, NEARBY_ARRAY_LENGTH, feature_arraylist, sector_mid);
     }
 
 
@@ -163,9 +182,11 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     for (size_t coordinate_row = 0; coordinate_row < SECTOR_SIZE; coordinate_row++) {
         for (size_t coordinate_col = 0; coordinate_col < SECTOR_SIZE; coordinate_col++) {
             coordinate_t absolute_coordinate = {.x = sector_start.x + coordinate_col, .y = sector_start.y + coordinate_row};
-            rc = get_place_feature_index((coordinate_t**) nearest_features, features, feature_count, absolute_coordinate, rng_buffer, &place_feature_index);
+            rc = get_place_feature_index((coordinate_t**) nearby_features, features, feature_count, absolute_coordinate, rng_buffer, &place_feature_index);
 
             if (rc) {
+            	free(nearby_array_inner);
+            	free(nearby_features);
             	return rc;
             }
 
@@ -173,12 +194,16 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
             	tile_t* tile = &(sector->tiles[coordinate_row][coordinate_col]);
             	int place_code = place_feature(features + place_feature_index, tile, absolute_coordinate, placed_features + place_feature_index);
             	if (place_code) {
+                	free(nearby_array_inner);
+                	free(nearby_features);
             		return place_code;
             	}
             }
         }
     }
 
+	free(nearby_array_inner);
+	free(nearby_features);
     return EXIT_SUCCESS;
 }
 
@@ -246,10 +271,30 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
             World_GetSector(&local_world, row, col, &current_sector);
             populate_code = populate_sector(current_sector, row, col, features, feature_count, placed_features, &rng_buffer);
             if (populate_code) {
+            	for (size_t fuck = 0; fuck < feature_count; fuck++) {
+					arraylist_t* list = placed_features + fuck;
+					for (size_t i = 0; i < list->size; i++) {
+						free(list->array[i]);
+					}
+					ArrayListDestroy(list);
+				}
+            	free(placed_features);
+            	free(sector_array);
             	return populate_code;
             }
         }
     }
+
+	for (size_t fuck = 0; fuck < feature_count; fuck++) {
+		arraylist_t* list = placed_features + fuck;
+		for (size_t i = 0; i < list->size; i++) {
+			free(list->array[i]);
+		}
+		ArrayListDestroy(list);
+	}
+    free(placed_features);
+
+    destination[0] = local_world;
 
     return EXIT_SUCCESS;
 }
