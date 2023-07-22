@@ -12,13 +12,6 @@ typedef struct stats_s
     int32_t battery;
 } stats_t;
 
-typedef struct statMods_s
-{
-    int32_t hullMod;
-    int32_t shieldMod;
-    int32_t speedMod;
-    int32_t storageMod;
-    int32_t batteryMod;
-} statMods_t;
+Stats_ApplyModifier(stats_t* stats, stats_t* mods);
 
 #endif
