@@ -29,6 +29,6 @@ void UI_DrawFrame()
     }
     Window_SetPos(1, 17);
     for (int i = 1; i < 80; i++) {
-        Window_PrintGlyph('7');
+        Window_PrintGlyph('=');
     }
 }

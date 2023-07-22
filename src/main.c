@@ -11,6 +11,7 @@ int main(int argc, char** argv)
     sector_t sector;
 
     Window_CreateWindow(80, 24, &win);
+    Window_ClearScreen();
     Window_SetPos(1, 1);
     printf(":3 Hewwo Wowld uwu\n");
     UI_DrawSector(1, 1, &sector);

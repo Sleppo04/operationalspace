@@ -1,0 +1,1 @@
+gcc -g -o os.exe src/*.c src/ui/*.c

@@ -34,6 +34,15 @@ void Window_DestroyWindow(window_t* win)
 
 int Window_CreateWindow(int width, int height, window_t* win)
 {
+    DWORD outMode;
+    HANDLE stdoutHandle;
+    
+    // Activate ANSI Stuff on Win10
+    stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleMode(stdoutHandle, &outMode);
+    outMode |= 0x0004; //ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    SetConsoleMode(stdoutHandle, outMode);
+
     // TODO: Resize Console Window
     return 0;
 }
@@ -69,5 +78,11 @@ void Window_SetGlyph(int x, int y, glyph_t glyph)
 void Window_PrintGlyph(glyph_t glyph)
 {
     putchar(glyph);
+    return;
+}
+
+void Window_ClearScreen()
+{
+    printf("\x1b[2J");
     return;
 }
