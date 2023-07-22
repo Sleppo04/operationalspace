@@ -12,7 +12,10 @@ int coordinate_manhattan_distance(coordinate_t *self, coordinate_t *other, size_
         return EDESTADDRREQ;
     }
 
-    destination[0] = abs(self->x - other->x) + abs(self->y - other->y);
+    size_t x_distance = max(self->x, other->x) - min(self->x, other->x);
+    size_t y_distance = max(self->y, other->y) - min(self->y, other->y);
+
+    destination[0] = x_distance + y_distance;
 
     return EXIT_SUCCESS;
 }
