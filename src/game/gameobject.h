@@ -6,11 +6,11 @@
 
 typedef struct GameObject {
     // Modules
-    utility_module_t* utility_modules;
-    custom_module_t*  custom_modules;
-    weapon_module_t*  weapon_modules;
-    engine_module_t*  engine_modules;
-    armor_module_t*   armor_modules;
+    utility_module_t* utility_modules; int num_utility_modules;
+    custom_module_t*  custom_modules;  int num_custom_modules;
+    weapon_module_t*  weapon_modules;  int num_weapon_modules;
+    engine_module_t*  engine_modules;  int num_engine_modules;
+    armor_module_t*   armor_modules;   int num_armor_modules;
     
     // Precalculated stats
     stats_t stats;
@@ -25,6 +25,8 @@ typedef struct GameObject {
     char glyph;
     char color;
 } gameobject_t;
+
+Obj_RecalculateStats(gameobject_t* obj);
 
 #endif
 

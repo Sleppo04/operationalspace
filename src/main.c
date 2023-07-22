@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     Window_CreateWindow(80, 24, &win);
     Window_ClearScreen();
     UI_DrawFrame();
-    UI_DrawWorld(0, 0, 60, 20, world);
+    //UI_DrawWorld(0, 0, 16, 16, &world);
     Window_SetColor(15, 0);
     return 0;
 }

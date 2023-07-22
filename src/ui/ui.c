@@ -1,13 +1,13 @@
 #include "ui.h"
 
-void UI_DrawWorld(int worldX, int worldY, int width, int height, world_t world)
+void UI_DrawWorld(int worldX, int worldY, int width, int height, world_t* world)
 {
     tile_t* tile;
     
     Window_SetPos(0, 0);
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            tile = World_GetTile(worldX + j, worldY + i);
+            tile = World_GetTile(world, worldX + j, worldY + i);
             if (tile->object == NULL) {
                 Window_SetColor(tile->object->color, 0);
                 Window_PrintGlyph(tile->object->glyph);
@@ -22,6 +22,12 @@ void UI_DrawWorld(int worldX, int worldY, int width, int height, world_t world)
     return;
 }
 
+void UI_DrawStatusBar()
+{
+    Window_SetPos(24, 1);
+    printf("Cursor: %-4i, %-4i                                                              ", 123, 4);
+}
+
 void UI_DrawFrame()
 {
     Window_SetColor(0, 7);
@@ -34,15 +40,9 @@ void UI_DrawFrame()
     for (int i = 1; i < 60; i++) {
         Window_PrintGlyph(' ');
     }
+    UI_DrawStatusBar();
     Window_SetPos(17, 1);
     printf("Script Editor");
-    // Bottom status bar
-    Window_SetPos(24, 1);
-    for (int i = 1; i < 81; i++) {
-        Window_PrintGlyph(' ');
-    }
-    Window_SetPos(24, 1);
-    printf("Cursor: 123, 4 | Selection Mode | Selected Ship at: 120, 5");
     Window_SetColor(7, 0);
     Window_SetPos(1, 62);
     printf("Selected Ship");

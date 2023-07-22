@@ -8,7 +8,7 @@
 
 typedef struct Module {
     // Stat Modifiers
-    statMods_t statMods;
+    stats_t statMods;
 } module_t;
 
 typedef struct CustomModule {
