@@ -18,14 +18,15 @@ int Window_CreateWindow(int width, int height, window_t* win)
         return 1;
     }
 
-    win->nativeHandle = 1; // Dummy value
+    win->nativeHandle = (void*) 0x1; // Dummy value
     return 0;
 }
 
 void Window_DestroyWindow(window_t* win)
 {
     // No need to destroy anything...
-    return 0;
+    win->nativeHandle = NULL;
+    return;
 }
 
 #elif defined _WIN32
