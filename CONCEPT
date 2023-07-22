@@ -16,6 +16,18 @@ They modify the ships "stats". There are 5 stats in total:
     Battery  (max energy capacity)
     Storage  (max cargo space)
 
+These are the worlds basic resources:
+    Metal
+    Crystals
+    Gas (Deuterium)
+
+There are also exotic resources.
+Exotic resource deposits are very sparse, if one manages to acquire them, they will be able to build better modules.
+Exotic resources:
+    dark matter
+    living metal
+    unobtanium (can't be obtained)
+
 Around in space, there are resource deposits
 Each game objects size is exactly one tile
 
@@ -24,4 +36,3 @@ The map is limited
 It is possible to move less than 1 tile per round
 
 There are enemies scattered in space
-
