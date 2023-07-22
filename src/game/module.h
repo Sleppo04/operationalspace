@@ -1,17 +1,14 @@
 #ifndef MODULE_H
 #define MODULE_H
 
-#include "gameobject.h"
-
 #include <stdint.h>
 
+#include "gameobject.h"
+#include "stats.h"
+
 typedef struct Module {
-    /** stat modifiers **/
-    int32_t hull_mod;
-    int32_t shield_mod;
-    int32_t speed_mod;
-    int32_t storage_mod;
-    int32_t battery_mod;
+    // Stat Modifiers
+    statMods_t statMods;
 } module_t;
 
 typedef struct CustomModule {

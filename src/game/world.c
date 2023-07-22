@@ -184,38 +184,39 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
 
 int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination, unsigned short seed[3])
 {
-    if (sector_rows == 0) {
-        return EINVAL;
-    }
-    if (sector_cols == 0) {
-        return EINVAL;
-    }
-    if (features == NULL) {
-        return EINVAL;
-    }
-    if (destination == NULL) {
-        return EDESTADDRREQ;
-    }
-
+    int seed_code;
+    int populate_code;
+    world_t local_world;
+    size_t sector_bytes;
+    size_t feature_count;
+    sector_t* sector_array;
+    arraylist_t* placed_features;
     struct drand48_data rng_buffer;
-    int seed_code = seed48_r(seed, &rng_buffer);
+
+    
+    if (sector_rows == 0)
+        return EINVAL;
+    if (sector_cols == 0)
+        return EINVAL;
+    if (features == NULL) 
+        return EINVAL;
+    if (destination == NULL) 
+        return EDESTADDRREQ;
+    
+    seed_code = seed48_r(seed, &rng_buffer);
     if (seed_code < 0) {
     	fprintf(stderr, "Seeding the rng buffer failed in generate_world, exiting function");
     	return ECANCELED;
     }
 
-    world_t local_world;
-
-    size_t sector_bytes    = sizeof(sector_t) * sector_rows * sector_cols;
-    sector_t* sector_array = (sector_t*) calloc(1, sector_bytes);
-    if (sector_array == NULL) {
+    sector_bytes = sizeof(sector_t) * sector_rows * sector_cols;
+    sector_array = (sector_t*) calloc(1, sector_bytes);
+    if (sector_array == NULL)
         return ENOMEM;
-    }
 
-    size_t feature_count;
     for (feature_count = 0; features[feature_count].provider != NULL; feature_count++);
 
-    arraylist_t* placed_features = malloc(sizeof(arraylist_t) * feature_count);
+    placed_features = malloc(sizeof(arraylist_t) * feature_count);
     if (placed_features == NULL) {
         free(sector_array);
         return ENOMEM;
@@ -239,11 +240,10 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
     local_world.sector_cols = sector_cols;
     local_world.sector_rows = sector_rows;
 
-    int populate_code;
     for (size_t row = 0; row < sector_rows; row++) {
         for (size_t col = 0; col < sector_cols; col++) {
             sector_t* current_sector;
-            world_get_sector(&local_world, row, col, &current_sector);
+            World_GetSector(&local_world, row, col, &current_sector);
             populate_code = populate_sector(current_sector, row, col, features, feature_count, placed_features, &rng_buffer);
             if (populate_code) {
             	return populate_code;
@@ -254,23 +254,35 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
     return EXIT_SUCCESS;
 }
 
-int world_get_sector(world_t* world, size_t row, size_t col, sector_t** destination)
+int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destination)
 {
-    if (world == NULL) {
+    size_t index;
+    
+    if (world == NULL)
         return EINVAL;
-    }
-    if (row >= world->sector_rows) {
+    if (row >= world->sector_rows)
         return EINVAL;
-    }
-    if (col >= world->sector_cols) {
+    if (col >= world->sector_cols)
         return EINVAL;
-    }
-    if (destination == NULL) {
+    if (destination == NULL)
         return EDESTADDRREQ;
-    }
 
-    size_t index = world->sector_rows * row + col;
+    index = world->sector_rows * row + col;
     destination[0] = world->sectors + index;
 
     return EXIT_SUCCESS;
+}
+
+tile_t* World_GetTile(world_t* world, int x, int y)
+{
+    int sectorX;
+    int sectorY;
+    sector_t* sector;
+
+    sectorX = floor((float)x / SECTOR_SIZE);
+    sectorY = floor((float)y / SECTOR_SIZE);
+
+    World_GetSector(world, sectorX, sectorY, &sector);
+
+    return &sector->tiles[x%SECTOR_SIZE][y%SECTOR_SIZE];
 }

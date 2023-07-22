@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "sector.h"
 #include "../logic/arraylist/arraylist.h"
@@ -48,15 +49,15 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
 /// @param world world to get the sector from
 /// @param row in which row is the sector
 /// @param col what is the column of the sector
-/// @param destiantion where the result pointer will be written
+/// @param destination where the result pointer will be written
 /// @return int, errorcodes (EINVAL, EDESTADDRREQ)
-int world_get_sector(world_t* world, size_t row, size_t col, sector_t** destination);
+int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destination);
 
 /// @brief Get a tile from its absolute address 
 /// @param x The tiles absolute x-position
 /// @param y The tiles absolute y-position
 /// @return Pointer to the requested tile struct
-tile_t* World_GetTile(int x, int y);
+tile_t* World_GetTile(world_t* world, int x, int y);
 
 /// @brief Populate a sector with generated tiles
 /// @param sector sector to populate

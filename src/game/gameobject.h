@@ -2,6 +2,7 @@
 #define GAMEOBJECT_H
 
 #include "module.h"
+#include "stats.h"
 
 typedef struct GameObject {
     // Modules
@@ -12,11 +13,7 @@ typedef struct GameObject {
     armor_module_t*   armor_modules;
     
     // Precalculated stats
-    int32_t hull;
-    int32_t shield;
-    int32_t speed;
-    int32_t storage;
-    int32_t battery;
+    stats_t stats;
     
     // Current state of the ship
     int32_t current_hull;

@@ -2,7 +2,6 @@
 #define UI_H
 
 #include <stdio.h>
-#include <math.h>
 #include "window.h"
 #include "../game/world.h"
 
