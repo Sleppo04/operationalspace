@@ -8,13 +8,8 @@ void UI_DrawSector(int x,int y, sector_t* sector)
     for (int i = 0; i < SECTOR_SIZE; i++) {
         for(int j = 0; j < SECTOR_SIZE; j++) {
             tile = sector->tiles[j][i];
-            //if (tile.object == 0) {
-                //Window_SetColor(tile.object->color, 0);
-                //Window_PrintGlyph(tile.object->glyph);
-            //} else {
-                Window_SetColor(tile.color, 0);
-                Window_PrintGlyph(tile.glyph);
-            //}
+            Window_SetColor(0, 15);
+            Window_PrintGlyph(' ');
         }
         Window_PrintGlyph('\n');
     }
