@@ -2,14 +2,15 @@
 #define WORLD_H
 
 #include <errno.h>
+#include <float.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "sector.h"
 #include "../logic/arraylist/arraylist.h"
 #include "../logic/coordinate/coordinate.h"
 
-extern struct drand48_data;
 
 typedef struct World {
     size_t sector_rows;
@@ -17,10 +18,10 @@ typedef struct World {
     sector_t* sectors;
 } world_t;
 
-typedef int (*FeatureProviderFunction) (gameobject_t* destination, void* user_data);
+typedef int (*FeatureProviderFunction) (gameobject_t** destination, void* user_data);
 
 typedef struct Feature {
-    FeatureProviderFunction* provider;
+    int (*provider) (gameobject_t** destination, void* user_data);
     void* user_data;
     double max_probability;    // The modified probability shall never exceed this, if the distances are kept
     double min_probability;    // The modified probability shall never subceed this, if the distances are kept
