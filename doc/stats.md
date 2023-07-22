@@ -20,11 +20,30 @@ The 5 **STATs** used are:
 | St             | Storage   | The maximum amount of ressources the object can carry at once |
 | Ba             | Battery   | The maximum amount of energy the object can hold |
 
+## Module Stats
+Modules share a common set of stats. These stats take their effect on the ship the module is installed on.
+
+| Displayed Name | Full Name        | Description |
+| -------------- | ---------------- | ----------- |
+| StM            | Storage Modifier | The amount of resources the ship can store with this module |
+| HuM            | Hull Modifier    | How much hull does this module provide |
+| ShM            | Shield Modifier  | Shields this module generates |
+| SpM            | Speed Modifier   | Does this module accelerate the ships movement? |
+| BaM            | Battery Modifier | Energy storage of the module |
+ 
 ## Weapon Stats
 Weapon modules have an extra set of **STATs** that detemines the weapons damage values, damage types and applied effects to the target: the **WEAPON STATs**.
 
-| Displayed Name | Full Name     | Description |
-| -------------- | ------------- | ----------- |
-| Da             | Direct Damage | The amount of direct damage dealt to the target object. |
-| Ad             | Area Damage   | The amount of damage dealt to objects in the area of the target |
-| Ar             | Area          | The size of the area for area damage |
+| Displayed Name | Full Name          | Description |
+| -------------- | ------------------ | ----------- |
+| Ad             | Armor damage       | Damage dealt to the enemy armor, if shields are down |
+| Sd             | Shield damage      | Damage dealt to the enemy shields |
+| Aad            | Area Armor damage  | Armor damage for ships in the armor area |
+| Ada            | Armor Damage Area  | What is the tile range for ships to be affected from the area armor damage |
+| Asd            | Area Shield damage | Shield damage for ships in the shield area |
+| Sda            | Shield Damage Area | The tile range for ships to be affected from the area shield damage |
+| Cd             | Cooldown           | Time it takes to recharge the weapon after firing (in game ticks) |
+| Ae             | Activation Energy  | How much energy does the weapon consume when being fired |
+| Re             | Recharge Energy    | The amount of energy the weapon consumes when it is being recharged |
+
+
