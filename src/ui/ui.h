@@ -1,10 +1,12 @@
 #ifndef UI_H
 #define UI_H
 
+#include <stdio.h>
+#include <math.h>
 #include "window.h"
-#include "../game/sector.h"
+#include "../game/world.h"
 
-void UI_DrawSector(int x,int y, sector_t* sector);
+void UI_DrawWorld(int worldX, int worldY, int width, int height, world_t world);
 void UI_DrawFrame();
 
 #endif

@@ -64,7 +64,7 @@ void Window_SetColor(color_t fg, color_t bg)
 
 void Window_SetPos(int x, int y)
 {
-    printf("\x1b[%u;%uH");
+    printf("\x1b[%u;%uH", x, y);
     return;
 }
 

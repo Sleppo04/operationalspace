@@ -51,6 +51,12 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
 /// @return int, errorcodes (EINVAL, EDESTADDRREQ)
 int world_get_sector(world_t* world, size_t row, size_t col, sector_t** destination);
 
+/// @brief Get a tile from its absolute address 
+/// @param x The tiles absolute x-position
+/// @param y The tiles absolute y-position
+/// @return Pointer to the requested tile struct
+tile_t* World_GetTile(int x, int y);
+
 /// @brief Populate a sector with generated tiles
 /// @param sector sector to populate
 /// @param row what row is the sector in

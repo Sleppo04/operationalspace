@@ -1,1 +1,1 @@
-gcc -g -o os.exe src/*.c src/ui/*.c
+gcc -Wall -Wextra -g -o os.exe src/*.c src/ui/*.c

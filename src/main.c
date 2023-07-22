@@ -8,13 +8,12 @@
 int main(int argc, char** argv)
 {
     window_t win;
-    sector_t sector;
+    world_t world;
 
     Window_CreateWindow(80, 24, &win);
     Window_ClearScreen();
-    Window_SetPos(1, 1);
-    UI_DrawSector(1, 1, &sector);
     UI_DrawFrame();
+    UI_DrawWorld(0, 0, 60, 20, world);
     Window_SetColor(15, 0);
     return 0;
 }
