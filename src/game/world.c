@@ -1,6 +1,6 @@
 #include "world.h"
 
-#define NEARBY_ARRAY_LENGTH 10
+#define NEARBY_ARRAY_LENGTH 100
 
 int get_place_feature_index(coordinate_t** nearby_feature_coordinates, feature_t* features, size_t feature_count, coordinate_t absolute_coordinate, unsigned int* seedp, size_t* destination)
 {
