@@ -1,6 +1,6 @@
 #include "stats.h"
 
-Stats_ApplyModifier(stats_t* stats, stats_t* mods)
+void Stats_ApplyModifier(stats_t* stats, stats_t* mods)
 {
     stats->battery += mods->battery;
     stats->storage += mods->storage;

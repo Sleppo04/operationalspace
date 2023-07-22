@@ -12,6 +12,6 @@ typedef struct stats_s
     int32_t battery;
 } stats_t;
 
-Stats_ApplyModifier(stats_t* stats, stats_t* mods);
+void Stats_ApplyModifier(stats_t* stats, stats_t* mods);
 
 #endif
