@@ -26,7 +26,7 @@ typedef struct GameObject {
     char color;
 } gameobject_t;
 
-Obj_RecalculateStats(gameobject_t* obj);
+void Obj_RecalculateStats(gameobject_t* obj);
 
 #endif
 
