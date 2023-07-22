@@ -2,9 +2,9 @@
 
 #define NEARBY_ARRAY_LENGTH 10
 
-int get_place_feature_index(coordinate_t** nearest_features, feature_t* features, size_t feature_count, coordinate_t absolute_coordinate, struct drand48_data* rng_buffer, size_t* destination)
+int get_place_feature_index(coordinate_t** nearby_feature_coordinates, feature_t* features, size_t feature_count, coordinate_t absolute_coordinate, unsigned int* seedp, size_t* destination)
 {
-    if (nearest_features == NULL) {
+    if (nearby_feature_coordinates == NULL) {
         return EINVAL;
     }
     if (destination == NULL) {
@@ -25,7 +25,7 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
     for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
         best_coordinate = nearest_coordinates + feature_index;
         for (size_t i = 0; i < NEARBY_ARRAY_LENGTH; i++) {
-            coordinate_t* nearest_feature_coordinate = nearest_features[feature_index] + i;
+            coordinate_t* nearest_feature_coordinate = nearby_feature_coordinates[feature_index] + i;
             size_t self_distance;
             size_t best_distance;
             coordinate_manhattan_distance(best_coordinate, &absolute_coordinate, &best_distance);
@@ -38,24 +38,23 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
     }
 
     double best_probability = DBL_MAX;
-    size_t best_index    = feature_count;
+    size_t best_index       = feature_count;
     feature_t* feature;
     size_t self_distance, foreign_distance;
     double feature_probability;
     double random_number;
-    int random_code;
     for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
-    	feature = features + feature_index;
+			feature = features + feature_index;
 
-    	coordinate_manhattan_distance(nearest_coordinates + feature_index, &absolute_coordinate, &self_distance);
-    	if (self_distance < feature->minimum_distance) {
-    		continue;
-    	}
+			coordinate_manhattan_distance(nearest_coordinates + feature_index, &absolute_coordinate, &self_distance);
+			if (self_distance < feature->minimum_distance) {
+				continue;
+			}
 
-    	foreign_distance = SIZE_MAX;
-    	coordinate_t* foreign_coordinate;
-    	size_t coord_distance;
-    	for (size_t f = 0; f < feature_count; f++) {
+			foreign_distance = SIZE_MAX;
+			coordinate_t* foreign_coordinate;
+			size_t coord_distance;
+			for (size_t f = 0; f < feature_count; f++) {
     		if (f == feature_index) continue;
 
     		foreign_coordinate = nearest_coordinates + f;
@@ -68,6 +67,8 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
     		continue;
     	}
 
+        
+        random_number = rand_r(seedp) / (double) (RAND_MAX);
 
     	feature_probability  = feature->base_probability;
     	feature_probability += feature->probability_mod * self_distance;
@@ -76,14 +77,6 @@ int get_place_feature_index(coordinate_t** nearest_features, feature_t* features
     	feature_probability  = max(feature->min_probability, feature_probability);
     	feature_probability  = min(feature->max_probability, feature_probability);
 
-    	errno = 0;
-    	random_code = drand48_r(rng_buffer, &random_number);
-    	if (random_code < 0) {
-    		free(nearest_coordinates);
-    		random_code = errno;
-    		perror("The following error occured in get_place_feature_index from world.c when calling drand48_r");
-    		return random_code;
-    	}
     	feature_probability -= random_number;
 
     	if (feature_probability < best_probability) {
@@ -132,7 +125,7 @@ int place_feature(feature_t* feature, tile_t* tile, coordinate_t coordinate, arr
 	return EXIT_SUCCESS;
 }
 
-int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* features, size_t feature_count, arraylist_t* placed_features, struct drand48_data* rng_buffer)
+int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* features, size_t feature_count, arraylist_t* placed_features, unsigned int* seedp)
 {
     if (sector == NULL) {
         return EDESTADDRREQ;
@@ -166,12 +159,6 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     		nearby_features[feature_index][i].y = SIZE_MAX;
     	}
     }
-    
-    for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
-        arraylist_t*  feature_arraylist = placed_features + feature_index;
-        coordinate_t* nearby_array = nearby_features[feature_index];
-        coordinate_find_nearest(nearby_array, NEARBY_ARRAY_LENGTH, feature_arraylist, sector_mid);
-    }
 
 
     size_t place_feature_index;
@@ -181,8 +168,14 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     int rc;
     for (size_t coordinate_row = 0; coordinate_row < SECTOR_SIZE; coordinate_row++) {
         for (size_t coordinate_col = 0; coordinate_col < SECTOR_SIZE; coordinate_col++) {
+            for (size_t feature_index = 0; feature_index < feature_count; feature_index++) {
+                arraylist_t*  feature_arraylist = placed_features + feature_index;
+                coordinate_t* nearby_array = nearby_features[feature_index];
+                coordinate_find_nearest(nearby_array, NEARBY_ARRAY_LENGTH, feature_arraylist, sector_mid);
+            }
+
             coordinate_t absolute_coordinate = {.x = sector_start.x + coordinate_col, .y = sector_start.y + coordinate_row};
-            rc = get_place_feature_index((coordinate_t**) nearby_features, features, feature_count, absolute_coordinate, rng_buffer, &place_feature_index);
+            rc = get_place_feature_index((coordinate_t**) nearby_features, features, feature_count, absolute_coordinate, seedp, &place_feature_index);
 
             if (rc) {
             	free(nearby_array_inner);
@@ -207,17 +200,14 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     return EXIT_SUCCESS;
 }
 
-int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination, unsigned short seed[3])
+int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination, unsigned int seed)
 {
-    int seed_code;
     int populate_code;
     world_t local_world;
     size_t sector_bytes;
     size_t feature_count;
     sector_t* sector_array;
     arraylist_t* placed_features;
-    struct drand48_data rng_buffer;
-
     
     if (sector_rows == 0)
         return EINVAL;
@@ -228,11 +218,6 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
     if (destination == NULL) 
         return EDESTADDRREQ;
     
-    seed_code = seed48_r(seed, &rng_buffer);
-    if (seed_code < 0) {
-    	fprintf(stderr, "Seeding the rng buffer failed in generate_world, exiting function");
-    	return ECANCELED;
-    }
 
     sector_bytes = sizeof(sector_t) * sector_rows * sector_cols;
     sector_array = (sector_t*) calloc(1, sector_bytes);
@@ -261,15 +246,16 @@ int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, 
         }
     }
 
-    local_world.sectors = sector_array;
+    local_world.sectors     = sector_array;
     local_world.sector_cols = sector_cols;
     local_world.sector_rows = sector_rows;
+    local_world.seed        = seed;
 
     for (size_t row = 0; row < sector_rows; row++) {
         for (size_t col = 0; col < sector_cols; col++) {
             sector_t* current_sector;
             World_GetSector(&local_world, row, col, &current_sector);
-            populate_code = populate_sector(current_sector, row, col, features, feature_count, placed_features, &rng_buffer);
+            populate_code = populate_sector(current_sector, row, col, features, feature_count, placed_features, &(local_world.seed));
             if (populate_code) {
             	for (size_t fuck = 0; fuck < feature_count; fuck++) {
 					arraylist_t* list = placed_features + fuck;
