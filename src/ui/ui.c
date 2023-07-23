@@ -1,27 +1,5 @@
 #include "ui.h"
 
-void UI_DrawWorld(int worldX, int worldY, int width, int height, world_t* world)
-{
-    tile_t* tile;
-    
-    Window_SetPos(0, 0);
-    for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            tile = World_GetTile(world, worldX + j, worldY + i);
-            if (tile->object != NULL) {
-                Window_SetColor(tile->object->color, 0);
-                Window_PrintGlyph(tile->object->glyph);
-            } else {
-                Window_SetColor(tile->color, 0);
-                Window_PrintGlyph(tile->glyph);
-            }
-        }
-        Window_PrintGlyph('\n');
-    }
-
-    return;
-}
-
 void UI_DrawStatusBar()
 {
     Window_SetPos(24, 1);

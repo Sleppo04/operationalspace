@@ -33,11 +33,9 @@ int main(int argc, char** argv)
     generate_world(2, 2, features, &world, 42);
 
     Window_CreateWindow(80, 24, &win);
-    Window_SetColor(7, 0);
     Window_ClearScreen();
     UI_DrawFrame();
-    UI_DrawWorld(0, 0, 59, 16, &world);
-    Window_SetColor(15, 0);
+    Window_SetColor(7, 0);
 
     getchar();
     return 0;
