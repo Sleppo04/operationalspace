@@ -9,7 +9,7 @@ Those **STATs** are mainly used for three things:
 
 Attack damage is not calculated using those **STATs** however, for this the weapons **WEAPON STATs** are used.
 
-Those **STATs** are integer values reaching from X to X. On ships, they are influenced by the used modules; more specifically their **STAT MODIFIERs**.
+Those **STATs** are integer values reaching from $-2^{31}$ to $2^{31}$. On ships, they are influenced by the used modules; more specifically their **STAT MODIFIERs**.
 The 5 **STATs** used are:
 
 | Displayed Name | Full Name | Description |
@@ -21,7 +21,7 @@ The 5 **STATs** used are:
 | Ba             | Battery   | The maximum amount of energy the object can hold |
 
 ## Module Stats
-Modules share a common set of stats. These stats take their effect on the ship the module is installed on.
+Modules share a common set of **STATs**. These **STATs** take their effect on the ship the module is installed on.
 
 | Displayed Name | Full Name        | Description |
 | -------------- | ---------------- | ----------- |
