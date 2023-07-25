@@ -18,7 +18,7 @@ typedef struct worldview_s
     unsigned int height;
 } worldview_t;
 
-void UI_WorldViewCreate(world_t* world, worldview_t* view, int screenX, int screenY, int width, int height);
+void UI_WorldViewCreate(worldview_t* view, world_t* world, unsigned int screenX, unsigned int screenY, unsigned int width, unsigned int height);
 void UI_WorldViewRender(worldview_t* view);
 
 #endif

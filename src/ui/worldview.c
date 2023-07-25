@@ -1,6 +1,6 @@
 #include "worldview.h"
 
-void UI_WorldViewCreate(world_t* world, worldview_t* view, int screenX, int screenY, int width, int height)
+void UI_WorldViewCreate(worldview_t* view, world_t* world, unsigned int screenX, unsigned int screenY, unsigned int width, unsigned int height)
 {
     view->world   = world;
     view->worldX  = 0;
