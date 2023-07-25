@@ -63,7 +63,7 @@ void Window_SetColor(color_t fg, color_t bg)
 
 void Window_SetPos(int x, int y)
 {
-    printf("\x1b[%u;%uH", x, y);
+    printf("\x1b[%u;%uH", y, x);
     return;
 }
 
@@ -71,6 +71,13 @@ void Window_ResetColor()
 {
     printf("\x1b[39m"); // Reset foreground color
     printf("\x1b[49m"); // Reset Background color
+    return;
+}
+
+void Window_ResetFormatting()
+{
+    printf("\x1b[0m");
+    return;
 }
 
 void Window_SetBold(bool a)
