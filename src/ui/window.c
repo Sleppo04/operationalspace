@@ -76,42 +76,42 @@ void Window_ResetColor()
 void Window_SetBold(bool a)
 {
     if (a) printf("\x1b[1m");
-    else printf("\x1b[22");
+    else printf("\x1b[22m");
     return;
 }
 
 void Window_SetItalic(bool a)
 {
     if (a) printf("\x1b[3m");
-    else printf("\x1b[23");
+    else printf("\x1b[23m");
     return;
 }
 
 void Window_SetUnderlined(bool a)
 {
     if (a) printf("\x1b[4m");
-    else printf("\x1b[24");
+    else printf("\x1b[24m");
     return;
 }
 
 void Window_SetBlinking(bool a)
 {
     if (a) printf("\x1b[5m");
-    else printf("\x1b[25");
+    else printf("\x1b[25m");
     return;
 }
 
 void Window_SetInverse(bool a)
 {
     if (a) printf("\x1b[7m");
-    else printf("\x1b[27");
+    else printf("\x1b[27m");
     return;
 }
 
 void Window_SetCrossedout(bool a)
 {
     if (a) printf("\x1b[9m");
-    else printf("\x1b[29");
+    else printf("\x1b[29m");
     return;
 }
 

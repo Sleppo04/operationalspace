@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include "../src/ui/window.h"
+
+int main()
+{
+    window_t win;
+    
+    Window_CreateWindow(80, 24, &win);
+    Window_ClearScreen();
+    //UI_DrawFrame();
+	printf("Test Normal\n");
+	Window_SetBold(true);
+	printf("Test Bold ");
+	Window_SetBold(false);
+	printf("no longer bold.\n");
+	Window_SetItalic(true);
+	printf("Test Italic ");
+	Window_SetItalic(false);
+	printf("no longer italic.\n");
+	Window_SetUnderlined(true);
+	printf("Test Underlined ");
+	Window_SetUnderlined(false);
+	printf("no longer underlined.\n");
+	Window_SetBlinking(true);
+	printf("Test Blinking ");
+	Window_SetBlinking(false);
+	printf("no longer blinking.\n");
+	Window_SetInverse(true);
+	printf("Test Inverse ");
+	Window_SetInverse(false);
+	printf("no longer inverse.\n");
+	Window_SetCrossedout(true);
+	printf("Test Crossedout ");
+	Window_SetCrossedout(false);
+	printf("no longer crossedout.\n");
+
+	Window_ResetColor();
+    getchar();
+    return 0;
+}
