@@ -1,7 +1,5 @@
 #include "window.h"
 
-#include <stdio.h>
-
 #ifdef __linux__
 
 #include <sys/ioctl.h>
@@ -73,6 +71,48 @@ void Window_ResetColor()
 {
     printf("\x1b[39m"); // Reset foreground color
     printf("\x1b[49m"); // Reset Background color
+}
+
+void Window_SetBold(bool a)
+{
+    if (a) printf("\x1b[1m");
+    else printf("\x1b[22");
+    return;
+}
+
+void Window_SetItalic(bool a)
+{
+    if (a) printf("\x1b[3m");
+    else printf("\x1b[23");
+    return;
+}
+
+void Window_SetUnderlined(bool a)
+{
+    if (a) printf("\x1b[4m");
+    else printf("\x1b[24");
+    return;
+}
+
+void Window_SetBlinking(bool a)
+{
+    if (a) printf("\x1b[5m");
+    else printf("\x1b[25");
+    return;
+}
+
+void Window_SetInverse(bool a)
+{
+    if (a) printf("\x1b[7m");
+    else printf("\x1b[27");
+    return;
+}
+
+void Window_SetCrossedout(bool a)
+{
+    if (a) printf("\x1b[9m");
+    else printf("\x1b[29");
+    return;
 }
 
 void Window_SetGlyph(int x, int y, glyph_t glyph)
