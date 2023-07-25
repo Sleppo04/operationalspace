@@ -115,6 +115,13 @@ void Window_SetCrossedout(bool a)
     return;
 }
 
+void Window_SetCursorVisible(bool a)
+{
+    if (a) printf("\x1b?25h");
+    else printf("\x1b?25l");
+    return;
+}
+
 void Window_SetGlyph(int x, int y, glyph_t glyph)
 {
     Window_SetPos(x, y);

@@ -20,6 +20,7 @@ void Window_SetUnderlined(bool a);
 void Window_SetBlinking(bool a);
 void Window_SetInverse(bool a);
 void Window_SetCrossedout(bool a);
+void Window_SetCursorVisible(bool a);
 void Window_SetPos(int x, int y);
 void Window_SetGlyph(int x, int y, glyph_t glyph);
 void Window_PrintGlyph(glyph_t glyph);
