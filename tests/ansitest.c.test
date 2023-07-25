@@ -18,27 +18,27 @@ int main()
 	// Text Formatting Test
 	printf("Test Normal\n");
 	Window_SetBold(true);
-	printf("Test Bold");
+	printf("Test Bold...");
 	Window_SetBold(false);
 	printf(" no longer bold.\n");
 	Window_SetItalic(true);
-	printf("Test Italic");
+	printf("Test Italic...");
 	Window_SetItalic(false);
 	printf(" no longer italic.\n");
 	Window_SetUnderlined(true);
-	printf("Test Underlined");
+	printf("Test Underlined...");
 	Window_SetUnderlined(false);
 	printf(" no longer underlined.\n");
 	Window_SetBlinking(true);
-	printf("Test Blinking");
+	printf("Test Blinking...");
 	Window_SetBlinking(false);
 	printf(" no longer blinking.\n");
 	Window_SetInverse(true);
-	printf("Test Inverse");
+	printf("Test Inverse...");
 	Window_SetInverse(false);
 	printf(" no longer inverse.\n");
 	Window_SetCrossedout(true);
-	printf("Test Crossedout");
+	printf("Test Crossedout...");
 	Window_SetCrossedout(false);
 	printf(" no longer crossedout.\n");
 
@@ -57,6 +57,17 @@ int main()
 	}
 	Window_ResetColor();
 
+	// SetPos test (even though it's already been used...)
+	Window_SetPos(1, 16);
+	printf("CUP (Cursor Position) Test... ");
+	Window_SetBold(true);
+	Window_SetColor(15, 1);
+	printf("FAILED!");
+	Window_SetPos(31, 16);
+	Window_SetColor(15, 2);
+	printf("PASSED!");
+
+	Window_ResetColor();
 	Window_SetPos(1, 23);
 	printf("Hit <ENTER> to exit...");
     getchar();
