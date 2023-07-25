@@ -69,6 +69,12 @@ void Window_SetPos(int x, int y)
     return;
 }
 
+void Window_ResetColor()
+{
+    printf("\x1b[39m"); // Reset foreground color
+    printf("\x1b[49m"); // Reset Background color
+}
+
 void Window_SetGlyph(int x, int y, glyph_t glyph)
 {
     Window_SetPos(x, y);

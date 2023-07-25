@@ -35,7 +35,7 @@ int main(int argc, char** argv)
     Window_CreateWindow(80, 24, &win);
     Window_ClearScreen();
     UI_DrawFrame();
-    Window_SetColor(7, 0);
+    Window_ResetColor();
 
     getchar();
     return 0;
