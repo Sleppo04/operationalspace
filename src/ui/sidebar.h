@@ -10,10 +10,10 @@
 
 typedef struct sidebar_s
 {
-    unsigned int  screenX;
-    unsigned int  screenY;
-    unsigned int  width;
-    unsigned int  height;
+    unsigned int screenX;
+    unsigned int screenY;
+    unsigned int width;
+    unsigned int height;
 } sidebar_t;
 
 void UI_SidebarCreate(sidebar_t* sidebar, unsigned int screenX, unsigned int screenY, unsigned int width, unsigned int height);

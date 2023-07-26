@@ -33,8 +33,10 @@ int main(int argc, char** argv)
     generate_world(2, 2, features, &world, 42);
 
     Window_CreateWindow(80, 24, &win);
+	UI_Init(&world);
     Window_ClearScreen();
     UI_DrawFrame();
+	
     Window_ResetColor();
 
     getchar();
