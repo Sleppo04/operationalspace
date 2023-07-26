@@ -24,9 +24,14 @@ void UI_WorldViewRender(worldview_t* view)
         Window_SetPos(view->screenX, view->screenY + i);
         for (int j = 0; j < view->width; j++) {
             tile = World_GetTile(view->world, view->worldX + j, view->worldY + i);
-            if (j == view->cursorX && i == view->cursorY) {
+            if (tile == NULL) {
+                Window_SetColor(15, 1);
+                Window_SetBlinking(true);
+                Window_PrintGlyph('X');
+                Window_SetBlinking(false);
+            } else if (j == view->cursorX && i == view->cursorY) {
                 // Draw selection cursor
-                Window_SetColor(0, 11);
+                Window_SetColor(0, 3);
                 Window_PrintGlyph(' ');
             } else if (tile->object != NULL) {
                 Window_SetColor(tile->object->color, 0);

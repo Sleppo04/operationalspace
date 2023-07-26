@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 	features[0].probability_growth  = 1;
 	features[1].provider            = NULL;
 
-    generate_world(2, 2, features, &world, 42);
+    generate_world(8, 8, features, &world, 42);
 
     Window_CreateWindow(80, 24, &win);
 	UI_Init(&world);

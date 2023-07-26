@@ -316,6 +316,8 @@ tile_t* World_GetTile(world_t* world, int x, int y)
     sectorX = floor((float)x / SECTOR_SIZE);
     sectorY = floor((float)y / SECTOR_SIZE);
 
+    if(sectorX > (world->sector_cols - 1) || sectorY > (world->sector_rows - 1)) return NULL;
+
     World_GetSector(world, sectorX, sectorY, &sector);
 
     return &sector->tiles[x%SECTOR_SIZE][y%SECTOR_SIZE];

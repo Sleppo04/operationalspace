@@ -5,7 +5,7 @@ static sidebar_t sidebar;
 
 void UI_Init(world_t* world)
 {
-    UI_WorldViewCreate(&worldview, world, 1, 1, 16, 16);
+    UI_WorldViewCreate(&worldview, world, 1, 1, 59, 16);
     UI_SidebarCreate(&sidebar, 71, 1, 9, 24);
     return;
 }
@@ -13,7 +13,7 @@ void UI_Init(world_t* world)
 void UI_DrawStatusBar()
 {
     Window_SetPos(1, 24);
-    printf("Cursor: %-4i, %-4i                                                              ", 123, 4);
+    printf("Cursor: %-4i, %-4i                                                              ", worldview.cursorX, worldview.cursorY);
     return;
 }
 
