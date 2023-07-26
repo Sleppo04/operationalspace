@@ -25,7 +25,7 @@ void UI_DrawFrame()
         Window_SetGlyph(60, i, ' ');
     }
     // Vertical separator
-    Window_SetPos(17, 1);
+    Window_SetPos(1, 17);
     for (int i = 1; i < 60; i++) {
         Window_PrintGlyph(' ');
     }
