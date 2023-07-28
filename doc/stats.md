@@ -46,4 +46,21 @@ Weapon modules have an extra set of **STATs** that detemines the weapons damage 
 | Ae             | Activation Energy  | How much energy does the weapon consume when being fired |
 | Re             | Recharge Energy    | The amount of energy the weapon consumes when it is being recharged |
 
+## Ship Prototype Stats
+Each ship has a ship prototype and a set of modules.
+The ship prototypes define the basic capabilities of a ship and limit the ships abilities.
+There are generic ship prototypes for custom ship architectures and specialized prototypes for standard designs.
 
+| Displayed Name | Full Name            | Description
+| -------------- | -------------------- | ---------- |
+| Hu             | Hull                 | Hull the prototype provides |
+| Hr             | Hull Regeneration    | Autonomous Hull-Repair per round |
+| Sh             | Shield               | Shield the prototype provides |
+| Sr             | Shield Regeneration  | Autonomous Shield Regeneration |
+| Ba             | Battery              | Built-in Energy Capacity of the prototype |
+| Br             | Battery Regeneration | How much Energy the ship recuperates per round |
+| Ma             | Mass                 | How heavy is the prototype |
+| Sp             | Speed                | The speed of the ship, will influence the actions per round |
+| MC             | Metal Cost           | How many Metal Resources you have to pay to construct this prototype |
+| CC             | Crystal Cost         | How many crystals you have to pay to construct this prototype |
+| GC             | Gas Cost             | How many Gas Resources you have to pay to construct this prototype |
