@@ -8,6 +8,7 @@ typedef struct stats_s
     int32_t hull;
     int32_t shield;
     int32_t speed;
+    int32_t mass;
     int32_t storage;
     int32_t battery;
 } stats_t;
