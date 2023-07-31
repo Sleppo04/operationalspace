@@ -9,4 +9,6 @@ typedef struct XoshiroState {
 
 uint64_t rotate_uint64_left(uint64_t bytes, int degree);
 
+uint64_t xoshiro256_next(xoshiro256_state_t *state);
+
 #endif
