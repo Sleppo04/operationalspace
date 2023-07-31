@@ -10,12 +10,15 @@
 #include "world.h"
 
 #include "../logic/rand/xoshiro256.h"
+#include "../logic/dynamicbuffer/dynamicbuffer.h"
 
 typedef struct WorldGenData {
     feature_t* features;
     size_t feature_count;
     world_t* destination;
-}
+    world_t local_world;
+    dynamic_buffer_t* feature_positions;
+} worldgendata_t;
 
 /**
  * @brief Generate a new world

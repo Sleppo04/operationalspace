@@ -197,14 +197,49 @@ int populate_sector(sector_t* sector, size_t row, size_t col, feature_t* feature
     return EXIT_SUCCESS;
 }
 
-int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination, unsigned int seed)
+int WorldGenData_Create(worldgendata_t* data, size_t sector_rows, size_t sector_cols, world_t* destination_world, feature_t* features, xoshiro256_state_t* rand_state)
+{
+    if (data == NULL) {
+        return EDESTADDRREQ;
+    }
+
+    worldgendata_t local;
+    local.destination        = destination_world;
+    local.features           = features;
+    for (local.feature_count = 0; features[local.feature_count].provider != NULL; local.feature_count++);
+    local.feature_positions  = malloc(sizeof(dynamic_buffer_t) * local.feature_count);
+    if (local.feature_positions == NULL) {
+        return ENOMEM;
+    }
+    local.local_world.sector_cols = sector_cols;
+    local.local_world.sector_rows = sector_rows;
+
+    // Fill the array with buffers
+    int buffer_code;
+    for (size_t feature_index = 0; feature_index < local.feature_count; feature_index++) {
+        dynamic_buffer_t* buffer_position = local.feature_positions + feature_index;
+        buffer_code = DynamicBuffer_Create(buffer_position, sizeof(coordinate_t) * 32);
+
+        if (buffer_code) {
+            // ENOMEM
+            for (size_t i = 0; i < feature_index; i++) {
+                DynamicBuffer_Destroy(local.feature_positions + i);
+            }
+            free(local.feature_positions);
+
+            return ENOMEM;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int generate_world(size_t sector_rows, size_t sector_cols, feature_t* features, world_t* destination, xoshiro256_state_t* rand_state)
 {
     int populate_code;
-    world_t local_world;
     size_t sector_bytes;
     size_t feature_count;
-    sector_t* sector_array;
-    arraylist_t* placed_features;
+    worldgendata_t data;·
     
     if (sector_rows == 0)
         return EINVAL;
