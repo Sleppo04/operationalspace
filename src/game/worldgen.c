@@ -7,7 +7,7 @@ int Worldgen_NewEmptyWorld(world_t* destination, size_t sector_rows, size_t sect
 
     size_t sector_bytes = sizeof(sector_t) * sector_cols * sector_rows;
 
-    destination->sectors = malloc(sector_bytes);
+    destination->sectors = calloc(1, sector_bytes);
 
     if (destination->sectors == NULL) {
         return ENOMEM;
@@ -91,6 +91,8 @@ int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t
     for (size_t row = 0; row < world_rows; row++) {
         for (size_t col = 0; col < world_cols; col++) {
             tile_t* tile = World_GetTile(&(data.local_world), row, col);
+            tile->glyph = ' ';
+            tile->color = 15;
             check_code = WorldGen_CheckFeaturePlacement(tile, &data, col, row);
             if (check_code) {
                 //TODO: Destroy world
