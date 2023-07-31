@@ -123,7 +123,7 @@ int DynamicBuffer_Destroy(dynamic_buffer_t* buffer)
         return EINVAL;
     }
     free(buffer->array);
-    buffer->array == NULL;
+    buffer->array = NULL;
     buffer->capacity = 0;
     buffer->used = 0;
 
