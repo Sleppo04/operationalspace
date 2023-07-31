@@ -11,28 +11,23 @@ int feature_provider(gameobject_t** destination, void* user_data __attribute__((
 	destination[0]->color = 100;
 	destination[0]->glyph = '#';
 
+
 	return 0;
 }
 
-int main(int argc __attribute__ ((__unused__)), char** argv __attribute__ ((__unused__)))
+int main()
 {
     window_t win;
     world_t world;
     feature_t features[2];
 	
     features[0].provider = feature_provider;
-    features[0].constant_factor    = 0.001;
-    features[0].foreign_distance    = 5;
-    features[0].minimum_distance    = 5;
-    features[0].min_probability     = 0.001;
-    features[0].max_probability     = 0.01;
-    features[0].constant_factor     = 0.001;
-    features[0].linear_factor       = 0.005;
-    features[0].quadratic_factor    = 1.015;
-    features[0].cubic_factor        = 0.0;
+    features[0].maximum_noise_levels[0] = 250;
+    features[0].minimum_noise_levels[0] = 100;
     features[1].provider            = NULL;
+    xoshiro256_state_t state = {.state = {1, 2, 3, 4}};
 
-    generate_world(8, 8, features, &world, 42);
+    WorldGen_GenerateWorld(8, 8, features, &world, state);
 
     Window_CreateWindow(80, 24, &win);
     UI_Init(&world);
