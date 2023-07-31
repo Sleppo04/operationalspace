@@ -7,7 +7,7 @@
 #include "stats.h"
 
 // Probably the ugliest macro in the code
-#define MODULESTRSIZE(x) (x==MODULETYPE_ARMOR)?sizeof(armor_module_t):(x==MODULETYPE_CUSTOM)?sizeof(custom_module_t):(x==MODULETYPE_ENGINE)?sizeof(engine_module_t):(x==MODULETYPE_UTILITY)?sizeof(utility_module_t):(x==MODULETYPE_WEAPON)?sizeof(weapon_module_t):0
+#define MODULESTRSIZE(x) (((x)==MODULETYPE_ARMOR)?sizeof(armor_module_t):((x)==MODULETYPE_CUSTOM)?sizeof(custom_module_t):((x)==MODULETYPE_ENGINE)?sizeof(engine_module_t):((x)==MODULETYPE_UTILITY)?sizeof(utility_module_t):((x)==MODULETYPE_WEAPON)?sizeof(weapon_module_t):0)
 
 #define NUM_MODULETYPES 5 // Number of existing module types, need to update manually :(
 typedef enum moduleType_e
