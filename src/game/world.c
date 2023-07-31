@@ -70,12 +70,8 @@ int get_place_feature_index(coordinate_t** nearby_feature_coordinates, feature_t
         
         random_number = rand_r(seedp) / (double) (RAND_MAX);
 
-    	feature_probability  = feature->base_probability;
-    	feature_probability += feature->probability_mod * self_distance;
-        feature_probability *= pow(feature->probability_growth, (double) self_distance);
-
-    	feature_probability  = max(feature->min_probability, feature_probability);
-    	feature_probability  = min(feature->max_probability, feature_probability);
+        // Unused return because the conditions it checked are guaranteed in this function
+        Feature_CalculateProbability(feature, self_distance, foreign_distance, &feature_probability);
 
     	feature_probability -= random_number;
 

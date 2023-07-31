@@ -20,13 +20,15 @@ int main(int argc __attribute__ ((__unused__)), char** argv __attribute__ ((__un
     feature_t features[2];
 	
     features[0].provider = feature_provider;
-    features[0].base_probability    = 0.001;
+    features[0].constant_factor    = 0.001;
     features[0].foreign_distance    = 5;
     features[0].minimum_distance    = 5;
     features[0].min_probability     = 0.001;
     features[0].max_probability     = 0.01;
-    features[0].probability_mod     = 0.0;
-    features[0].probability_growth  = 1;
+    features[0].constant_factor     = 0.001;
+    features[0].linear_factor       = 0.005;
+    features[0].quadratic_factor    = 1.015;
+    features[0].cubic_factor        = 0.0;
     features[1].provider            = NULL;
 
     generate_world(8, 8, features, &world, 42);
