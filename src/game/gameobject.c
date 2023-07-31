@@ -2,7 +2,7 @@
 
 void Obj_RecalculateStats(gameobject_t* obj)
 {
-    obj->stats = (stats_t) { 0, 0, 0, 0, 0 };
+    obj->stats = (stats_t) { 0, 0, 0, 0, 0, 0 };
     for (int i = 0; i < obj->numModules[MODULETYPE_ARMOR]; i++) {
         armor_module_t* module = obj->modules[i];
         Stats_ApplyModifier(&obj->stats, &module->base.statMods);
