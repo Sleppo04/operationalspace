@@ -13,7 +13,7 @@ int feature_provider(gameobject_t** destination, void* user_data __attribute__((
 	return 0;
 }
 
-int main(int argc, char** argv)
+int main(int argc __attribute__ ((__unused__)), char** argv __attribute__ ((__unused__)))
 {
     window_t win;
     world_t world;
