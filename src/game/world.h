@@ -12,6 +12,7 @@
 #include "feature.h"
 #include "../logic/arraylist/arraylist.h"
 #include "../logic/coordinate/coordinate.h"
+#include "../logic/rand/xoshiro256.h"
 
 
 typedef struct World {
