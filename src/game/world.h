@@ -18,7 +18,7 @@ typedef struct World {
     size_t sector_rows;
     size_t sector_cols;
     sector_t* sectors;
-    unsigned int seed;
+    xoshiro256_state_t seed;
 } world_t;
 
 
