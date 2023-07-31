@@ -1,6 +1,7 @@
 #ifndef GAMEOBJECT_H
 #define GAMEOBJECT_H
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "module.h"
@@ -26,7 +27,7 @@ typedef struct GameObject {
 } gameobject_t;
 
 void Obj_RecalculateStats(gameobject_t* obj);
-void Obj_AddModule(gameobject_t* obj, module_t* module, moduleType_t type);
+int Obj_AddModule(gameobject_t* obj, module_t* module, moduleType_t type);
 
 #endif
 
