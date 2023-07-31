@@ -47,4 +47,9 @@ int DynamicBuffer_Reset(dynamic_buffer_t *buffer);
 /// @return EINVAL, EINVAL, ENOMEM, EXIT_SUCCESS
 int DynamicBuffer_Store(dynamic_buffer_t *buffer, void *data, size_t data_size);
 
+/// @brief Destroys the dynamic buffer and releases all resources held, the struct will not hold anything it did before
+/// @param buffer buffer that shall be destroyed
+/// @return EINVAL, EXIT_SUCCESS
+int DynamicBuffer_Destroy(dynamic_buffer_t *buffer);
+
 #endif

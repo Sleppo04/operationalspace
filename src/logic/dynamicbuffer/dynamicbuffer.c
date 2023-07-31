@@ -116,3 +116,16 @@ int DynamicBuffer_Store(dynamic_buffer_t* buffer, void* data, size_t data_size)
 
     return EXIT_SUCCESS;
 }
+
+int DynamicBuffer_Destroy(dynamic_buffer_t* buffer)
+{
+    if (buffer == NULL) {
+        return EINVAL;
+    }
+    free(buffer->array);
+    buffer->array == NULL;
+    buffer->capacity = 0;
+    buffer->used = 0;
+
+    return EXIT_SUCCESS;
+}
