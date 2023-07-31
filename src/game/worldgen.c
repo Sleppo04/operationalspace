@@ -19,7 +19,9 @@ int Worldgen_NewEmptyWorld(world_t* destination, size_t sector_rows, size_t sect
 bool WorldGen_CheckNoises(feature_t* feature, uint16_t* noise_values)
 {
     for (int noise_index = 0; noise_index < NOISE_COUNT; noise_index++) {
-        if (noise_values[noise_index] > feature->maximum_noise_levels[noise_index] || noise_values[noise_index] < feature->minimum_noise_levels[noise_index]) {
+        bool too_high = noise_values[noise_index] > feature->maximum_noise_levels[noise_index];
+        bool too_low  = noise_values[noise_index] < feature->minimum_noise_levels[noise_index];
+        if (too_high || too_low) {
             return false;
         }
     }
@@ -49,12 +51,15 @@ int WorldGen_CheckFeaturePlacement(tile_t* tile, worldgendata_t* data, size_t x,
         if (WorldGen_CheckNoises(&(data->features[feature_index]), noise_values)) {
             place_code = WorldGen_PlaceFeature(tile, &(data->features[feature_index]));
             if (place_code) {
+                free(noise_values);
                 return place_code;
             }
             break;
         }
     }
 
+    
+    free(noise_values);
     return EXIT_SUCCESS;
 }
 
