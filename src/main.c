@@ -3,6 +3,7 @@
 #include "ui/window.h"
 #include "ui/ui.h"
 #include "game/sector.h"
+#include "game/worldgen.h"
 
 int feature_provider(gameobject_t** destination, void* user_data __attribute__((unused)))
 {
