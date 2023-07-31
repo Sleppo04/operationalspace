@@ -20,9 +20,9 @@ void UI_WorldViewRender(worldview_t* view)
     tile_t* tile;
     
     Window_SetPos(view->screenX, view->screenY);
-    for (int i = 0; i < view->height; i++) {
+    for (unsigned int i = 0; i < view->height; i++) {
         Window_SetPos(view->screenX, view->screenY + i);
-        for (int j = 0; j < view->width; j++) {
+        for (unsigned int j = 0; j < view->width; j++) {
             tile = World_GetTile(view->world, view->worldX + j, view->worldY + i);
             if (tile == NULL) {
                 Window_SetColor(15, 1);

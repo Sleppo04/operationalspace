@@ -309,8 +309,8 @@ int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destinati
 
 tile_t* World_GetTile(world_t* world, int x, int y)
 {
-    int sectorX;
-    int sectorY;
+    size_t sectorX;
+    size_t sectorY;
     sector_t* sector;
 
     sectorX = floor((float)x / SECTOR_SIZE);
