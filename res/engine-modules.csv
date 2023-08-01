@@ -1,0 +1,7 @@
+Name,Mass,Speed,Energy Consumption,Battery Regeneration,Metal Cost, Crystal Cost,Gas Cost
+Tiny Fusion Engine,61,6,2,0,1,2,2
+Lightweight Fusion Engine,2,11,4,0,2,4,3
+Fusion Engine,4,20,8,0,4,7,5
+Tiny Fusion Reactor,2,0,1,5,2,2,1
+Lighthweight Fusion Reactor,4,0,3,11,3,3,1
+Fusion Reactor,7,0,7,24,5,6,3
