@@ -19,7 +19,7 @@ void Buffer_Write(buffer_t* buffer, void* data, size_t len)
         return;
     }
     
-    for(int i = 0; i < len; i++) {
+    for(size_t i = 0; i < len; i++) {
         buffer->ptr[0] = bytes[i];
         buffer->ptr++;
     }

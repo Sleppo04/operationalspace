@@ -23,7 +23,7 @@ void UI_SidebarRedraw(sidebar_t* sidebar, tile_t* tile)
         obj = tile->object;
         printf("Selected Ship");
         Window_SetPos(sidebar->screenX + 1, y);
-        for (int i = 0; i < sidebar->width - 1; i++) Window_PrintGlyph('-'); // Draw Separator
+        for (unsigned int i = 0; i < sidebar->width - 1; i++) Window_PrintGlyph('-'); // Draw Separator
         Window_SetPos(sidebar->screenX + 1, y);
         printf("Name: SHIPNAME");
         Window_SetPos(sidebar->screenX + 1, y);
