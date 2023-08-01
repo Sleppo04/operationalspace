@@ -31,16 +31,29 @@ void Window_DestroyWindow(window_t* win)
 
 #include <windows.h>
 
+static HANDLE stdoutHandle;
+static HANDLE stdinHandle;
+static DWORD outModeOld;
+static DWORD inModeOld;
+
 int Window_CreateWindow(int width, int height, window_t* win)
 {
     DWORD outMode;
-    HANDLE stdoutHandle;
+    DWORD inMode;
     
-    // Activate ANSI Stuff on Win10
     stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    stdinHandle = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(stdoutHandle, &outMode);
-    outMode |= 0x0004; //ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    GetConsoleMode(stdinHandle, &inMode);
+    outModeOld = outMode;
+    inModeOld = inMode;
+    
+    // Activate ANSI stuff on Win10
+    outMode |= 0x0004; // ENABLE_VIRTUAL_TERMINAL_PROCESSING
     SetConsoleMode(stdoutHandle, outMode);
+    // Activate Raw Input Mode
+    inMode = ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS;
+    SetConsoleMode(stdinHandle, inMode);
 
     // TODO: Resize Console Window
     return 0;
@@ -48,7 +61,9 @@ int Window_CreateWindow(int width, int height, window_t* win)
 
 void Window_DestroyWindow(window_t* win)
 {
-    // No need to destroy anything...
+    // Reset console modes
+    SetConsoleMode(stdoutHandle, outModeOld);
+    SetConsoleMode(stdinHandle, inModeOld);
     return;
 }
 

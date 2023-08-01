@@ -38,7 +38,7 @@ int main(int argc, char** argv)
     UI_DrawFrame();
 	
     Window_ResetColor();
-
+	Window_DestroyWindow(&win);
     getchar();
     return 0;
 }
