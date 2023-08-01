@@ -73,7 +73,7 @@ int DynamicBuffer_Resize(dynamic_buffer_t* buffer, size_t new_capacity)
         return EINVAL;
     }
 
-    char* new_array = realloc(buffer, new_capacity);
+    char* new_array = realloc(buffer->array, new_capacity);
     if (new_array == NULL) {
         return ENOMEM;
     }
