@@ -24,6 +24,7 @@
 /// @param x 
 /// @param y 
 /// @return noise at x, y with seed seed
+// TODO: Don't use this one, it has weird diagonal artifacts
 float OpenSimplex_2DNoise(long seed, double x, double y);
 
 float OpenSimplex_2DNoise_ImprovedX(long seed, double x, double y);
