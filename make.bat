@@ -1,1 +1,1 @@
-gcc -Wall -Wextra -g -o os.exe src/*.c src/ui/*.c src/game/
+gcc -std=c99 -pedantic -Wall -Wextra -g -o os.exe src\*.c src\ui\*.c src\game\*.c
