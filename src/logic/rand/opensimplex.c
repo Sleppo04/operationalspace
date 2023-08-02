@@ -7,8 +7,8 @@ int OpenSimplex_Floor(double n)
     return (int) floor(n);
 }
 
-float OpenSimplex_2DGrad(long seed, long xsvp, long ysvp, float dx, float dy) {
-    long hash = seed ^ xsvp ^ ysvp;
+float OpenSimplex_2DGrad(int64_t seed, int64_t xsvp, int64_t ysvp, float dx, float dy) {
+    int64_t hash = seed ^ xsvp ^ ysvp;
     hash *= HASH_MULTIPLIER;
     hash ^= hash >> (64 - N_GRADS_2D_EXPONENT + 1);
     int gi = (int)hash & ((N_GRADS_2D - 1) << 1);
@@ -18,14 +18,14 @@ float OpenSimplex_2DGrad(long seed, long xsvp, long ysvp, float dx, float dy) {
 /**
  * 2D  OpenSimplex2S/SuperSimplex noise base.
  */
-float OpenSimplex_2DNoise_UnskewedBase(long seed, double xs, double ys) {
+float OpenSimplex_2DNoise_UnskewedBase(int64_t seed, double xs, double ys) {
 
     // Get base points and offsets.
     int xsb = OpenSimplex_Floor(xs), ysb = OpenSimplex_Floor(ys);
     float xi = (float)(xs - xsb), yi = (float)(ys - ysb);
 
     // Prime pre-multiplication for hash.
-    long xsbp = xsb * PRIME_X, ysbp = ysb * PRIME_Y;
+    int64_t xsbp = xsb * PRIME_X, ysbp = ysb * PRIME_Y;
 
     // Unskew.
     float t = (xi + yi) * (float)UNSKEW_2D;
@@ -130,7 +130,7 @@ float OpenSimplex_2DNoise_UnskewedBase(long seed, double xs, double ys) {
 /**
  * 2D OpenSimplex2S/SuperSimplex noise, standard lattice orientation.
  */
-float OpenSimplex_2DNoise(long seed, double x, double y) {
+float OpenSimplex_2DNoise(int64_t seed, double x, double y) {
 
     // Get points for A2* lattice
     double s = SKEW_2D * (x + y);
@@ -146,7 +146,7 @@ float OpenSimplex_2DNoise(long seed, double x, double y) {
  * unless your map is centered around an equator. It's a slight
  * difference, but the option is here to make it easy.
  */
-float OpenSimplex_2DNoise_ImprovedX(long seed, double x, double y) {
+float OpenSimplex_2DNoise_ImprovedX(int64_t seed, double x, double y) {
 
     // Skew transform and rotation baked into one.
     double xx = x * ROOT2OVER2;

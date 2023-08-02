@@ -1,6 +1,7 @@
 #ifndef OPENSIMPLEX2S_H
 #define OPENSIMPLEX2S_H
 
+#include <stdint.h>
 #include <math.h>
 
 
@@ -25,8 +26,8 @@
 /// @param y 
 /// @return noise at x, y with seed seed
 // TODO: Don't use this one, it has weird diagonal artifacts
-float OpenSimplex_2DNoise(long seed, double x, double y);
+float OpenSimplex_2DNoise(int64_t seed, double x, double y);
 
-float OpenSimplex_2DNoise_ImprovedX(long seed, double x, double y);
+float OpenSimplex_2DNoise_ImprovedX(int64_t seed, double x, double y);
 
 #endif
