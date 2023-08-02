@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Create bin directory
+mkdir bin
+
 # Make wren libraries
 current_directory=`pwd`
 cd src/3rdparty/wren/projects/make/
