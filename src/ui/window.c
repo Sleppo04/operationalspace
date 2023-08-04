@@ -15,7 +15,7 @@ int Window_CreateWindow(int width, int height, window_t* win)
 
     tcgetattr(STDIN_FILENO, &termMode);
     termModeOld = termMode;
-    termMode.c_iflag &= ~(IXON); // Disable flow control with ^Q and ^V
+    termMode.c_iflag &= ~(ICRNL | IXON); // Disable autmatic \r->\n, and flow control with ^Q and ^V
     termMode.c_lflag &= ~(ECHO | ICANON); // Disable echo and canonical mode
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &termMode);
 
