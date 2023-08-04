@@ -20,12 +20,12 @@ int main()
     window_t win;
     world_t world;
     feature_t features[2];
+    xoshiro256_state_t state = {.state = {1, 2, 3, 4}};
 	
     features[0].provider = feature_provider;
     features[0].maximum_noise_levels[0] = 250;
     features[0].minimum_noise_levels[0] = 100;
     features[1].provider            = NULL;
-    xoshiro256_state_t state = {.state = {1, 2, 3, 4}};
 
     WorldGen_GenerateWorld(8, 8, features, &world, state);
 

@@ -2,13 +2,17 @@
 
 #ifdef __linux__
 
+#include <termios.h>
 #include <sys/ioctl.h>
+
+static struct termios termModeOld;
 
 int Window_CreateWindow(int width, int height, window_t* win)
 {
     // On Linux, we dont care about windows, we access the terminal.
     // Set terminal to requested size, no matter its current size
     struct winsize ws;
+    struct termios termMode;
     ws.ws_col = width;
     ws.ws_row = height;
     if (ioctl(0, TIOCSWINSZ, &ws)) {
@@ -16,13 +20,19 @@ int Window_CreateWindow(int width, int height, window_t* win)
         return 1;
     }
 
+    tcgetattr(STDIN_FILENO, TCSAFLUSH, &termMode);
+    termModeOld = termMode;
+    termMode.c_iflag &= ~(IXON); // Disable flow control with ^Q and ^V
+    termMode.c_lflag &= ~(ECHO | ICANON); // Disable echo and canonical mode
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termMode);
+
     win->nativeHandle = (void*) 0x1; // Dummy value
     return 0;
 }
 
 void Window_DestroyWindow(window_t* win)
 {
-    // No need to destroy anything...
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termModeOld);
     win->nativeHandle = NULL;
     return;
 }
