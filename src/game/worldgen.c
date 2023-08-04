@@ -75,16 +75,16 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
     }
 
     // maybe move this onto the heap
-    data.local_world.seed = rand_state;
+    world->seed = rand_state;
 
     data.features = features;
     for (data.feature_count = 0; features[data.feature_count].provider != NULL; data.feature_count++);
 
     for (int i = 0; i < NOISE_COUNT; i++) {
-        data.noise_seeds[i] = xoshiro256_next(&(data.local_world.seed));
+        data.noise_seeds[i] = xoshiro256_next(&(world->seed));
     }
 
-    if (Worldgen_NewEmptyWorld(&(data.local_world))) {
+    if (Worldgen_NewEmptyWorld(world)) {
         return ENOMEM;
     }
 
@@ -93,7 +93,7 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
     int check_code;
     for (size_t row = 0; row < world_rows; row++) {
         for (size_t col = 0; col < world_cols; col++) {
-            tile_t* tile = World_GetTile(&(data.local_world), row, col);
+            tile_t* tile = World_GetTile(world, row, col);
             tile->glyph = ' ';
             tile->color = 15;
             check_code = WorldGen_CheckFeaturePlacement(tile, &data, col, row);
@@ -103,9 +103,6 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
             }
         }
     }
-
-
-    *world = data.local_world;
 
     return EXIT_SUCCESS;
 }

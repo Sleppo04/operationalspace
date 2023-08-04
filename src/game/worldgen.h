@@ -18,7 +18,6 @@
 typedef struct WorldGenData {
     feature_t* features;
     world_t*   destination;
-    world_t    local_world;
     size_t     feature_count;
     long       noise_seeds[NOISE_COUNT]; // seed for each of the noises
 } worldgendata_t;
