@@ -34,8 +34,8 @@ int main()
     Window_ClearScreen();
     UI_DrawFrame();
 	
+    getchar();
     Window_ResetColor();
 	Window_DestroyWindow(&win);
-    getchar();
     return 0;
 }
