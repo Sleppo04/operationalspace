@@ -11,15 +11,7 @@ static struct termios termModeOld;
 int Window_CreateWindow(int width, int height, window_t* win)
 {
     // On Linux, we dont care about windows, we access the terminal.
-    // Set terminal to requested size, no matter its current size
-    struct winsize ws;
     struct termios termMode;
-    ws.ws_col = width;
-    ws.ws_row = height;
-    if (ioctl(0, TIOCSWINSZ, &ws)) {
-        printf("ERROR: Couldn't set terminal size!\n");
-        return 1;
-    }
 
     tcgetattr(STDIN_FILENO, &termMode);
     termModeOld = termMode;
