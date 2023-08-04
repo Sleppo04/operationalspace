@@ -18,7 +18,7 @@ about your terminal emulators support for ANSI, there is a test program in the c
 
 On Linux, we recommend using **xterm** as it has great support for even the most niche of features, but most modern
 terminal emulators on Linux support ANSI atleast to a usable degree, for example **GNOME-Terminal**. **LXTerminal**
-is one of the few terminal emulators that didn't support isome important features.
+is one of the few terminal emulators that didn't support some of the important features.
 
 On Windows, things are more complicated. From Windows 10 1511 onward the built-in terminal emulator **conhost.exe** (often
 wrongly called **cmd.exe**) parses ANSI escape codes when the application specifically requests it. OperationalSpace does that.
