@@ -70,6 +70,10 @@ void Window_DestroyWindow(window_t* win)
     return;
 }
 
+#else
+
+#error "The Terminal Library doesn't support this OS."
+
 #endif
 
 void Window_SetColor(color_t fg, color_t bg)
