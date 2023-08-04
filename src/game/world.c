@@ -1,5 +1,15 @@
 #include "world.h"
 
+void World_Create(world_t* world, unsigned int width, unsigned int height)
+{
+    ArrayListNew(&world->objects);
+    world->sectors = NULL;
+    world->sector_cols = width;
+    world->sector_rows = height;
+
+    return;
+}
+
 int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destination)
 {
     size_t index;

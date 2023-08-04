@@ -27,7 +27,8 @@ int main()
     features[0].minimum_noise_levels[0] = 100;
     features[1].provider            = NULL;
 
-    WorldGen_GenerateWorld(8, 8, features, &world, state);
+    World_Create(&world, 8, 8);
+    WorldGen_GenerateWorld(&world, features, state);
 
     Window_CreateWindow(80, 24, &win);
     UI_Init(&world);

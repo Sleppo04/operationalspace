@@ -1,11 +1,8 @@
 #include "worldgen.h"
 
-int Worldgen_NewEmptyWorld(world_t* destination, size_t sector_rows, size_t sector_cols)
+int Worldgen_NewEmptyWorld(world_t* destination)
 {
-    destination->sector_cols = sector_cols;
-    destination->sector_rows = sector_rows;
-
-    size_t sector_bytes = sizeof(sector_t) * sector_cols * sector_rows;
+    size_t sector_bytes = sizeof(sector_t) * destination->sector_cols * destination->sector_rows;
 
     destination->sectors = calloc(1, sector_bytes);
 
@@ -63,19 +60,20 @@ int WorldGen_CheckFeaturePlacement(tile_t* tile, worldgendata_t* data, size_t x,
     return EXIT_SUCCESS;
 }
 
-int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t* features, world_t* destination, xoshiro256_state_t rand_state)
+int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state_t rand_state)
 {
-    if (destination == NULL) {
+    worldgendata_t data;
+    
+    if (world == NULL) {
         return EDESTADDRREQ;
     }
     if (features == NULL) {
         return EINVAL;
     }
-    if (sector_rows == 0 || sector_cols == 0) {
+    if (world->sector_rows == 0 || world->sector_cols == 0) {
         return EINVAL;
     }
 
-    worldgendata_t data;
     // maybe move this onto the heap
     data.local_world.seed = rand_state;
 
@@ -86,12 +84,12 @@ int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t
         data.noise_seeds[i] = xoshiro256_next(&(data.local_world.seed));
     }
 
-    if (Worldgen_NewEmptyWorld(&(data.local_world), sector_rows, sector_cols)) {
+    if (Worldgen_NewEmptyWorld(&(data.local_world))) {
         return ENOMEM;
     }
 
-    size_t world_cols = sector_cols * SECTOR_SIZE;
-    size_t world_rows = sector_rows * SECTOR_SIZE;
+    size_t world_cols = world->sector_cols * SECTOR_SIZE;
+    size_t world_rows = world->sector_rows * SECTOR_SIZE;
     int check_code;
     for (size_t row = 0; row < world_rows; row++) {
         for (size_t col = 0; col < world_cols; col++) {
@@ -107,7 +105,7 @@ int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t
     }
 
 
-    destination[0] = data.local_world;
+    *world = data.local_world;
 
     return EXIT_SUCCESS;
 }

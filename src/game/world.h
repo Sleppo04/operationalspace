@@ -16,12 +16,14 @@
 
 
 typedef struct World {
-    size_t sector_rows;
-    size_t sector_cols;
-    sector_t* sectors;
     xoshiro256_state_t seed;
+    unsigned int       sector_rows;
+    unsigned int       sector_cols;
+    sector_t*          sectors;
+    arraylist_t        objects;
 } world_t;
 
+void World_Create(world_t* world, unsigned int width, unsigned int height);
 
 /// @brief get a sector at row and col from the world
 /// @param world world to get the sector from

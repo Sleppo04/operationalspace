@@ -34,6 +34,6 @@ typedef struct WorldGenData {
  * @return int error codes (EINVAL, EDESTADDRREQ, ENOMEM)
  */
 
-int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t* features, world_t* destination, xoshiro256_state_t state);
+int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state_t rand_state);
 
 #endif
