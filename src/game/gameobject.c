@@ -34,32 +34,37 @@ void Obj_RecalculateStats(gameobject_t* obj)
 
 int Obj_AddModule(gameobject_t* obj, module_t* module, moduleType_t type)
 {
+    void* resizedArray;
+    void* moduleArray;
+    void* newModuleLocation;
+    size_t moduleSize;
+    size_t skip;
+
+    moduleSize = MODULESTRSIZE(type);
+    
     if (obj->numModules[type] == 0) {
         // We currently don't have an equipped module in the slot
-        obj->modules[type] = malloc(MODULESTRSIZE(type));
-        if (obj->modules[type] == NULL) {
+        obj->modules[type] = malloc(moduleSize);
+        if (obj->modules[type] == NULL)
             return ENOMEM;
-        }
 
         obj->numModules[type] = 1;
     } else {
         // We have at least one equipped, so just resize array
-        void* resized_array = realloc(obj->modules[type], MODULESTRSIZE(type) * (obj->numModules[type] + 1));
-        if (resized_array == NULL) {
+        resizedArray = realloc(obj->modules[type], moduleSize * (obj->numModules[type] + 1));
+        if (resizedArray == NULL)
             return ENOMEM;
-        }
 
-        obj->modules[type] = resized_array;
+        obj->modules[type] = resizedArray;
         obj->numModules[type]++;
     }
     
     // Finally, copy the module and recalculate the ships stats
-    char* module_array        = obj->modules[type];
-    size_t module_type_size   = MODULESTRSIZE(type);
-    size_t skip_bytes         = obj->numModules[type] * module_type_size;
-    void* new_module_location = module_array + skip_bytes;
+    moduleArray       = obj->modules[type];
+    skip              = obj->numModules[type] * moduleSize;
+    newModuleLocation = moduleArray + skip;
 
-    memcpy(new_module_location, module, MODULESTRSIZE(type));
+    memcpy(newModuleLocation, module, moduleSize);
     Obj_RecalculateStats(obj);
 
     return EXIT_SUCCESS;
