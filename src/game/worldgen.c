@@ -74,7 +74,6 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
         return EINVAL;
     }
 
-    // maybe move this onto the heap
     world->seed = rand_state;
 
     data.features = features;
