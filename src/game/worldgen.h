@@ -18,9 +18,8 @@
 typedef struct WorldGenData {
     feature_t* features;
     world_t*   destination;
-    world_t    local_world;
     size_t     feature_count;
-    long       noise_seeds[NOISE_COUNT]; // seed for each of the noises
+    int64_t    noise_seeds[NOISE_COUNT]; // seed for each of the noises
 } worldgendata_t;
 
 /**
@@ -34,6 +33,6 @@ typedef struct WorldGenData {
  * @return int error codes (EINVAL, EDESTADDRREQ, ENOMEM)
  */
 
-int WorldGen_GenerateWorld(uint16_t sector_rows, uint16_t sector_cols, feature_t* features, world_t* destination, xoshiro256_state_t state);
+int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state_t rand_state);
 
 #endif

@@ -1,20 +1,23 @@
 #include "window.h"
 
-#ifdef __linux__
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 
+#include <unistd.h>
+#include <termios.h>
 #include <sys/ioctl.h>
+
+static struct termios termModeOld;
 
 int Window_CreateWindow(int width, int height, window_t* win)
 {
     // On Linux, we dont care about windows, we access the terminal.
-    // Set terminal to requested size, no matter its current size
-    struct winsize ws;
-    ws.ws_col = width;
-    ws.ws_row = height;
-    if (ioctl(0, TIOCSWINSZ, &ws)) {
-        printf("ERROR: Couldn't set terminal size!\n");
-        return 1;
-    }
+    struct termios termMode;
+
+    tcgetattr(STDIN_FILENO, &termMode);
+    termModeOld = termMode;
+    termMode.c_iflag &= ~(ICRNL | IXON); // Disable autmatic \r->\n, and flow control with ^Q and ^V
+    termMode.c_lflag &= ~(ECHO | ICANON); // Disable echo and canonical mode
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termMode);
 
     win->nativeHandle = (void*) 0x1; // Dummy value
     return 0;
@@ -22,7 +25,7 @@ int Window_CreateWindow(int width, int height, window_t* win)
 
 void Window_DestroyWindow(window_t* win)
 {
-    // No need to destroy anything...
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &termModeOld);
     win->nativeHandle = NULL;
     return;
 }
@@ -31,16 +34,29 @@ void Window_DestroyWindow(window_t* win)
 
 #include <windows.h>
 
+static HANDLE stdoutHandle;
+static HANDLE stdinHandle;
+static DWORD outModeOld;
+static DWORD inModeOld;
+
 int Window_CreateWindow(int width, int height, window_t* win)
 {
     DWORD outMode;
-    HANDLE stdoutHandle;
+    DWORD inMode;
     
-    // Activate ANSI Stuff on Win10
     stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    stdinHandle = GetStdHandle(STD_INPUT_HANDLE);
     GetConsoleMode(stdoutHandle, &outMode);
-    outMode |= 0x0004; //ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    GetConsoleMode(stdinHandle, &inMode);
+    outModeOld = outMode;
+    inModeOld = inMode;
+    
+    // Activate ANSI stuff on Win10
+    outMode |= 0x0004; // ENABLE_VIRTUAL_TERMINAL_PROCESSING
     SetConsoleMode(stdoutHandle, outMode);
+    // Activate Raw Input Mode
+    inMode = ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS;
+    SetConsoleMode(stdinHandle, inMode);
 
     // TODO: Resize Console Window
     return 0;
@@ -48,9 +64,15 @@ int Window_CreateWindow(int width, int height, window_t* win)
 
 void Window_DestroyWindow(window_t* win)
 {
-    // No need to destroy anything...
+    // Reset console modes
+    SetConsoleMode(stdoutHandle, outModeOld);
+    SetConsoleMode(stdinHandle, inModeOld);
     return;
 }
+
+#else
+
+#error "The Terminal Library doesn't support this OS."
 
 #endif
 
