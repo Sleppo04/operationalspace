@@ -30,14 +30,56 @@ int Tick_Playerwise_Round(tick_playerwise_data_t *data, game_t *game)
         return EINVAL;
     }
 
+    arraylist_t*  player_ship_list;
+    gameobject_t* current_ship;
+    int tick_code;
+    for (uint16_t player_index = data->current_player_index; player_index < game->player_count; player_index++) {
+        player_ship_list = game->ship_lists + player_index;
+        for (size_t ship_index = data->current_ship_index; ship_index < player_ship_list->size; ship_index++) {
+            current_ship = player_ship_list->array[ship_index];
 
+            tick_code = Tick_Playerwise_TickShip(game, game->players + player_index, current_ship);
+            if (tick_code) {
+                data->current_ship_index   = ship_index;
+                data->current_player_index = player_index;
+                return tick_code;
+            }
+        }
+        data->current_ship_index = 0;
+    }
+
+    data->current_player_index = 0;
 
     return EXIT_SUCCESS;
 }
 
 int Tick_Playerwise_Step(tick_playerwise_data_t *data, game_t *game)
 {
-    return 0;
+    if (data == NULL) {
+        return EINVAL;
+    }
+    if (game == NULL) {
+        return EINVAL;
+    }
+
+    arraylist_t*  current_ship_list = game->ship_lists + data->current_player_index;
+    player_t*     player            = game->players + data->current_player_index;
+    gameobject_t* ship;
+    int tick_code;
+    for (size_t i = 0; i < current_ship_list->size; i++) {
+        ship = current_ship_list->array[i];
+        tick_code = Tick_Playerwise_TickShip(game, player, ship);
+        if (tick_code) {
+            data->current_ship_index = i;
+            return tick_code;
+        }
+    }
+
+    
+    data->current_ship_index   = 0;
+    data->current_player_index = (data->current_player_index + 1) % game->player_count;
+
+    return EXIT_SUCCESS;
 }
 
 int Tick_Playerwise_Single(tick_playerwise_data_t *data, game_t *game)
