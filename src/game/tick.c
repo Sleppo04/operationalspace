@@ -30,7 +30,7 @@ int Tick_Playerwise_Round(tick_playerwise_data_t *data, game_t *game)
         return EINVAL;
     }
 
-    
+
 
     return EXIT_SUCCESS;
 }
@@ -51,10 +51,10 @@ int Tick_Playerwise_Single(tick_playerwise_data_t *data, game_t *game)
 
     arraylist_t* current_player_list = game->ship_lists + data->current_player_index;
 
-    while (data->current_ship_index > current_player_list->size) {
+    if (data->current_ship_index > current_player_list->size) {
         data->current_player_index = (data->current_player_index + 1) % game->player_count;
         data->current_ship_index   = 0;
-        current_player_list = game->ship_lists + data->current_player_index;
+        return EXIT_SUCCESS;
     }
 
 
