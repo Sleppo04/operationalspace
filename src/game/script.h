@@ -19,7 +19,7 @@ typedef struct WrenScriptData {
 } wren_script_data_t;
 
 typedef union ScriptData {
-	struct c_script_data_t    c_data;
+	struct CSCriptData c_data;
 	struct WrenScriptData wren_data;
 } script_data_t;
 
