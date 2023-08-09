@@ -62,7 +62,7 @@ int Obj_AddModule(gameobject_t* obj, module_t* module, moduleType_t type)
     // Finally, copy the module and recalculate the ships stats
     moduleArray       = obj->modules[type];
     skip              = obj->numModules[type] * moduleSize;
-    newModuleLocation = moduleArray + skip;
+    newModuleLocation = (char*) (moduleArray) + skip;
 
     memcpy(newModuleLocation, module, moduleSize);
     Obj_RecalculateStats(obj);

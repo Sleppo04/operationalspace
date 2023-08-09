@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Create bin directory
-mkdir bin
+mkdir -p bin
 
 # Make wren libraries
 current_directory=`pwd`

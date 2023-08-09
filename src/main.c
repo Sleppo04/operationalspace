@@ -11,7 +11,6 @@ int feature_provider(gameobject_t** destination, void* user_data __attribute__((
 	destination[0]->color = 100;
 	destination[0]->glyph = '#';
 
-
 	return 0;
 }
 
@@ -24,8 +23,8 @@ int main()
 	
     features[0].provider = feature_provider;
     features[0].maximum_noise_levels[0] = 250;
-    features[0].minimum_noise_levels[0] = 100;
-    features[1].provider            = NULL;
+    features[0].minimum_noise_levels[0] = 215;
+    features[1].provider                = NULL;
 
     World_Create(&world, 8, 8);
     WorldGen_GenerateWorld(&world, features, state);
