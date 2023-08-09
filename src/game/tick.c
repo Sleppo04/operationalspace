@@ -23,7 +23,16 @@ int Tick_Playerwise_TickShip(game_t* game, player_t* player, gameobject_t* ship)
 
 int Tick_Playerwise_Round(tick_playerwise_data_t *data, game_t *game)
 {
-    return 0;
+    if (data == NULL) {
+        return EINVAL;
+    }
+    if (game == NULL) {
+        return EINVAL;
+    }
+
+    
+
+    return EXIT_SUCCESS;
 }
 
 int Tick_Playerwise_Step(tick_playerwise_data_t *data, game_t *game)
