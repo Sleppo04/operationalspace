@@ -1,6 +1,6 @@
 #include "script.h"
 
-int Script_ComputeShipActions(script_t* script, game_t* game)
+int Script_ComputeShipActions(script_t* script, struct Game* game)
 {
     if (script == NULL) {
         return EINVAL;

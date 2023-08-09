@@ -5,6 +5,9 @@
 
 #include "wren.h"
 
+// TODO: Find out whether forward declarations are the perfect solution for this
+struct Game;
+
 typedef int (*CScriptFunction) (const world_t* world, void** data_pointer);
 
 typedef enum ScriptType {
