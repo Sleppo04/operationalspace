@@ -7,6 +7,12 @@
 #include "player.h"
 #include "../logic/arraylist/arraylist.h"
 
+typedef enum Direction {
+	DIRECTION_UP,
+	DIRECTION_DOWN,
+	DIRECTION_LEFT,
+	DIRECTION_RIGHT
+} direction_t;
 
 typedef enum TickType {
 	TICK_PLAYERWISE
