@@ -1,38 +1,33 @@
 #include "ship.h"
 
-void Ship_RecalculateStats(ship_t* obj)
+void Ship_RecalculateStats(ship_t* ship)
 {
-    obj->stats = (stats_t) { 0, 0, 0, 0, 0, 0 };
-    for (int i = 0; i < obj->numModules[MODULETYPE_ARMOR]; i++) {
-        armor_module_t* module = obj->modules[i];
-        Stats_ApplyModifier(&obj->stats, &module->base.statMods);
+    ship->stats = (stats_t) { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int i = 0; i < ship->numModules[MODULETYPE_STATS]; i++) {
+        stat_module_t* module = ship->modules[i];
+        Stats_ApplyModifier(&ship->stats, &module->base.statMods);
     }
         
-    for (int i = 0; i < obj->numModules[MODULETYPE_UTILITY]; i++) {
-        utility_module_t* module = obj->modules[i];
-        Stats_ApplyModifier(&obj->stats, &module->base.statMods);
+    for (int i = 0; i < ship->numModules[MODULETYPE_UTILITY]; i++) {
+        utility_module_t* module = ship->modules[i];
+        Stats_ApplyModifier(&ship->stats, &module->base.statMods);
     }
         
-    for (int i = 0; i < obj->numModules[MODULETYPE_CUSTOM]; i++) {
-        custom_module_t* module = obj->modules[i];
-        Stats_ApplyModifier(&obj->stats, &module->base.statMods);
-    }
-        
-    for (int i = 0; i < obj->numModules[MODULETYPE_ENGINE]; i++) {
-        engine_module_t* module = obj->modules[i];
-        Stats_ApplyModifier(&obj->stats, &module->base.statMods);
+    for (int i = 0; i < ship->numModules[MODULETYPE_CUSTOM]; i++) {
+        custom_module_t* module = ship->modules[i];
+        Stats_ApplyModifier(&ship->stats, &module->base.statMods);
     }
     
-    for (int i = 0; i < obj->numModules[MODULETYPE_WEAPON]; i++) {
-        weapon_module_t* module = obj->modules[i];
-        Stats_ApplyModifier(&obj->stats, &module->base.statMods);
+    for (int i = 0; i < ship->numModules[MODULETYPE_WEAPON]; i++) {
+        weapon_module_t* module = ship->modules[i];
+        Stats_ApplyModifier(&ship->stats, &module->base.statMods);
     }
     
     // TODO: Check current values for OOB after change of max!
     return;
 }
 
-int Ship_AddModule(ship_t* obj, module_t* module, moduleType_t type)
+int Ship_AddModule(ship_t* ship, module_t* module, moduleType_t type)
 {
     void* resizedArray;
     void* moduleArray;
@@ -42,30 +37,30 @@ int Ship_AddModule(ship_t* obj, module_t* module, moduleType_t type)
 
     moduleSize = MODULESTRSIZE(type);
     
-    if (obj->numModules[type] == 0) {
+    if (ship->numModules[type] == 0) {
         // We currently don't have an equipped module in the slot
-        obj->modules[type] = malloc(moduleSize);
-        if (obj->modules[type] == NULL)
+        ship->modules[type] = malloc(moduleSize);
+        if (ship->modules[type] == NULL)
             return ENOMEM;
 
-        obj->numModules[type] = 1;
+        ship->numModules[type] = 1;
     } else {
         // We have at least one equipped, so just resize array
-        resizedArray = realloc(obj->modules[type], moduleSize * (obj->numModules[type] + 1));
+        resizedArray = realloc(ship->modules[type], moduleSize * (ship->numModules[type] + 1));
         if (resizedArray == NULL)
             return ENOMEM;
 
-        obj->modules[type] = resizedArray;
-        obj->numModules[type]++;
+        ship->modules[type] = resizedArray;
+        ship->numModules[type]++;
     }
     
     // Finally, copy the module and recalculate the ships stats
-    moduleArray       = obj->modules[type];
-    skip              = obj->numModules[type] * moduleSize;
+    moduleArray       = ship->modules[type];
+    skip              = ship->numModules[type] * moduleSize;
     newModuleLocation = (char*) (moduleArray) + skip;
 
     memcpy(newModuleLocation, module, moduleSize);
-    Ship_RecalculateStats(obj);
+    Ship_RecalculateStats(ship);
 
     return EXIT_SUCCESS;
 }

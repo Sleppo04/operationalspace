@@ -7,16 +7,15 @@
 
 // Probably the ugliest macro in the code
 // Not anymore since we included wren
-#define MODULESTRSIZE(x) (((x)==MODULETYPE_ARMOR)?sizeof(armor_module_t):((x)==MODULETYPE_CUSTOM)?sizeof(custom_module_t):((x)==MODULETYPE_ENGINE)?sizeof(engine_module_t):((x)==MODULETYPE_UTILITY)?sizeof(utility_module_t):((x)==MODULETYPE_WEAPON)?sizeof(weapon_module_t):0)
+#define MODULESTRSIZE(x) (((x)==MODULETYPE_CUSTOM)?sizeof(custom_module_t):((x)==MODULETYPE_STATS)?sizeof(stat_module_t):((x)==MODULETYPE_UTILITY)?sizeof(utility_module_t):((x)==MODULETYPE_WEAPON)?sizeof(weapon_module_t):0)
 
-#define NUM_MODULETYPES 5 // Number of existing module types, need to update manually :(
+#define NUM_MODULETYPES 4 // Number of existing module types, need to update manually :(
 typedef enum moduleType_e
 {
     MODULETYPE_UTILITY,
     MODULETYPE_CUSTOM,
     MODULETYPE_WEAPON,
-    MODULETYPE_ENGINE,
-    MODULETYPE_ARMOR
+    MODULETYPE_STATS
 } moduleType_t;
 
 typedef void module_t; // Required for naughty hacky thingies UwU
@@ -31,10 +30,12 @@ typedef struct customModule_s {
     // custom module members
 } custom_module_t;
 
-typedef struct armorModule_s {
+// Module type used to provide stats for the ship
+typedef struct StatModule {
     base_module_t base;
-    // armor module members
-} armor_module_t;
+    bool activatable;
+    stats_t activatable_stats;
+} stat_module_t;
 
 typedef struct weaponModule_s {
     base_module_t base;
@@ -50,11 +51,6 @@ typedef struct weaponModule_s {
     int32_t activation_energy;
     int32_t recharge_energy;
 } weapon_module_t;
-
-typedef struct engineModule_s {
-    base_module_t base;
-    // engine module members
-} engine_module_t;
 
 typedef enum utilityModuleTypes_e {
     UMODULE_SOLAR_PANEL,
