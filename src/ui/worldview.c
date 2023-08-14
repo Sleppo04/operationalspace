@@ -24,6 +24,18 @@ void UI_WorldViewRender(worldview_t* view)
         Window_SetPos(view->screenX, view->screenY + i);
         for (unsigned int j = 0; j < view->width; j++) {
             tile = World_GetTile(view->world, view->worldX + j, view->worldY + i);
+            
+            char color = tile->color;
+            char glyph = tile->glyph;
+            if (tile->occupation == OCCUPIED_BY_GAMEOBJECT) {
+                color = tile->object.gameobject->color;
+                glyph = tile->object.gameobject->glyph;
+            }
+            if (tile->occupation == OCCUPIED_BY_SHIP) {
+                color = tile->object.ship->color;
+                glyph = tile->object.ship->glyph;
+            }
+
             if (tile == NULL) {
                 Window_SetColor(15, 1);
                 Window_SetBlinking(true);
@@ -33,12 +45,9 @@ void UI_WorldViewRender(worldview_t* view)
                 // Draw selection cursor
                 Window_SetColor(0, 3);
                 Window_PrintGlyph(' ');
-            } else if (tile->object != NULL) {
-                Window_SetColor(tile->object->color, 0);
-                Window_PrintGlyph(tile->object->glyph);
             } else {
-                Window_SetColor(tile->color, 0);
-                Window_PrintGlyph(tile->glyph);
+                Window_SetColor(color, 0);
+                Window_PrintGlyph(glyph);
             }
         }
     }

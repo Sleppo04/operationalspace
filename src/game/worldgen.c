@@ -28,7 +28,13 @@ bool WorldGen_CheckNoises(feature_t* feature, uint16_t* noise_values)
 
 int WorldGen_PlaceFeature(tile_t* tile, feature_t* feature)
 {
-    return feature->provider(&(tile->object), feature->user_data);
+    int provider_code = feature->provider(&(tile->object.gameobject), feature->user_data);
+    if (provider_code) {
+        return provider_code;
+    }
+
+    tile->occupation = OCCUPIED_BY_GAMEOBJECT;
+    return EXIT_SUCCESS;
 }
 
 int WorldGen_CheckFeaturePlacement(tile_t* tile, worldgendata_t* data, size_t x, size_t y)

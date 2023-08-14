@@ -8,7 +8,7 @@
 typedef enum ActionType {
     ACTION_MOVEMENT,
     ACTION_MODULE,
-    ACTION_DIRECTION_MODULE
+    ACTION_MODULE_DIRECTION,
 } action_type_t;
 
 typedef struct MovementActionData {
@@ -20,16 +20,17 @@ typedef struct ModuleActionData {
     uint32_t module_id;
 } module_action_data_t;
 
-typedef struct DirectionModuleActionData {
+typedef struct ModuleDirectionActionData {
     bool activation_state;
     uint32_t module_id;
     int32_t  x_direction;
     int32_t  y_direction;
-} direction_module_action_data_t;
+} module_direction_action_data_t;
 
 typedef union ActionData {
     movement_action_data_t movement;
     module_action_data_t module;
+    module_direction_action_data_t module_direction;
 } action_data_t;
 
 typedef struct Action {

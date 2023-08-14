@@ -1,6 +1,6 @@
 #include "tick.h"
 
-int Tick_Playerwise_TickShip(game_t* game, player_t* player, gameobject_t* ship)
+int Tick_Playerwise_TickShip(game_t* game, player_t* player, ship_t* ship)
 {
     if (player == NULL) {
         return EINVAL;
@@ -15,8 +15,8 @@ int Tick_Playerwise_TickShip(game_t* game, player_t* player, gameobject_t* ship)
 
     // TODO: Implement this function
     //script_t* ship_tick_script = &(player->scripts.ship_tick_script);
-    //action_t* actions = NULL;
-    //int script_code = Script_ComputeShipActions(ship_tick_script, &actions);
+    //action_t action = NULL;
+    //int script_code = Script_GetShipAction(ship_tick_script, &action);
 
     return EXIT_SUCCESS;
 }
@@ -31,7 +31,7 @@ int Tick_Playerwise_Round(tick_playerwise_data_t *data, game_t *game)
     }
 
     arraylist_t*  player_ship_list;
-    gameobject_t* current_ship;
+    ship_t* current_ship;
     int tick_code;
     for (uint16_t player_index = data->current_player_index; player_index < game->player_count; player_index++) {
         player_ship_list = game->ship_lists + player_index;
@@ -64,7 +64,7 @@ int Tick_Playerwise_Step(tick_playerwise_data_t *data, game_t *game)
 
     arraylist_t*  current_ship_list = game->ship_lists + data->current_player_index;
     player_t*     player            = game->players + data->current_player_index;
-    gameobject_t* ship;
+    ship_t* ship;
     int tick_code;
     for (size_t i = 0; i < current_ship_list->size; i++) {
         ship = current_ship_list->array[i];
@@ -100,7 +100,7 @@ int Tick_Playerwise_Single(tick_playerwise_data_t *data, game_t *game)
     }
 
 
-    gameobject_t* current_ship   = current_player_list->array[data->current_ship_index];
+    ship_t* current_ship   = current_player_list->array[data->current_ship_index];
     player_t*     current_player = game->players + data->current_player_index;
 
     int tick_code = Tick_Playerwise_TickShip(game, current_player, current_ship);
