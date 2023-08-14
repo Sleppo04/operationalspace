@@ -1,6 +1,6 @@
 # OperationalSpace - Game Stats
 ## Base Stats
-The game OperationalSpace mimics the way traditional pen-and-paper RPGs work, and uses a **STAT** system, using 5 different **BASE STATs**
+The game OperationalSpace mimics the way traditional pen-and-paper RPGs work, and uses a **STAT** system, using 6 different **BASE STATs**
 (also just called **STATs** for simplicity).
 Those **STATs** are mainly used for three things:
 - To tell the user what effects a certain module will have
@@ -10,11 +10,12 @@ Those **STATs** are mainly used for three things:
 Attack damage is not calculated using those **STATs** however, for this the weapons **WEAPON STATs** are used.
 
 Those **STATs** are integer values reaching from $-2^{31}$ to $2^{31}$. On ships, they are influenced by the used modules; more specifically their **STAT MODIFIERs**.
-The 5 **STATs** used are:
+The 6 **STATs** used are:
 
 | Displayed Name | Full Name | Description |
 | -------------- | --------- | ----------- |
 | Sp             | Speed     | The maximum amount of tiles the object can move per round |
+| Ma             | Mass      | The mass of a ship, how heavy it is |
 | Hu             | Hull      | The maximum amount of hull integrity (health) the object can have |
 | Sh             | Shield    | The maximum amount of shield integrity (shield health) the object can have |
 | St             | Storage   | The maximum amount of ressources the object can carry at once |
@@ -29,6 +30,7 @@ Modules share a common set of **STATs**. These **STATs** take their effect on th
 | HuM            | Hull Modifier    | How much hull does this module provide |
 | ShM            | Shield Modifier  | Shields this module generates |
 | SpM            | Speed Modifier   | Does this module accelerate the ships movement? |
+| MaM            | Mass Modifier    | How much the module adds to the ships Mass
 | BaM            | Battery Modifier | Energy storage of the module |
  
 ## Weapon Stats
