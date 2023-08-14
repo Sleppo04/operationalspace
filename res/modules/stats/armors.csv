@@ -1,0 +1,7 @@
+Name,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Activatable,Activation Energy,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Hull Regeneration,Shield Regeneration,Metal Cost,Crystal Cost,Gas Cost
+Metal Heat Shields,5,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0
+Metal Hull,9,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0
+Metal Plating,21,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0
+Crystal Heat Shields,11,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1,0
+Crystal Reinforced Hull,18,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,0
+Crystal Plating,34,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,0
