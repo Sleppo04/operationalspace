@@ -1,12 +1,15 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include "shared.h"
+#include "player.h"
 
-#include "tick.h"
-
-int Game_TickRound(game_t* game);
-int Game_TickStep(game_t* game); 
-int Game_TickSingle(game_t* game);
+typedef struct Game {
+	arraylist_t* ship_lists;
+	player_t*    players;
+	uint16_t     tick_current_player;
+	uint32_t     tick_current_ship;
+	uint16_t     player_count;
+	world_t*     world;
+} game_t;
 
 #endif

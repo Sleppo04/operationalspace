@@ -1,9 +1,8 @@
 #ifndef GAMEACTION_H
 #define GAMEACTION_H
 
+#include <stdbool.h>
 #include <stdint.h>
-
-#include "shared.h"
 
 typedef enum ActionType {
     ACTION_MOVEMENT,
@@ -11,17 +10,24 @@ typedef enum ActionType {
     ACTION_MODULE_DIRECTION,
 } action_type_t;
 
+typedef enum Direction {
+	DIRECTION_UP,
+	DIRECTION_DOWN,
+	DIRECTION_LEFT,
+	DIRECTION_RIGHT
+} direction_t;
+
 typedef struct MovementActionData {
     direction_t direction;
 } movement_action_data_t;
 
 typedef struct ModuleActionData {
-    bool activation_state;
+    bool     activation_state;
     uint32_t module_id;
 } module_action_data_t;
 
 typedef struct ModuleDirectionActionData {
-    bool activation_state;
+    bool     activation_state;
     uint32_t module_id;
     int32_t  x_direction;
     int32_t  y_direction;
