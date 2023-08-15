@@ -5,7 +5,7 @@
 #include <windows.h>
 typedef HANDLE systhread_t;
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
-#include <pthreads.h>
+#include <pthread.h>
 typedef pthread_t systhread_t;
 #else
 #error "The threading library doesn't support this OS!"
