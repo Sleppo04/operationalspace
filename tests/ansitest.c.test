@@ -127,6 +127,7 @@ int main()
 			case 'q':
 				Window_ResetFormatting();
 				Window_ResetColor();
+			    Window_DestroyWindow(&win);
 				exit(0);
 				break;
 		}
