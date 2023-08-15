@@ -50,6 +50,7 @@ typedef struct weaponModule_s {
     int32_t charges;
     int32_t activation_energy;
     int32_t recharge_energy;
+    int32_t range;
 } weapon_module_t;
 
 typedef enum utilityModuleTypes_e {

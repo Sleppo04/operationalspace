@@ -1,0 +1,3 @@
+Name,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Shield Regeneration,Hull Regeneration,Armor Damage,Shield Damage,Area Armor Damage,Area Shield Damage,Armor Damage Area,Shield Damage Area,Charges,Charge Cooldown,Activation Energy,Recharge Energy,Metal Cost,Crystal Cost,Gas Cost,Description
+Bord Cannon,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,2,1,1,1,0,0,A cannon shooting cannon balls
+Rocket Launcher,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,1,2,2,1,1,0,0,Weapon launching explosive missiles with AoE effects
