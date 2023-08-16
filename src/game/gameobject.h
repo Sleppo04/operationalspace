@@ -26,7 +26,7 @@ typedef struct GameObject {
     char color;
 } gameobject_t;
 
-void Ship_RecalculateStats(gameobject_t* obj);
-int Ship_AddModule(gameobject_t* obj, module_t* module, moduleType_t type);
+void Obj_RecalculateStats(gameobject_t* obj);
+int Obj_AddModule(gameobject_t* obj, module_t* module, moduleType_t type);
 
 #endif //GAMEOBJECT_H
