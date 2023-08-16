@@ -12,18 +12,15 @@ void UI_SidebarCreate(sidebar_t* sidebar, unsigned int screenX, unsigned int scr
 void UI_SidebarRedraw(sidebar_t* sidebar, tile_t* tile)
 {
     int y;
-    ship_t* obj;
+    gameobject_t* obj;
 
     y = sidebar->screenY;
     Window_SetPos(sidebar->screenX + 1, sidebar->screenY);
 
-    if (tile->occupation == OCCUPIED_BY_NOTHING) {
+    if (tile->object == NULL) {
         printf("Nothing here");
-    } else if (tile->occupation == OCCUPIED_BY_GAMEOBJECT) {
-        printf("Something else is here");
-        //TODO: Also display gameobjects
     } else {
-        obj = tile->object.ship;
+        obj = tile->object;
         printf("Selected Ship");
         Window_SetPos(sidebar->screenX + 1, y);
         for (unsigned int i = 0; i < sidebar->width - 1; i++) Window_PrintGlyph('-'); // Draw Separator

@@ -17,7 +17,7 @@ typedef struct Game {
 /// @param player 
 /// @param ship 
 /// @return EINVAL, ENOMEM
-int Game_TickShip(game_t *game, player_t *player, ship_t *ship);
+int Game_TickShip(game_t *game, player_t *player, gameobject_t *ship);
 
 /// @brief Tick all ships left in the current round in game
 /// @param game game to tick

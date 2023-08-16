@@ -1,6 +1,6 @@
-#include "ship.h"
+#include "gameobject.h"
 
-void Ship_RecalculateStats(ship_t* ship)
+void Ship_RecalculateStats(gameobject_t* ship)
 {
     ship->stats = (stats_t) { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     for (int i = 0; i < ship->numModules[MODULETYPE_STATS]; i++) {
@@ -27,7 +27,7 @@ void Ship_RecalculateStats(ship_t* ship)
     return;
 }
 
-int Ship_AddModule(ship_t* ship, module_t* module, moduleType_t type)
+int Ship_AddModule(gameobject_t* ship, module_t* module, moduleType_t type)
 {
     void* resizedArray;
     void* moduleArray;

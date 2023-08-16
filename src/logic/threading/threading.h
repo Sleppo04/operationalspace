@@ -4,13 +4,15 @@
 #if defined _WIN32
 #include <windows.h>
 typedef HANDLE systhread_t;
+
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 #include <pthread.h>
 typedef pthread_t systhread_t;
+
 #else
 #error "The threading library doesn't support this OS!"
 #endif
 
-void Sys_CreateThread(systhread_t* thread, void* arg, void* func);
+int Sys_CreateThread(systhread_t* thread, void* arg, void* (*function) (void*));
 
 #endif //THREADING_H

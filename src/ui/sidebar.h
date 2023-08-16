@@ -4,7 +4,6 @@
 #include <stdio.h> 
 
 #include "../game/gameobject.h"
-#include "../game/ship.h"
 #include "../game/module.h"
 #include "../game/tile.h"
 #include "../ui/window.h"

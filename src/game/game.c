@@ -1,6 +1,6 @@
 #include "game.h"
 
-int Game_TickShip(game_t* game, player_t* player, ship_t* ship)
+int Game_TickShip(game_t* game, player_t* player, gameobject_t* ship)
 {
     if (player == NULL) {
         return EINVAL;
@@ -28,7 +28,7 @@ int Game_TickRound(game_t* game)
     }
 
     arraylist_t*  player_ship_list;
-    ship_t* current_ship;
+    gameobject_t* current_ship;
     int tick_code;
     uint16_t* current_player_index = &(game->tick_current_player);
     uint32_t* current_ship_index   = &(game->tick_current_ship);
@@ -65,7 +65,7 @@ int Game_TickStep(game_t* game)
     uint32_t* current_ship_index   = &(game->tick_current_ship);
     arraylist_t*  current_ship_list = game->ship_lists + current_player_index[0];
     player_t*     player            = game->players + current_player_index[0];
-    ship_t* ship;
+    gameobject_t* ship;
     int tick_code;
 
     for (size_t i = 0; i < current_ship_list->size; i++) {
@@ -102,7 +102,7 @@ int Game_TickSingle(game_t* game)
     }
 
 
-    ship_t*   current_ship      = current_player_list->array[current_ship_index[0]];
+    gameobject_t*   current_ship      = current_player_list->array[current_ship_index[0]];
     player_t* current_player    = game->players + current_player_index[0];
 
     int tick_code = Game_TickShip(game, current_player, current_ship);

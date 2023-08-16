@@ -27,13 +27,9 @@ void UI_WorldViewRender(worldview_t* view)
             
             char color = tile->color;
             char glyph = tile->glyph;
-            if (tile->occupation == OCCUPIED_BY_GAMEOBJECT) {
-                color = tile->object.gameobject->color;
-                glyph = tile->object.gameobject->glyph;
-            }
-            if (tile->occupation == OCCUPIED_BY_SHIP) {
-                color = tile->object.ship->color;
-                glyph = tile->object.ship->glyph;
+            if (tile->object != NULL) {
+                color = tile->color;
+                glyph = tile->glyph;
             }
 
             if (tile == NULL) {
