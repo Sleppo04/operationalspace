@@ -53,7 +53,7 @@ Each ship has a ship prototype and a set of modules.
 The ship prototypes define the basic capabilities of a ship and limit the ships abilities.
 There are generic ship prototypes for custom ship architectures and specialized prototypes for standard designs.
 
-| Displayed Name | Full Name            | Description
+| Displayed Name | Full Name            | Description |
 | -------------- | -------------------- | ---------- |
 | Hu             | Hull                 | Hull the prototype provides |
 | Hr             | Hull Regeneration    | Autonomous Hull-Repair per round |
