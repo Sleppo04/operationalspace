@@ -1,6 +1,6 @@
 #include "gameobject.h"
 
-void Ship_RecalculateStats(gameobject_t* ship)
+void Obj_RecalculateStats(gameobject_t* ship)
 {
     ship->stats = (stats_t) { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     for (int i = 0; i < ship->numModules[MODULETYPE_STATS]; i++) {
@@ -27,7 +27,7 @@ void Ship_RecalculateStats(gameobject_t* ship)
     return;
 }
 
-int Ship_AddModule(gameobject_t* ship, module_t* module, moduleType_t type)
+int Obj_AddModule(gameobject_t* ship, module_t* module, moduleType_t type)
 {
     void* resizedArray;
     void* moduleArray;
@@ -60,7 +60,7 @@ int Ship_AddModule(gameobject_t* ship, module_t* module, moduleType_t type)
     newModuleLocation = (char*) (moduleArray) + skip;
 
     memcpy(newModuleLocation, module, moduleSize);
-    Ship_RecalculateStats(ship);
+    Obj_RecalculateStats(ship);
 
     return EXIT_SUCCESS;
 }
