@@ -12,4 +12,27 @@ typedef struct Game {
 	world_t*     world;
 } game_t;
 
+/// @brief Tick ship ship of player player in game game
+/// @param game 
+/// @param player 
+/// @param ship 
+/// @return EINVAL, ENOMEM
+int Game_TickShip(game_t *game, player_t *player, ship_t *ship);
+
+/// @brief Tick all ships left in the current round in game
+/// @param game game to tick
+/// @return EINVAL
+int Game_TickRound(game_t *game);
+
+/// @brief Tick All remaining ships from one player in game
+/// @param game game to tick
+/// @return EINVAL
+int Game_TickStep(game_t *game);
+
+/// @brief Tick exactly one ship in game
+/// @param game game to tick
+/// @return EINVAL
+int Game_TickSingle(game_t *game);
+
 #endif
+
