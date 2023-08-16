@@ -1,0 +1,24 @@
+#include "../src/logic/memorypool/memorypool.c"
+#include "../src/logic/memorypool/memoryarena.c"
+
+#include <assert.h>
+
+int main()
+{
+    memory_pool_t pool;
+    MemoryPool_Create(&pool, sizeof(int), 0);
+
+    int** addresses = malloc(sizeof(int*) * 8000);
+    for (int i = 0; i < 8000; i++) {
+        MemoryPool_Allocate(&pool, (void**) addresses + i);
+        addresses[i][0] = i;
+    }
+
+    for (int i = 7999; i > -1; i--) {
+        assert(addresses[i][0] == i);
+        MemoryPool_Free(&pool, addresses[i]);
+    }
+
+    MemoryPool_Destroy(&pool);
+    free(addresses);
+}
