@@ -21,11 +21,14 @@ class World {
     }
 }
 
+
+// Now you might ask: Why has this enum foreign members?
+// And I would answer, to ensure the enum members have the same values as the C enum members
 class Direction {
-    static UP { 0 }
-    static DOWN { 1 }
-    static LEFT { 2 }
-    static RIGHT { 3 }
+    foreign static UP
+    foreign static DOWN
+    foreign static LEFT
+    foreign static RIGHT
 }
 
 foreign class NoAction {
