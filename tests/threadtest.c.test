@@ -1,0 +1,22 @@
+#include <stdio.h>
+#include <windows.h>
+#include "../src/logic/threading/threading.h"
+
+void foo(int* a)
+{
+    for(int i = 0; i < 10; i++) printf("Func %i says: %i\n", *a, i);
+    Sys_YieldThread();
+    return;
+}
+
+int main(int argc, char** argv)
+{
+    systhread_t threads[3];
+    int arguments[] = {1, 2, 3};
+
+    Sys_CreateThread(&threads[0], &arguments[0], &foo);
+    Sys_CreateThread(&threads[1], &arguments[1], &foo);
+    Sys_CreateThread(&threads[2], &arguments[2], &foo);
+
+    return 0;
+}
