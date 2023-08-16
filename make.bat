@@ -9,7 +9,7 @@ rem Make OperationalSpace executables
 SET sourcefiles=
 SET libraryfiles=
 SET includeargs=
-SET "includedirs="%CD%\include""
+SET "includedirs="%CD%\include" "%CD%\src\3rdparty\os-wren\src\include""
 SET "cflags=-std=c99 -pedantic -Wall -Wextra -ggdb"
 FOR /R src\game %%G IN (*.c) DO SET "sourcefiles=!sourcefiles! "%%G""
 FOR /R src\ui %%G IN (*.c) DO SET "sourcefiles=!sourcefiles! "%%G""
