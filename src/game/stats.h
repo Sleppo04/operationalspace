@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-typedef struct ExtendedStats {
+typedef struct Stats {
     int32_t hull;
     int32_t shield;
     int32_t speed;
