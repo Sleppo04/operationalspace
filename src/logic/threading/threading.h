@@ -14,6 +14,5 @@ typedef pthread_t systhread_t;
 #endif
 
 int Sys_CreateThread(systhread_t* thread, void* arg, void* (*function) (void*));
-void Sys_YieldThread();
 
 #endif //THREADING_H

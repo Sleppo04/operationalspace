@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include "../src/logic/threading/threading.h"
 
-void foo(int* a)
+void foo(void* a)
 {
     for (int i = 0; i < 10; i++) {
-        printf("Func %i says: %i\n", *a, i);
-        Sys_YieldThread();
+        printf("Func %i says: %i\n", *((int*)a), i);
     }
     return;
 }

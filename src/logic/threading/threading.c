@@ -6,11 +6,6 @@ int Sys_CreateThread(systhread_t* thread, void* arg, void* (*function) (void*))
     return pthread_create(thread, NULL, function, arg);
 }
 
-void Sys_YieldThread()
-{
-    pthread_yield();
-    return;
-}
 #elif defined _WIN32
 int Sys_CreateThread(systhread_t* thread, void* arg, void* (*function) (void*))
 {
@@ -22,9 +17,4 @@ int Sys_CreateThread(systhread_t* thread, void* arg, void* (*function) (void*))
     return GetLastError();
 }
 
-void Sys_YieldThread()
-{
-    SwitchToThread();
-    return;
-}
 #endif
