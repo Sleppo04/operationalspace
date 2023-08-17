@@ -1,5 +1,5 @@
-#ifndef MEMORYPOOL
-#define MEMORYPOOL
+#ifndef MEMORYPOOL_H
+#define MEMORYPOOL_H
 
 #include <errno.h>
 #include <stdint.h>
@@ -12,11 +12,6 @@ typedef struct MemoryPool {
     uintptr_t       object_size;
     memory_arena_t* arenas;
 } memory_pool_t;
-
-/// @brief The Size the Memory Pool would pick by default for objects of the given size
-/// @param object_size 
-/// @return The arena size, at least 128 objects and aligned to 4096
-uintptr_t MemoryPool_DefaultArenaSizeForObjectSize(uintptr_t object_size);
 
 /// @brief Create a memory-pool at destination for objects of size object-size
 /// @param destination where the memory pool will be placed in memory
