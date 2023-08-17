@@ -1,5 +1,14 @@
 #include "memoryarena.h"
 
+uintptr_t MemoryArena_DefaultSizeForObjectSize(uintptr_t object_size)
+{
+    // Try to calculate an arena size for storing a lot of objects (128+) and close to multiples of 4096 (Page Size?)
+    uintptr_t arena_memory = 128 * object_size;
+    uintptr_t arena_size   = 128;
+    arena_size += (4096 - (arena_memory % 4096)) / object_size;
+
+    return arena_size;
+}
 
 int MemoryArena_Create(memory_arena_t* destination, uintptr_t object_size, uintptr_t arena_size)
 {
@@ -10,7 +19,7 @@ int MemoryArena_Create(memory_arena_t* destination, uintptr_t object_size, uintp
         return EINVAL;
     }
     if (arena_size == 0) {
-        arena_size = MemoryPool_DefaultArenaSizeForObjectSize(object_size);
+        arena_size = MemoryArena_DefaultSizeForObjectSize(object_size);
     }
 
     char* arena_memory = malloc(arena_size * object_size);
@@ -49,7 +58,7 @@ int MemoryArena_Destroy(memory_arena_t* arena)
 uintptr_t MemoryArena_FirstZeroBit(uint8_t byte)
 {
     for (uintptr_t bit_index = 0; bit_index < 8; bit_index++) {
-        if ((~byte) & (0b10000000 >> bit_index)) {
+        if ((~byte) & (0x80 >> bit_index)) {
             return bit_index;
         }
     }
@@ -103,7 +112,7 @@ int MemoryArena_Allocate(memory_arena_t* arena, void** pointer_destination)
     // Mark place as used
     uintptr_t byte_index =  free_index / 8;
     uintptr_t bit_index  = free_index % 8;
-    arena->used[byte_index] |= 0b10000000 >> bit_index;
+    arena->used[byte_index] |= 0x80 >> bit_index;
 
     return EXIT_SUCCESS;
 }
@@ -133,9 +142,9 @@ int MemoryArena_Free(memory_arena_t *arena, void *address)
     uintptr_t byte_index = address_index / 8;
     uintptr_t bit_index  = address_index % 8;
 
-    if (arena->used[byte_index] & (0b10000000 >> bit_index)) {
+    if (arena->used[byte_index] & (0x80 >> bit_index)) {
         // Was used, mark as free
-        arena->used[byte_index] ^= 0b10000000 >> bit_index;
+        arena->used[byte_index] ^= 0x80 >> bit_index;
     } else {
         // Is not used, can't free
         return EBUSY;

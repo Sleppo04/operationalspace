@@ -21,4 +21,6 @@ int MemoryArena_Allocate(memory_arena_t *arena, void **pointer_destination);
 
 int MemoryArena_Free(memory_arena_t* arena, void* address);
 
+uintptr_t MemoryArena_DefaultSizeForObjectSize(uintptr_t object_size);
+
 #endif

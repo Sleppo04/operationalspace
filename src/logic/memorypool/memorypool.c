@@ -1,15 +1,6 @@
 #include "memorypool.h"
 
-uintptr_t MemoryPool_DefaultArenaSizeForObjectSize(uintptr_t object_size)
-{
-    // Try to calculate an arena size for storing a lot of objects (128+) and close to multiples of 4096 (Page Size?)
-    uintptr_t arena_memory = 128 * object_size;
-    uintptr_t arena_size   = 128;
-    arena_size += (4096 - (arena_memory % 4096)) / object_size;
 
-
-    return arena_size;
-}
 
 int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr_t arena_size)
 {
@@ -20,7 +11,7 @@ int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr
         return EINVAL;
     }
     if (arena_size == 0) {
-        arena_size = MemoryPool_DefaultArenaSizeForObjectSize(object_size);
+        arena_size = MemoryArena_DefaultSizeForObjectSize(object_size);
     }
 
     memory_arena_t* arena_array = malloc(sizeof(memory_arena_t));
@@ -80,7 +71,7 @@ int MemoryPool_Allocate(memory_pool_t* pool, void** pointer_destination)
     // Allocation wasn't successful, we need more arenas
     memory_arena_t new_arena;
     int arena_code;
-    arena_code = MemoryArena_Create(&new_arena, pool->object_size, MemoryPool_DefaultArenaSizeForObjectSize(pool->object_size));
+    arena_code = MemoryArena_Create(&new_arena, pool->object_size, MemoryArena_DefaultSizeForObjectSize(pool->object_size));
     if (arena_code) {
         return arena_code;
     }
