@@ -85,6 +85,23 @@ int MemoryArena_Destroy(memory_arena_t* arena)
     return EXIT_SUCCESS;
 }
 
+int MemoryArena_ForceDestroy(memory_arena_t* arena)
+{
+    if (arena == NULL) {
+        return EINVAL;
+    }
+
+    free(arena->used);
+    free(arena->memory);
+    arena->arena_size  = 0;
+    arena->memory      = NULL;
+    arena->object_size = 0;
+    arena->used        = NULL;
+    arena->used_count  = 0;
+
+    return EXIT_SUCCESS;
+}
+
 uintptr_t MemoryArena_FirstZeroBit(uint8_t byte)
 {
     for (uintptr_t bit_index = 0; bit_index < 8; bit_index++) {

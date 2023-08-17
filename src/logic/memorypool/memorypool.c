@@ -48,12 +48,41 @@ int MemoryPool_Destroy(memory_pool_t* pool)
         return EINVAL;
     }
 
-    pool->object_size = 0;
+    for (uint64_t arena_index = 0; arena_index < pool->arena_count; arena_index++) {
+        if (pool->arenas[arena_index].used_count != 0) {
+            return EBUSY;
+        }
+    }
+
     for (uint64_t arena_index = 0; arena_index < pool->arena_count; arena_index++) {
         MemoryArena_Destroy(pool->arenas + arena_index);
     }
 
     free(pool->arenas);
+    pool->arena_count        = 0;
+    pool->max_pool_capacity  = 0;
+    pool->used_pool_capacity = 0;
+    pool->object_size        = 0;
+
+    return EXIT_SUCCESS;
+}
+
+int MemoryPool_ForceDestroy(memory_pool_t *pool)
+{
+    if (pool == NULL) {
+        return EINVAL;
+    }
+
+    for (uint64_t arena_index = 0; arena_index < pool->arena_count; arena_index++) {
+        MemoryArena_ForceDestroy(pool->arenas + arena_index);
+    }
+
+    free(pool->arenas);
+    pool->arenas             = NULL;
+    pool->arena_count        = 0;
+    pool->max_pool_capacity  = 0;
+    pool->used_pool_capacity = 0;
+    pool->object_size        = 0;
 
     return EXIT_SUCCESS;
 }

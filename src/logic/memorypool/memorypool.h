@@ -23,10 +23,15 @@ typedef struct MemoryPool {
 /// @return EDESTADDRREQ, EINVAL, ENOMEM
 int MemoryPool_Create(memory_pool_t* destination, uintptr_t object_size, uintptr_t arena_size, uintptr_t max_pool_capacity);
 
-/// @brief Destroy the passed memory pool and free all resourced associated with it
+/// @brief if there are no allocations left in the pool, destroy the passed memory pool and free all resources associated with it.
+/// @param pool pool
+/// @return EINVAL, EBUSY, EXIT_SUCCESS
+int MemoryPool_Destroy(memory_pool_t* pool);
+
+/// @brief Destroy the passed memory pool and free all resources, this function doesn't check whether there are still allocated areas
 /// @param pool pool
 /// @return EINVAL, EXIT_SUCCESS
-int MemoryPool_Destroy(memory_pool_t* pool);
+int MemoryPool_ForceDestroy(memory_pool_t* pool);
 
 /// @brief Get a pointer to an allocated memory address from the fixed-size pool
 /// @param pool pool to allocate on

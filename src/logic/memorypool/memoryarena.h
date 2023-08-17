@@ -19,6 +19,8 @@ int MemoryArena_Create(memory_arena_t *destination, uintptr_t object_size, uintp
 
 int MemoryArena_Destroy(memory_arena_t *arena);
 
+int MemoryArena_ForceDestroy(memory_arena_t* arena);
+
 int MemoryArena_Allocate(memory_arena_t *arena, void **pointer_destination);
 
 int MemoryArena_Free(memory_arena_t* arena, void* address);
