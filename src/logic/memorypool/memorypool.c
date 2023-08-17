@@ -70,8 +70,8 @@ int MemoryPool_AddArena(memory_pool_t* pool, uintptr_t needed_object_capacity)
     }
 
     uintptr_t arena_object_capacity = MemoryArena_DefaultSize(pool->object_size, pool_capacity_left);
-    if (needed_object_capacity < (arena_object_capacity)) {
-        MemoryArena_AlignSize(needed_object_capacity, pool->object_size, pool_capacity_left);
+    if (needed_object_capacity > (arena_object_capacity)) {
+        arena_object_capacity = MemoryArena_AlignSize(needed_object_capacity, pool->object_size, pool_capacity_left);
     }
     
 
@@ -158,4 +158,74 @@ int MemoryPool_Free(memory_pool_t *pool, void *address)
     }
 
     return ENXIO;
+}
+
+int MemoryPool_AllocateArray(memory_pool_t* pool, uintptr_t array_length, void** pointer_destination)
+{
+    if (pool == NULL) {
+        return EINVAL;
+    }
+    if (array_length == 0) {
+        return EINVAL;
+    }
+    if (pointer_destination == NULL) {
+        return EDESTADDRREQ;
+    }
+
+    int allocate_code = ENOMEM;
+    memory_arena_t* arena;
+    uint64_t arena_index = 0;
+    while (allocate_code != EXIT_SUCCESS && arena_index < pool->arena_count) {
+        arena = pool->arenas + arena_index;
+        allocate_code = MemoryArena_AllocateArray(arena, array_length, pointer_destination);
+        arena_index++;
+    }
+    if (allocate_code == EXIT_SUCCESS) {
+        return EXIT_SUCCESS;
+    }
+
+    // Not successfull, try adding another arena
+    int arena_code = MemoryPool_AddArena(pool, array_length);
+    if (arena_code) {
+        return arena_code;
+    }
+
+    memory_arena_t* new_arena = pool->arenas + pool->arena_count - 1;
+    allocate_code = MemoryArena_AllocateArray(new_arena, array_length, pointer_destination);
+    if (allocate_code) {
+        return allocate_code;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int MemoryPool_FreeArray(memory_pool_t *pool, void *address, uintptr_t array_length)
+{
+    if (pool == NULL) {
+        return EINVAL;
+    }
+    if (address == NULL) {
+        return EINVAL;
+    }
+    if (array_length == 0) {
+        return EINVAL;
+    }
+
+    int free_code = ENXIO;
+    uint64_t arena_index = 0;
+    memory_arena_t* arena;
+    while (free_code == ENXIO && arena_index < pool->arena_count)
+    {
+        arena = pool->arenas + arena_index;
+        free_code = MemoryArena_FreeArray(arena, address, array_length);
+        arena_index++;
+    }
+    
+    if (free_code != EXIT_SUCCESS) {
+        // Something went wrong while freeing
+        // But the address was found
+        return free_code;
+    }
+
+    return EXIT_SUCCESS;
 }

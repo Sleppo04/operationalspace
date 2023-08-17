@@ -2,6 +2,7 @@
 #define MEMORYARENA_H
 
 #include <errno.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -21,6 +22,10 @@ int MemoryArena_Destroy(memory_arena_t *arena);
 int MemoryArena_Allocate(memory_arena_t *arena, void **pointer_destination);
 
 int MemoryArena_Free(memory_arena_t* arena, void* address);
+
+int MemoryArena_AllocateArray(memory_arena_t* arena, uintptr_t array_length, void** pointer_destination);
+
+int MemoryArena_FreeArray(memory_arena_t* arena, void* array_start, uintptr_t array_length);
 
 uintptr_t MemoryArena_GetMemoryByteCount(memory_arena_t* arena);
 

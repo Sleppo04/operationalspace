@@ -42,10 +42,34 @@ int MemoryPool_Allocate(memory_pool_t* pool, void** pointer_destination);
  *  | ------ | ----------- |
  *  | EINVAL | pool is NULL |
  *  | EINVAL | address is NULL |
- *  | EBUSY  | The provided address is not in use and cannot be freed |
  *  | ENXIO  | The provided address is not contained in this memory pool |
+ *  | EBUSY  | The provided address is not in use and cannot be freed |
  *  | 0      | Success |
  **/
 int MemoryPool_Free(memory_pool_t* pool, void* address);
+
+/// @brief Allocate a continous array from the memory pool
+/// @param pool Memory provider
+/// @param array_length how many object-sizes the array needs successive in memory
+/// @param pointer_destination where the pool will write the address of the array
+/// @return EINVAL, EDESTADDRREQ, ENOMEM, EXIT_SUCCESS
+int MemoryPool_AllocateArray(memory_pool_t* pool, uintptr_t array_length, void** pointer_destination);
+
+/// @brief Free a continous array from the memory pool
+/// @param pool Memory provider
+/// @param address address the array starts at
+/// @param array_length how many objects the array spans
+/** @return
+ * | code   | description |
+ * | ------ | ----------- |
+ * | EINVAL | Pool is NULL |
+ * | EINVAL | Address is NULL |
+ * | ENXIO  | The Address is not contained in this memory-pool |
+ * | ENOENT | The Address was invalid for an array of this size |
+ * | ENOENT | The Address passed was not the start of the array |
+ * | EBUSY  | One of the array members was not in use, can't free the array |
+ * | 0      | Success |
+ **/
+int MemoryPool_FreeArray(memory_pool_t* pool, void* address, uintptr_t array_length);
 
 #endif //MEMORYPOOL
