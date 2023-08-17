@@ -1,8 +1,17 @@
 #include "memorypool.h"
 
 
+uintptr_t MemoryPool_PoolCapacityLeft(memory_pool_t* pool)
+{
+    if (pool->max_pool_capacity == 0) {
+        return 0;
+    }
 
-int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr_t arena_size)
+    return pool->max_pool_capacity - pool->used_pool_capacity;
+} 
+
+
+int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr_t arena_size, uintptr_t max_pool_capacity)
 {
     if (destination == NULL) {
         return EDESTADDRREQ;
@@ -11,7 +20,7 @@ int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr
         return EINVAL;
     }
     if (arena_size == 0) {
-        arena_size = MemoryArena_DefaultSizeForObjectSize(object_size);
+        arena_size = MemoryArena_DefaultSize(object_size, max_pool_capacity);
     }
 
     memory_arena_t* arena_array = malloc(sizeof(memory_arena_t));
@@ -24,9 +33,11 @@ int MemoryPool_Create(memory_pool_t *destination, uintptr_t object_size, uintptr
         return ENOMEM;
     }
 
-    destination->arenas      = arena_array;
-    destination->arena_count = 1;
-    destination->object_size = object_size;
+    destination->arenas             = arena_array;
+    destination->arena_count        = 1;
+    destination->object_size        = object_size;
+    destination->max_pool_capacity  = max_pool_capacity;
+    destination->used_pool_capacity = MemoryArena_GetMemoryByteCount(arena_array);
 
     return EXIT_SUCCESS;
 }
@@ -43,6 +54,46 @@ int MemoryPool_Destroy(memory_pool_t* pool)
     }
 
     free(pool->arenas);
+
+    return EXIT_SUCCESS;
+}
+
+int MemoryPool_AddArena(memory_pool_t* pool, uintptr_t needed_object_capacity)
+{
+    if (pool == NULL) {
+        return EINVAL;
+    }
+    uintptr_t pool_capacity_left   = MemoryPool_PoolCapacityLeft(pool);
+    uintptr_t object_capacity_left = pool_capacity_left / pool->object_size;
+    if (pool->max_pool_capacity != 0 && needed_object_capacity > object_capacity_left) {
+        return ENOMEM;
+    }
+
+    uintptr_t arena_object_capacity = MemoryArena_DefaultSize(pool->object_size, pool_capacity_left);
+    if (needed_object_capacity < (arena_object_capacity)) {
+        MemoryArena_AlignSize(needed_object_capacity, pool->object_size, pool_capacity_left);
+    }
+    
+
+    memory_arena_t new_arena;
+    int arena_code;
+    arena_code = MemoryArena_Create(&new_arena, pool->object_size, arena_object_capacity);
+    if (arena_code) {
+        return arena_code;
+    }
+
+    // Resize the arena array
+    size_t new_array_size           = sizeof(memory_arena_t) * (pool->arena_count + 1);
+    memory_arena_t* new_arena_array = realloc(pool->arenas, new_array_size);
+    if (new_arena_array == NULL) {
+        MemoryArena_Destroy(&new_arena);
+        return ENOMEM;
+    }
+    // Place arena in arena array
+    pool->arenas = new_arena_array;
+    pool->arenas[pool->arena_count] = new_arena;
+    pool->arena_count++;
+    pool->used_pool_capacity += MemoryArena_GetMemoryByteCount(&new_arena);
 
     return EXIT_SUCCESS;
 }
@@ -69,24 +120,10 @@ int MemoryPool_Allocate(memory_pool_t* pool, void** pointer_destination)
     }
 
     // Allocation wasn't successful, we need more arenas
-    memory_arena_t new_arena;
-    int arena_code;
-    arena_code = MemoryArena_Create(&new_arena, pool->object_size, MemoryArena_DefaultSizeForObjectSize(pool->object_size));
+    int arena_code = MemoryPool_AddArena(pool, 1);
     if (arena_code) {
         return arena_code;
     }
-
-    // Resize the arena array
-    size_t new_array_size           = sizeof(memory_arena_t) * (pool->arena_count + 1);
-    memory_arena_t* new_arena_array = realloc(pool->arenas, new_array_size);
-    if (new_arena_array == NULL) {
-        MemoryArena_Destroy(&new_arena);
-        return ENOMEM;
-    }
-    // Place arena in arena array
-    pool->arenas = new_arena_array;
-    pool->arenas[pool->arena_count] = new_arena;
-    pool->arena_count++;
 
 
     memory_arena_t* new_arena_address = pool->arenas + pool->arena_count - 1;

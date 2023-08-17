@@ -22,6 +22,10 @@ int MemoryArena_Allocate(memory_arena_t *arena, void **pointer_destination);
 
 int MemoryArena_Free(memory_arena_t* arena, void* address);
 
-uintptr_t MemoryArena_DefaultSizeForObjectSize(uintptr_t object_size);
+uintptr_t MemoryArena_GetMemoryByteCount(memory_arena_t* arena);
+
+uintptr_t MemoryArena_DefaultSize(uintptr_t object_size, uintptr_t max_bytes);
+
+uintptr_t MemoryArena_AlignSize(uintptr_t min_objects, uintptr_t object_size, uintptr_t max_bytes);
 
 #endif

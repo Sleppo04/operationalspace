@@ -10,6 +10,8 @@
 typedef struct MemoryPool {
     uint64_t        arena_count;
     uintptr_t       object_size;
+    uintptr_t       max_pool_capacity;
+    uintptr_t       used_pool_capacity;
     memory_arena_t* arenas;
 } memory_pool_t;
 
@@ -17,8 +19,9 @@ typedef struct MemoryPool {
 /// @param destination where the memory pool will be placed in memory
 /// @param object_size The size of the objects placed in the pool
 /// @param arena_size Size of the memory arenas, impacts minimum memory usage and malloc frequency, leave zero for a default value
+/// @param max_pool_capacity Maximum byte count the user will be able to receive from the pool, zero for unlimited
 /// @return EDESTADDRREQ, EINVAL, ENOMEM
-int MemoryPool_Create(memory_pool_t* destination, uintptr_t object_size, uintptr_t arena_size);
+int MemoryPool_Create(memory_pool_t* destination, uintptr_t object_size, uintptr_t arena_size, uintptr_t max_pool_capacity);
 
 /// @brief Destroy the passed memory pool and free all resourced associated with it
 /// @param pool pool

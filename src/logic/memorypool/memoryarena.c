@@ -1,11 +1,35 @@
 #include "memoryarena.h"
 
-uintptr_t MemoryArena_DefaultSizeForObjectSize(uintptr_t object_size)
+uintptr_t MemoryArena_AlignSize(uintptr_t min_objects, uintptr_t object_size, uintptr_t max_bytes)
+{
+    uintptr_t arena_capacity = min_objects;
+    uintptr_t arena_memory   = min_objects * object_size;
+    arena_capacity += (4096 - (arena_memory % 4096)) / object_size;
+
+    arena_memory = arena_capacity * object_size;
+    if (arena_memory > max_bytes) {
+        arena_capacity = max_bytes / object_size;
+    }
+
+    return arena_capacity;
+}
+
+uintptr_t MemoryArena_GetMemoryByteCount(memory_arena_t* arena)
+{
+    return arena->arena_size * arena->object_size;
+}
+
+uintptr_t MemoryArena_DefaultSize(uintptr_t object_size, uintptr_t max_bytes)
 {
     // Try to calculate an arena size for storing a lot of objects (256+) and close to multiples of 4096 (Page Size?)
     uintptr_t arena_memory = 128 * object_size;
     uintptr_t arena_size   = 128;
     arena_size += (4096 - (arena_memory % 4096)) / object_size;
+    
+    uintptr_t arena_bytes = arena_size * object_size;
+    if (max_bytes != 0 && arena_bytes > max_bytes) {
+        arena_size = max_bytes / object_size;
+    }
 
     return arena_size;
 }
@@ -19,7 +43,7 @@ int MemoryArena_Create(memory_arena_t* destination, uintptr_t object_size, uintp
         return EINVAL;
     }
     if (arena_size == 0) {
-        arena_size = MemoryArena_DefaultSizeForObjectSize(object_size);
+        return EINVAL;
     }
 
     char* arena_memory = malloc(arena_size * object_size);
