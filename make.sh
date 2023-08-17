@@ -15,7 +15,7 @@ library_files=`find . -type f -path *.a`
 include_dirs=`find . -type d -path */include`
 include_args=`for include in $include_dirs; do echo "-I$include "; done` 
 CFLAGS="-std=c99 -pedantic -Wall -Wextra -ggdb"
-LIBRARIES="-lm"
+LIBRARIES="-lm -pthread"
 gcc $source_files $library_files $include_args $CFLAGS $LIBRARIES -o bin/operational-space
 
 # Compile terminal test utility
