@@ -8,6 +8,7 @@
 typedef struct MemoryArena {
     char* memory;
     uintptr_t arena_size;
+    uintptr_t used_count;
     uintptr_t object_size;
     uint8_t* used;
 } memory_arena_t;

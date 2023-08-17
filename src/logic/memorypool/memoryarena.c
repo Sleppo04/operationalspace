@@ -2,7 +2,7 @@
 
 uintptr_t MemoryArena_DefaultSizeForObjectSize(uintptr_t object_size)
 {
-    // Try to calculate an arena size for storing a lot of objects (128+) and close to multiples of 4096 (Page Size?)
+    // Try to calculate an arena size for storing a lot of objects (256+) and close to multiples of 4096 (Page Size?)
     uintptr_t arena_memory = 128 * object_size;
     uintptr_t arena_size   = 128;
     arena_size += (4096 - (arena_memory % 4096)) / object_size;
@@ -37,6 +37,7 @@ int MemoryArena_Create(memory_arena_t* destination, uintptr_t object_size, uintp
     destination->used        = indicator_bits;
     destination->arena_size  = arena_size;
     destination->object_size = object_size;
+    destination->used_count  = 0;
 
     return EXIT_SUCCESS;
 }
@@ -44,6 +45,10 @@ int MemoryArena_Create(memory_arena_t* destination, uintptr_t object_size, uintp
 int MemoryArena_Destroy(memory_arena_t* arena)
 {
     if (arena == NULL) return EINVAL;
+    if (arena->used_count != 0) {
+	    // There are still allocated memory areas in this arena
+	    return EBUSY;
+    }
 
     free(arena->memory);
     free(arena->used);
@@ -51,6 +56,7 @@ int MemoryArena_Destroy(memory_arena_t* arena)
     arena->used   = NULL;
     arena->arena_size  = 0;
     arena->object_size = 0;
+    arena->used_count  = 0;
 
     return EXIT_SUCCESS;
 }
@@ -100,6 +106,10 @@ int MemoryArena_Allocate(memory_arena_t* arena, void** pointer_destination)
     if (pointer_destination == NULL) {
         return EDESTADDRREQ;
     }
+    if (arena->used_count == arena->arena_size) {
+	// This arena has no free addresses
+	return ENOMEM;
+    }
 
     uintptr_t free_index;
     if (MemoryArena_NextFreeIndex(arena->used, arena->arena_size, &free_index)) {
@@ -113,6 +123,7 @@ int MemoryArena_Allocate(memory_arena_t* arena, void** pointer_destination)
     uintptr_t byte_index =  free_index / 8;
     uintptr_t bit_index  = free_index % 8;
     arena->used[byte_index] |= 0x80 >> bit_index;
+    arena->used_count += 1;
 
     return EXIT_SUCCESS;
 }
@@ -142,13 +153,13 @@ int MemoryArena_Free(memory_arena_t *arena, void *address)
     uintptr_t byte_index = address_index / 8;
     uintptr_t bit_index  = address_index % 8;
 
-    if (arena->used[byte_index] & (0x80 >> bit_index)) {
-        // Was used, mark as free
-        arena->used[byte_index] ^= 0x80 >> bit_index;
-    } else {
+    if (~ (arena->used[byte_index] & (0x80 >> bit_index))) {
         // Is not used, can't free
         return EBUSY;
     }
+    
+    arena->used[byte_index] ^= 0x80 >> bit_index;
+    arena->used_count -= 1;
 
     return EXIT_SUCCESS;
 }
