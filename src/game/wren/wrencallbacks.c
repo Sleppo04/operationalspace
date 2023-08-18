@@ -15,29 +15,36 @@ void WrenCallback_ErrorFn(WrenVM* vm, WrenErrorType type, const char* module, in
 {
 	WrenUserData* data = (WrenUserData*) wrenGetUserData(vm);
 	
-	WrenError* errors = realloc(data->errors, (data->error_count + 1) * sizeof(WrenError));
-	if (errors == NULL) {
-		return; //ENOMEM
+	char* format_string;
+	switch (type) {
+		case WREN_ERROR_COMPILE:
+			format_string = "\n[Compilation Error]\n%s\nLine %d in module %s\n";
+			break;
+		case WREN_ERROR_RUNTIME:
+			format_string = "\n[Runtime Error]\n%s\nLine %d in module %s\n";
+			break;
+		case WREN_ERROR_STACK_TRACE:
+			format_string = "Function\n%s\nLine %d in module %s\n";
+			break;
 	}
 
 	size_t module_length  = strlen(module);
 	size_t message_length = strlen(message);
+	size_t int_length     = 15; // Just to be sure
+	size_t format_length  = strlen(format_string);
+	size_t total_length   = module_length + message_length + int_length + format_length + 1;
 
-	data->errors = errors;
-	
-	WrenError* new_error = data->errors + data->error_count;
-	new_error->type = type;
-	new_error->module = malloc(module_length + 1);
-	if (new_error->module != NULL) {
-		strcpy(new_error->module, module);
+	char* string = malloc(total_length);
+	if (string == NULL) {
+		//TODO: Error handling ENOMEM
+		return;
 	}
-	new_error->line = line;
-	new_error->message = malloc(message_length + 1);
-	if (new_error->message != NULL) {
-		strcpy(new_error->message, message);
-	}
+	snprintf(string, total_length, format_string, message, line, module);
 
-	data->error_count++;
+	WrenLogs_WriteMessage(data->errors, string);
+	//TODO: Error checking here
 
-	//TODO: Memory limitation?
+	free(string);
+
+	return;
 }
