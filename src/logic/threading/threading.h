@@ -10,7 +10,7 @@ typedef HANDLE syssemaphore_t;
 #elif defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
 
 #include <pthread.h>
-#include <sys/semaphore.h>
+#include <semaphore.h>
 typedef pthread_t systhread_t;
 typedef sem_t syssemaphore_t;
 
