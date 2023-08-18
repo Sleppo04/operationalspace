@@ -5,9 +5,10 @@
 #include <stdlib.h>
 
 typedef struct ScriptConfig {
-    size_t   MaxScriptMemory;
-    uint64_t MaxScriptOpcodes;
-    time_t   ScriptTimeoutSeconds;
+    size_t    MaxScriptMemory;
+    uint64_t  MaxScriptOpcodes;
+    time_t    ScriptTimeoutSeconds;
+    uintptr_t ScriptLogMemory;
 } script_config_t;
 
 typedef struct WorldConfig {
