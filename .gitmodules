@@ -1,3 +1,3 @@
-[submodule "src/3rdparty/wren"]
-	path = src/3rdparty/wren
-	url = https://github.com/wren-lang/wren
+[submodule "src/3rdparty/os-gravity"]
+	path = src/3rdparty/os-gravity
+	url = https://github.com/Hyalunar/os-gravity.git
