@@ -6,7 +6,7 @@ mkdir -p bin
 # Make wren libraries
 current_directory=`pwd`
 cd src/3rdparty/os-wren/projects/make/
-make
+make wren
 cd $current_directory
 
 # Make operationalspace executable
