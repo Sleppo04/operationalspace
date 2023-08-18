@@ -5,7 +5,7 @@
 #include "wrenerror.h"
 
 typedef struct WrenEngine {
-    WrenVM* vm;
+    WrenVM*    vm;
     WrenError* errors;
 } wren_engine_t;
 
