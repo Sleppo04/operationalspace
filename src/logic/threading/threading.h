@@ -1,6 +1,9 @@
 #ifndef THREADING_H
 #define THREADING_H
 
+#include <stdlib.h>
+// For EXIT_FAILURE, NULL and other stuff
+
 #if defined _WIN32
 
 #include <windows.h>
