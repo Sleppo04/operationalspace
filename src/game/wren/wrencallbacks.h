@@ -1,6 +1,9 @@
 #ifndef WRENCALLBACKS_H
 #define WRENCALLBACKS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "wren.h"
 #include "wrenuserdata.h"
 #include "wrenlogs.h"

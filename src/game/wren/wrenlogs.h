@@ -22,6 +22,6 @@ int WrenLogs_Create(WrenLogs* destination, uintptr_t max_memory);
 int WrenLogs_Destroy(WrenLogs* logs);
 
 // The message will be copied, the caller keeps ownership of the memory passed into the function
-int WrenLogs_WriteMessage(WrenLogs* logs, char* message);
+int WrenLogs_WriteMessage(WrenLogs* logs, const char* message);
 
 #endif //WRENLOGS_H

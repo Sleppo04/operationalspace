@@ -56,7 +56,7 @@ int WrenLogs_RemoveMessage(WrenLogs* logs)
 	return EXIT_SUCCESS;
 }
 
-int WrenLogs_WriteMessage(WrenLogs* logs, char* message)
+int WrenLogs_WriteMessage(WrenLogs* logs, const char* message)
 {
 	if (logs == NULL) {
 		return EINVAL;
@@ -93,7 +93,7 @@ int WrenLogs_WriteMessage(WrenLogs* logs, char* message)
 	// Copy the message
 	memcpy(owned_message, message, message_length);
 	
-	node->message = message;
+	node->message = owned_message;
 
 	if (logs->head == NULL) {
 		logs->head = node;

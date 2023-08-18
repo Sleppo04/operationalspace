@@ -15,7 +15,7 @@ void WrenCallback_ErrorFn(WrenVM* vm, WrenErrorType type, const char* module, in
 {
 	WrenUserData* data = (WrenUserData*) wrenGetUserData(vm);
 	
-	WrenError* errors = realloc(data->errors, (error_count + 1) * sizeof(WrenError));
+	WrenError* errors = realloc(data->errors, (data->error_count + 1) * sizeof(WrenError));
 	if (errors == NULL) {
 		return; //ENOMEM
 	}
