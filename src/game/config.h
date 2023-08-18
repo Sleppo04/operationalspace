@@ -9,6 +9,7 @@ typedef struct ScriptConfig {
     uint64_t  MaxScriptOpcodes;
     time_t    ScriptTimeoutSeconds;
     uintptr_t ScriptLogMemory;
+    uintptr_t ScriptErrorMemory;
 } script_config_t;
 
 typedef struct WorldConfig {
