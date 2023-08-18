@@ -35,7 +35,7 @@ int Game_TickRound(game_t* game)
 
 
     for (uint16_t player_index = current_player_index[0]; player_index < game->player_count; player_index++) {
-        player_ship_list = game->ship_lists + player_index;
+        player_ship_list = &((game->players + player_index)->ship_list);
         for (uint32_t ship_index = current_ship_index[0]; ship_index < player_ship_list->size; ship_index++) {
             current_ship = player_ship_list->array[ship_index];
 
@@ -63,8 +63,8 @@ int Game_TickStep(game_t* game)
 
     uint16_t* current_player_index = &(game->tick_current_player);
     uint32_t* current_ship_index   = &(game->tick_current_ship);
-    arraylist_t*  current_ship_list = game->ship_lists + current_player_index[0];
     player_t*     player            = game->players + current_player_index[0];
+    arraylist_t*  current_ship_list = &(player->ship_list); 
     gameobject_t* ship;
     int tick_code;
 
@@ -91,9 +91,10 @@ int Game_TickSingle(game_t* game)
     }
 
 
-    uint16_t* current_player_index = &(game->tick_current_player);
-    uint32_t* current_ship_index   = &(game->tick_current_ship);
-    arraylist_t* current_player_list = game->ship_lists + current_player_index[0];
+    uint16_t* current_player_index   = &(game->tick_current_player);
+    uint32_t* current_ship_index     = &(game->tick_current_ship);
+    player_t* current_player         = game->players + current_player_index[0];
+    arraylist_t* current_player_list = &(current_player->ship_list); 
 
     if (current_ship_index[0] > current_player_list->size) {
         current_player_index[0] = (current_player_index[0] + 1) % game->player_count;
@@ -102,8 +103,8 @@ int Game_TickSingle(game_t* game)
     }
 
 
-    gameobject_t*   current_ship      = current_player_list->array[current_ship_index[0]];
-    player_t* current_player    = game->players + current_player_index[0];
+    gameobject_t* current_ship = current_player_list->array[current_ship_index[0]];
+    current_player             = game->players + current_player_index[0];
 
     int tick_code = Game_TickShip(game, current_player, current_ship);
 

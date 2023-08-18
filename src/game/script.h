@@ -4,11 +4,11 @@
 #include "world.h"
 
 #include "wren.h"
+#include "wren/wrenengine.h"
 
-// TODO: Find out whether forward declarations are the perfect solution for this
 struct Game;
 
-typedef int (*CScriptFunction) (const world_t* world, void** data_pointer);
+typedef int (*CScriptFunction) (struct Game* game, void** data_pointer);
 
 typedef enum ScriptType {
 	SCRIPT_WREN,
@@ -17,12 +17,10 @@ typedef enum ScriptType {
 
 typedef struct CSCriptData {
 	CScriptFunction c_function;
-	void**          data_pointer;
 } c_script_data_t;
 
 typedef struct WrenScriptData {
 	WrenHandle* function_handle;
-	WrenVM*     vm;
 } wren_script_data_t;
 
 typedef union ScriptData {
@@ -36,9 +34,10 @@ typedef struct Script {
 } script_t;
 
 typedef struct PlayerScripts {
-	script_t ship_tick_script;
-	WrenVM*  vm;
-	void*    c_data;
+	script_t      ship_tick_script;
+	script_t      round_tick_script;
+	wren_engine_t wren;
+	void*         c_data;
 } player_scripts_t;
 
 #endif //SCRIPT_H

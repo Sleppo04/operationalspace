@@ -307,7 +307,7 @@ int MemoryArena_FreeArray(memory_arena_t* arena, void* array_start, uintptr_t ar
         return ENOENT;
     }
 
-    uintptr_t object_index = (array_start - arena_start) / arena->object_size;
+    uintptr_t object_index = ((uintptr_t) (array_start) - (uintptr_t) (arena_start)) / arena->object_size;
     uint8_t byte;
     uintptr_t byte_index;
     uintptr_t bit_index;

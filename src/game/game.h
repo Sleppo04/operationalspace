@@ -4,11 +4,15 @@
 #include "player.h"
 
 typedef struct Game {
-	arraylist_t* ship_lists;
+	// Player structs holding all informations about the players
 	player_t*    players;
-	uint16_t     tick_current_player;  // Never access this variable, only use it to pass it to the tick function, it may be inaccurate when accessed while ticking
-	uint32_t     tick_current_ship;    // Never access this variable, only use it to pass it to the tick function, it may be inaccurate when accessed while ticking
 	uint16_t     player_count;
+	
+	// Never access these variables, only use it to pass it to the tick function, it may be inaccurate when accessed while ticking
+	uint16_t     tick_current_player;  
+	uint32_t     tick_current_ship; 
+
+	// current world the game takes place in
 	world_t*     world;
 } game_t;
 
