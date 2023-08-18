@@ -40,21 +40,11 @@ int WrenLogs_RemoveMessage(WrenLogs* logs)
 	
 	int free_code;
 	// + 1 for \0 byte
-	size_t length = strlen(current_head->message) + 1;
-	free_code = MemoryPool_FreeArray(&(logs->memory_pool), current_head->message, length);
-	if (free_code) {
-		// This should not happen
-		return free_code;
-	}
-
+	size_t length = sizeof(MessageNode*) + strlen(current_head->message) + 1;
+	// They are continously allocated, and can be freed together
 	free_code = MemoryPool_FreeArray(&(logs->memory_pool), current_head, sizeof(MessageNode));
 	if (free_code) {
 		// This should not happen by design
-		// If it does, the message is freed, but the node is not
-		logs->head = next_head;
-		if (logs->head == NULL) {
-			logs->tail = NULL;
-		}
 		return free_code;
 	}
 	
