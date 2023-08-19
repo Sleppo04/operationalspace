@@ -1,6 +1,6 @@
-#include "wrenlogs.h"
+#include "rotatinglogs.h"
 
-int WrenLogs_Create(WrenLogs* logs, uintptr_t max_memory)
+int RotatingLogs_Create(RotatingLogs* logs, uintptr_t max_memory)
 {
 	if (logs == NULL) {
 		return EDESTADDRREQ;
@@ -17,7 +17,7 @@ int WrenLogs_Create(WrenLogs* logs, uintptr_t max_memory)
 	return EXIT_SUCCESS;
 }
 
-int WrenLogs_Destroy(WrenLogs* logs)
+int RotatingLogs_Destroy(RotatingLogs* logs)
 {
 	logs->head = NULL;
 	logs->tail = NULL;	
@@ -26,7 +26,7 @@ int WrenLogs_Destroy(WrenLogs* logs)
 	return MemoryPool_ForceDestroy(&(logs->memory_pool));
 }
 
-int WrenLogs_RemoveMessage(WrenLogs* logs)
+int WrenLogs_RemoveMessage(RotatingLogs* logs)
 {
 	if (logs == NULL) {
 		return EINVAL;
@@ -35,12 +35,12 @@ int WrenLogs_RemoveMessage(WrenLogs* logs)
 		return ENXIO;
 	}
 
-	MessageNode* current_head = logs->head;
-	MessageNode* next_head    = current_head->next;
+	LogNode* current_head = logs->head;
+	LogNode* next_head    = current_head->next;
 	
 	int free_code;
 	// + 1 for \0 byte
-	size_t length = sizeof(MessageNode*) + strlen(current_head->message) + 1;
+	size_t length = sizeof(LogNode*) + strlen(current_head->message) + 1;
 	// They are continously allocated, and can be freed together
 	free_code = MemoryPool_FreeArray(&(logs->memory_pool), current_head, length);
 	if (free_code) {
@@ -56,7 +56,7 @@ int WrenLogs_RemoveMessage(WrenLogs* logs)
 	return EXIT_SUCCESS;
 }
 
-int WrenLogs_WriteMessage(WrenLogs* logs, const char* message)
+int RotatingLogs_WriteMessage(RotatingLogs* logs, const char* message)
 {
 	if (logs == NULL) {
 		return EINVAL;
@@ -67,7 +67,7 @@ int WrenLogs_WriteMessage(WrenLogs* logs, const char* message)
 
 	// + 1 for \0 byte
 	size_t message_length = strlen(message) + 1;
-	size_t struct_length  = sizeof(MessageNode);
+	size_t struct_length  = sizeof(LogNode);
 	size_t allocation_length = struct_length + message_length;
 
 	char* owned_message;
@@ -87,7 +87,7 @@ int WrenLogs_WriteMessage(WrenLogs* logs, const char* message)
 	// else: allocation was successfull
 	
 	// Fun pointer stuff because of continous allocation
-	MessageNode* node = (MessageNode*) owned_message;
+	LogNode* node = (LogNode*) owned_message;
 	owned_message     = owned_message + struct_length;
 
 	// Copy the message
