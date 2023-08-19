@@ -3,7 +3,7 @@ setlocal enabledelayedexpansion
 
 mkdir bin
 
-rem TODO: Make Wren
+rem TODO: Make $SCRIPTING_LANGUAGE
 
 rem Make OperationalSpace executables
 SET sourcefiles=

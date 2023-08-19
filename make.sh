@@ -3,11 +3,7 @@
 # Create bin directory
 mkdir -p bin
 
-# Make wren libraries
-current_directory=`pwd`
-cd src/3rdparty/os-wren/projects/make/
-make wren
-cd $current_directory
+# TODO: Make $scripting_language
 
 # Make operationalspace executable
 source_files="`find src/game -type f -name *.c` `find src/ui -type f -name *.c` `find src/logic -type f -name *.c` src/main.c"
