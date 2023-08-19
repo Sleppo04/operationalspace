@@ -1,3 +1,0 @@
-[submodule "src/3rdparty/os-gravity"]
-	path = src/3rdparty/os-gravity
-	url = https://github.com/Hyalunar/os-gravity.git
