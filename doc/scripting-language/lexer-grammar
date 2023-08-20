@@ -6,6 +6,7 @@ Tokens:
 	"break" 	TOKEN_BREAK
 	"return"	TOKEN_RETURN
 	"function"	TOKEN_FUNCTION
+	"var"		TOKEN_VAR
 	"("		TOKEN_LEFT_PARENTHESES
 	")"		TOKEN_RIGHT_PARENTHESES
 	"{"		TOKEN_LEFT_BRACE
@@ -13,3 +14,16 @@ Tokens:
 	"type"		TOKEN_TYPE
 	"persist"	TOKEN_PERSIST
 	"include"	TOKEN_INCLUDE
+
+	"+"		TOKEN_PLUS
+	"-"		TOKEN_MINUS
+	"*"		TOKEN_TIMES
+	"/"		TOKEN_DIVIDE
+
+	"false"		TOKEN_FALSE
+	"true"		TOKEN_TRUE
+
+	"[_a-zA-Z][a-zA-Z0-9_]+"	TOKEN_IDENTIFIER
+	"[1-9][0-9]+"			TOKEN_INT_LITERAL
+	"[1-9][0-9]+\.[0-9]+"		TOKEN_FLOAT_LITERAL
+	"\"*\""				TOKEN_STRING_LITERAL
