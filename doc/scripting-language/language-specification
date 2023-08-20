@@ -1,28 +1,40 @@
-The OperationalSpace Programming language shall have a name.
-It is not a general-purpose scripting language but rather a scripting language specialized on re-occurring calls to the same script.
+OSLang Specifications
+2023 Sleppo04, Hyalunar
+
+
+
+=== INTRODUCTION ===============================================================
+
+The OperationalSpace Programming language shall have a name. It is not a
+general-purpose scripting language but rather a scripting language specialized
+on re-occurring calls to the same script.
 
 It will feature:
-	compile-time includes
-	static typing
-	custom data types
-	functions
-	variables persistent in-between runs
+* compile-time includes
+* static typing
+* custom data types
+* functions
+* variables persistent in-between runs
 
-Programs shall have the following structure:
-	----- program.extension -----
-	include "filename"
-	...
-	Statements
-	...
-	-----        EOF        -----
 
-The process of compiling:
-	User-Supplied Environment-Structure (global namespace)
-	Lexer converts the source into tokens
-	Parser parses the tokens into an abstract Syntax Tree
-	Compiler compiles the Abstract Syntax Tree to Bytecode
 
-How to execute a program:
-	Create an environment
-	Compile the source
-	Execute the bytecode on the same environment
+=== STRUCTURE ==================================================================
+
+Scripts written in the language have to follow a specific structure in order to
+be properly recognized by the compiler. The structure is roughly as follows:
+
+* List of includes which are required by the program
+* List of functions declarations
+* The "main" program code in global space
+* EOF
+
+Embedding the programming language is a two-step process. First, you have to
+provide a method for the computer to turn the script into a format it can
+understand and execute. For that, the compiler is required. The compiler
+roughly works as follows:
+
+* Source is given to the Lexer
+* Lexer converts the source into a stream of tokens
+* Parser parses the token stream into an abstract syntax tree
+* Compiler compiles the abstract syntax tree into executable bytecode and embeds
+  metadata about the script if necessary

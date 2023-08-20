@@ -21,6 +21,8 @@ Language-Unspecific keywords
 	")"		TOKEN_RIGHT_PARENTHESIS
 	"{"		TOKEN_LEFT_BRACE
 	"}"		TOKEN_RIGHT_BRACE
+	"<"     TOKEN_LESS_THAN
+	">"     TOKEN_GREATER_THAN
 	","		TOKEN_COMMA
 	";"		TOKEN_SEMICOLON
 	":"     TOKEN_COLON
