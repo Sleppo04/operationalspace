@@ -1,4 +1,7 @@
 Tokens:
+
+	TOKEN_EOF
+
 Language-specific keywords
 	"while"		TOKEN_WHILE
 	"if"		TOKEN_IF
