@@ -3,18 +3,57 @@ include:
 	TOKEN_INCLUDE TOKEN_STRING_LITERAL
 
 persist:
-	TOKEN_PERSIST TOKEN_IDENTIFIER
+	TOKEN_PERSIST TOKEN_IDENTIFIER TOKEN_SEMICOLON
+
+variable definition:
+	TOKEN_VAR TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_SEMICOLON
+
+type_definition:
+	TOKEN_TYPE TOKEN_IDENTIFIER
+	TOKEN_LEFT_BRACE
+		(TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_SEMICOLON)*
+	TOKEN_RIGHT_BRACE
+
+value:
+	TOKEN_IDENTIFIER
+|	TOKEN_INT_LITERAL
+|	TOKEN_FLOAT_LITERAL
+|	TOKEN_STRING_LITERAL
+|	TOKEN_FALSE
+|	TOKEN_TRUE
+
+binop_expression:
+	expression TOKEN_PLUS expression
+|	expression TOKEN_MINUS expression
+|	expression TOKEN_ASTERISK expression
+|	expression TOKEN_ASTERISK expression
+
+unop_expression:
+	TOKEN_MINUS expression
+
+expression:
+	value
+|	binop_expression
+|	unop_expression
+|	TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
 
 statement:
-	variable_declaration
-		
+	variable_definition
+|	persist
+|	expression
+
+compound_statements_inner:
+	statement compound_statements_inner
+|	statement
+
+compound_statement:
+	TOKEN_LEFT_BRACE compound_statements_inner TOKEN_RIGHT_BRACE
+|	statement
 
 function:
 	TOKEN_FUNCTION TOKEN_IDENTIFIER TOKEN_IDENTIFIER 
 	TOKEN_LEFT_PARENTHESES
-		(TOKEN_IDENTIFIER TOKEN_IDENTIFIER, TOKEN_COMMA)* 
+		(TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_COMMA)* 
 		TOKEN_IDENTIFIER TOKEN_IDENTIFIER
 	TOKEN_RIGHT_PARENTHESES
-	TOKEN_LEFT_BRACE
-		statement*;
-	TOKEN_RIGHT_BRACE
+	compound_statement
