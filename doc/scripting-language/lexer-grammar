@@ -29,7 +29,7 @@ Language-Unspecific keywords
 	"false"		TOKEN_FALSE
 	"true"		TOKEN_TRUE
 
-	"[_a-zA-Z][a-zA-Z0-9_]+"	TOKEN_IDENTIFIER
-	"[1-9][0-9]+"			TOKEN_INT_LITERAL
-	"[1-9][0-9]+\.[0-9]+"		TOKEN_FLOAT_LITERAL
-	"\"*\""				TOKEN_STRING_LITERAL
+	"[_a-zA-Z][a-zA-Z0-9_]*"	TOKEN_IDENTIFIER
+	"[1-9][0-9]*"				TOKEN_INT_LITERAL
+	"[1-9][0-9]*\.[0-9]+"		TOKEN_FLOAT_LITERAL
+	"\"*\""						TOKEN_STRING_LITERAL
