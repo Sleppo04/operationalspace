@@ -1,0 +1,13 @@
+Tokens:
+	"while"		TOKEN_WHILE
+	"if"		TOKEN_IF
+	"elif"		TOKEN_ELIF
+	"else"		TOKEN_ELSE
+	"break" 	TOKEN_BREAK
+	"return"	TOKEN_RETURN
+	"function"	TOKEN_FUNCTION
+	"("		TOKEN_LEFT_PARENTHESES
+	")"		TOKEN_RIGHT_PARENTHESES
+	"{"		TOKEN_LEFT_BRACE
+	"}"		TOKEN_RIGHT_BRACE
+	"type"		TOKEN_TYPE

@@ -1,0 +1,19 @@
+The OperationalSpace Programming language shall have a name.
+It is not a general-purpose scripting language but rather a scripting language specialized on re-occurring calls to the same script.
+
+It will feature:
+	compile-time includes
+	static typing
+	custom data types
+	functions
+	variables persistent in-between runs
+
+Programs shall have the following structure:
+	----- program.extension -----
+	include "filename"
+	...
+	persistent variables
+	...
+	Statements
+	...
+	-----        EOF        -----
