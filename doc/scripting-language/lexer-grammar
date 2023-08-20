@@ -12,6 +12,7 @@ Language-specific keywords
 	"persist"	TOKEN_PERSIST
 	"include"	TOKEN_INCLUDE
 
+Language-Unspecific keywords
 	"["		TOKEN_LEFT_BRACKET
 	"]"		TOKEN_RIGHT_BRACKET
 	"("		TOKEN_LEFT_PARENTHESES
