@@ -11,6 +11,8 @@ Language-specific keywords
 	"type"		TOKEN_TYPE
 	"persist"	TOKEN_PERSIST
 	"include"	TOKEN_INCLUDE
+	"false"		TOKEN_FALSE
+	"true"		TOKEN_TRUE
 
 Language-Unspecific keywords
 	"["		TOKEN_LEFT_BRACKET
@@ -26,9 +28,6 @@ Language-Unspecific keywords
 	"-"		TOKEN_MINUS
 	"*"		TOKEN_ASTERISK
 	"/"		TOKEN_SLASH
-
-	"false"		TOKEN_FALSE
-	"true"		TOKEN_TRUE
 
 	"[_a-zA-Z][a-zA-Z0-9_]*"	TOKEN_IDENTIFIER
 	"[1-9][0-9]*"				TOKEN_INT_LITERAL
