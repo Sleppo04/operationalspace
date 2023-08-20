@@ -17,3 +17,19 @@ Programs shall have the following structure:
 	Statements
 	...
 	-----        EOF        -----
+
+The process of compiling:
+	User-Supplied Environment-Structure (global namespace)
+	Lexer converts the source into tokens
+	Parser parses the tokens into an abstract Syntax Tree
+		|  Persistent variables are not part of the Tree
+		| but rather registered in the environment
+		|  Same goes with functions and types
+		| 
+		| This is because they don't affect the executed code but only the code executing the code
+	Compiler compiles the Abstract Syntax Tree to Bytecode
+
+How to execute a program:
+	Create an environment
+	Compile the source
+	Execute the bytecode on the same environment

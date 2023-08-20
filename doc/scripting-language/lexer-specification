@@ -1,0 +1,7 @@
+The lexer will convert a source code ascii string into a series of tokens
+
+This task is accomplished by:
+	Reading the include statements
+	=> Reading the include statements of the included files
+	
+	Tokenize all the files in reverse order of inclusion into a single token-stream
