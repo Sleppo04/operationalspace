@@ -24,8 +24,8 @@ Language-Unspecific keywords
 	":"     TOKEN_COLON
 	"+"		TOKEN_PLUS
 	"-"		TOKEN_MINUS
-	"*"		TOKEN_TIMES
-	"/"		TOKEN_DIVIDE
+	"*"		TOKEN_ASTERISK
+	"/"		TOKEN_SLASH
 
 	"false"		TOKEN_FALSE
 	"true"		TOKEN_TRUE
