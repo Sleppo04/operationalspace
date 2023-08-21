@@ -59,6 +59,25 @@ statementlist       : statement statementlist
 compound_statement  : TOKEN_LEFT_BRACE statementlist TOKEN_RIGHT_BRACE
                     | statement
 
+if                  : TOKEN_IF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS function_compound elif_statement else_statement
+
+elif                : TOKEN_ELIF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS function_compound
+                    |
+
+else                : TOKEN_ELSE function_compound
+
+while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS while_compound
+
+while_compound      : TOKEN_LEFT_BRACE while_list TOKEN_RIGHT_BRACE
+                    | while_statement
+
+while_list          : while_statement while_list
+                    | while_statement
+
+while_statement     : variable_definition
+                    | expression
+                    | assignment
+
 // Expression stuff
 value               : TOKEN_IDENTIFIER
                     | TOKEN_INT_LITERAL
