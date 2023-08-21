@@ -14,9 +14,18 @@ persist             : TOKEN_PERSIST TOKEN_IDENTIFIER
 
 variable_definition : TOKEN_VAR type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
 
+
+member              : type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
+
+memberlist          : member memberlist
+                    | member
+
+type_definition     : TOKEN_TYPE type_identifier TOKEN_LEFT_BRACE memberlist TOKEN_RIGHT_BRACE
+
 statement           : variable_definition
                     | persist
                     | expression
+					| type_definition
 
 statementlist       : statement statementlist
                     | statement
@@ -40,10 +49,12 @@ binop_expression    : expression TOKEN_PLUS expression
 
 unop_expression     : TOKEN_MINUS expression
 
+paren_expression    : TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
+
 expression          : value
                     | binop_expression
                     | unop_expression
-                    | TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
+                    | paren_expression
 
 type_identifier	    : TOKEN_IDENTIFIER
 
