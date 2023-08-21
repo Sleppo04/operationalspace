@@ -31,6 +31,7 @@ typedef void module_t; // Required for naughty hacky thingies UwU
 
 typedef struct baseModule_s {
     // Stat Modifiers
+    uint32_t id;
     stats_t statMods;
 } base_module_t;
 
