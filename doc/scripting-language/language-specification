@@ -9,11 +9,12 @@ The OperationalSpace Programming language shall have a name. It is not a
 general-purpose scripting language but rather a scripting language specialized
 on re-occurring calls to the same script.
 
-It will feature:
+It features:
 * compile-time includes
 * static typing
 * custom data types
 * functions
+* strings and mathematical vectors up to 4 dimensions as built-ins
 * variables persistent in-between runs
 
 
@@ -38,3 +39,30 @@ roughly works as follows:
 * Parser parses the token stream into an abstract syntax tree
 * Compiler compiles the abstract syntax tree into executable bytecode and embeds
   metadata about the script if necessary
+
+
+
+=== DATATYPES ==================================================================
+
+The language features several different built-in data types, as well as the
+possibility to define your own data types.
+
+
+
+--- Built-in datatypes ---------------------------------------------------------
+ NAME      | KEYWORD | DESCRIPTION
+-----------+---------+----------------------------------------------------------
+ Integer   | int     | 32bit signed integer value in two's complement. Can store
+           |         | values from -2^31 up to 2^31-1.
+ Float     | float   | 32bit floating point number, stored according to IEEE 754.
+ Boolean   | bool    | Boolean value. Can only store true/false. Guaranteed to be
+           |         | at most 8bits in memory.
+ String    | string  | ASCII Character string. Implemented as opaque type. No
+           |         | guaranteed layout or sizen in memory.
+ Vector    | vecX    | X-dimensional mathematical vector with 2 <= x <= 4. Imp-
+           |         | lements custom access-operators similar to GLSLs swizzle.
+           |         | Size in memory depends on X.
+-----------+---------+----------------------------------------------------------
+
+Custom datatypes can be implemented using the type keyword, and are composed of
+built in datatypes.
