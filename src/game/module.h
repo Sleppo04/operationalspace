@@ -12,9 +12,18 @@
 #define NUM_MODULETYPES 4 // Number of existing module types, need to update manually :(
 typedef enum moduleType_e
 {
+    // Modules whose sole purpose is not providing stats but also functions
+    // Module Actions are implemented in C
     MODULETYPE_UTILITY,
+
+    // Modules that can be scripted
+    // Module Actions implemented in a scripting language
     MODULETYPE_CUSTOM,
+
+    // Modules used for killing stuff
     MODULETYPE_WEAPON,
+
+    // Modules that provide stats for the ship e.g. engines, hull, armor, shields
     MODULETYPE_STATS
 } moduleType_t;
 
