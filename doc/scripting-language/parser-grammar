@@ -77,6 +77,8 @@ while_list          : while_statement while_list
 while_statement     : variable_definition
                     | expression
                     | assignment
+                    | TOKEN_BREAK
+                    | TOKEN_RETURN
 
 // Expression stuff
 value               : TOKEN_IDENTIFIER
