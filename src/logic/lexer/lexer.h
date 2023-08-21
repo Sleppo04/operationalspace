@@ -15,26 +15,26 @@ typedef struct lexer_s
 
 typedef enum tokenType_e
 {
-    TT_EOF,
-    TT_LEFT_BRACKET,      // "["
-    TT_RIGHT_BRACKET,     // "]"
-    TT_LEFT_PARENTHESIS,  // "("
-    TT_RIGHT_PARENTHESIS, // ")"
-    TT_LEFT_BRACE,        // "{"
-    TT_RIGHT_BRACE,       // "}"
-    TT_LESS_THAN,         // "<"
-    TT_GREATER_THAN,      // ">"
-    TT_COMMA,             // ","
-    TT_SEMICOLON,         // ";"
-    TT_COLON,             // ":"
-    TT_PLUS,              // "+"
-    TT_MINUS,             // "-"
-    TT_ASTERISK,          // "*"
-    TT_SLASH,             // "/"    
-    TT_IDENTIFIER,
-    TT_INT_LITERAL,
-    TT_FLOAT_LITERAL,
-    TT_STRING_LITERAL
+    TT_EOF               = 0,
+    TT_LEFT_BRACKET      = 1,  // "["
+    TT_RIGHT_BRACKET     = 2,  // "]"
+    TT_LEFT_PARENTHESIS  = 3,  // "("
+    TT_RIGHT_PARENTHESIS = 4,  // ")"
+    TT_LEFT_BRACE        = 5,  // "{"
+    TT_RIGHT_BRACE       = 6,  // "}"
+    TT_LESS_THAN         = 7,  // "<"
+    TT_GREATER_THAN      = 8,  // ">"
+    TT_COMMA             = 9,  // ","
+    TT_SEMICOLON         = 10, // ";"
+    TT_COLON             = 11, // ":"
+    TT_PLUS              = 12, // "+"
+    TT_MINUS             = 13, // "-"
+    TT_ASTERISK          = 14, // "*"
+    TT_SLASH             = 15, // "/"    
+    TT_IDENTIFIER        = 16,
+    TT_INT_LITERAL       = 17,
+    TT_FLOAT_LITERAL     = 18,
+    TT_STRING_LITERAL    = 19
 } tokenType_t;
 
 typedef union tokenValue_u
