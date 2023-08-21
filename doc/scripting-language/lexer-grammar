@@ -34,6 +34,7 @@ Language-Unspecific keywords
 	"-"		TOKEN_MINUS
 	"*"		TOKEN_ASTERISK
 	"/"		TOKEN_SLASH
+	"."		TOKEN_DOT
 
 	"[_a-zA-Z][a-zA-Z0-9_]*"	TOKEN_IDENTIFIER
 	"[1-9][0-9]*"				TOKEN_INT_LITERAL
