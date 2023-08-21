@@ -34,6 +34,8 @@ Language-Unspecific keywords
 	"/"		TOKEN_SLASH
 	"-"		TOKEN_MINUS
 	"+"		TOKEN_PLUS
+	"&"		TOKEN_AMPERSAND
+	"!"		TOKEN_BANG
 	"|"		TOKEN_PIPE
 	"."		TOKEN_DOT
 
