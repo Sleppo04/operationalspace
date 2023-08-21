@@ -1,59 +1,41 @@
-Statements:
-include:
-	TOKEN_INCLUDE TOKEN_STRING_LITERAL
+/** script is the goal of the compiler **/
+script              : includelist statementlist TOKEN_EOF 
 
-persist:
-	TOKEN_PERSIST TOKEN_IDENTIFIER TOKEN_SEMICOLON
+includelist         : include includelist
+                    | include
 
-variable definition:
-	TOKEN_VAR TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_SEMICOLON
+include             : TOKEN_INCLUDE TOKEN_STRING_LITERAL TOKEN_SEMICOLON
 
-type_definition:
-	TOKEN_TYPE TOKEN_IDENTIFIER
-	TOKEN_LEFT_BRACE
-		(TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_SEMICOLON)*
-	TOKEN_RIGHT_BRACE
+statement           : variable_definition
+                    | persist
+                    | expression
 
-value:
-	TOKEN_IDENTIFIER
-|	TOKEN_INT_LITERAL
-|	TOKEN_FLOAT_LITERAL
-|	TOKEN_STRING_LITERAL
-|	TOKEN_FALSE
-|	TOKEN_TRUE
+compound_statement  : TOKEN_LEFT_BRACE statementlist TOKEN_RIGHT_BRACE
+                    | statement
 
-binop_expression:
-	expression TOKEN_PLUS expression
-|	expression TOKEN_MINUS expression
-|	expression TOKEN_ASTERISK expression
-|	expression TOKEN_ASTERISK expression
+statementlist       : statement statementlist
+                    | statement
 
-unop_expression:
-	TOKEN_MINUS expression
+binop_expression    : expression TOKEN_PLUS expression
+                    | expression TOKEN_MINUS expression 
+                    | expression TOKEN_ASTERISK expression
+                    | expression TOKEN_SLASH expression
+                    | expression TOKEN_EQUALS expression
 
-expression:
-	value
-|	binop_expression
-|	unop_expression
-|	TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
+unop_expression     : TOKEN_MINUS expression
 
-statement:
-	variable_definition
-|	persist
-|	expression
+expression          : value
+                    | binop_expression
+                    | unop_expression
+                    | TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
 
-compound_statements_inner:
-	statement compound_statements_inner
-|	statement
+variable_definition : TOKEN_VAR TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_SEMICOLON
 
-compound_statement:
-	TOKEN_LEFT_BRACE compound_statements_inner TOKEN_RIGHT_BRACE
-|	statement
+value               : TOKEN_IDENTIFIER
+                    | TOKEN_INT_LITERAL
+                    | TOKEN_FLOAT_LITERAL
+                    | TOKEN_STRING_LITERAL
+                    | TOKEN_FALSE
+                    | TOKEN_TRUE
 
-function:
-	TOKEN_FUNCTION TOKEN_IDENTIFIER TOKEN_IDENTIFIER 
-	TOKEN_LEFT_PARENTHESES
-		(TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_COMMA)* 
-		TOKEN_IDENTIFIER TOKEN_IDENTIFIER
-	TOKEN_RIGHT_PARENTHESES
-	compound_statement
+function            : TOKEN_FUNCTION TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_LEFT_PARENTHESES (TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_COMMA)* TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_RIGHT_PARENTHESES compound_statement
