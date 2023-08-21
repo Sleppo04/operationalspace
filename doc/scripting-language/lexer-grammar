@@ -26,6 +26,7 @@ Language-Unspecific keywords
 	"}"		TOKEN_RIGHT_BRACE
 	"<"     TOKEN_LESS_THAN
 	">"     TOKEN_GREATER_THAN
+	"="     TOKEN_EQUALS
 	","		TOKEN_COMMA
 	";"		TOKEN_SEMICOLON
 	":"     TOKEN_COLON

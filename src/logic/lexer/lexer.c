@@ -77,6 +77,7 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
     else if (*lexer->pos == '}') *token = (token_t) { TT_RIGHT_BRACE, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == '<') *token = (token_t) { TT_LESS_THAN, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == '>') *token = (token_t) { TT_GREATER_THAN, 0, lexer->pos, lexer->line };
+    else if (*lexer->pos == '=') *token = (token_t) { TT_EQUALS, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == ',') *token = (token_t) { TT_COMMA, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == ';') *token = (token_t) { TT_SEMICOLON, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == ':') *token = (token_t) { TT_COLON, 0, lexer->pos, lexer->line };

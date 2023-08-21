@@ -24,17 +24,18 @@ typedef enum tokenType_e
     TT_RIGHT_BRACE       = 6,  // "}"
     TT_LESS_THAN         = 7,  // "<"
     TT_GREATER_THAN      = 8,  // ">"
-    TT_COMMA             = 9,  // ","
-    TT_SEMICOLON         = 10, // ";"
-    TT_COLON             = 11, // ":"
-    TT_PLUS              = 12, // "+"
-    TT_MINUS             = 13, // "-"
-    TT_ASTERISK          = 14, // "*"
-    TT_SLASH             = 15, // "/"    
-    TT_IDENTIFIER        = 16,
-    TT_INT_LITERAL       = 17,
-    TT_FLOAT_LITERAL     = 18,
-    TT_STRING_LITERAL    = 19
+    TT_EQUALS            = 9,  // "="
+    TT_COMMA             = 10, // ","
+    TT_SEMICOLON         = 11, // ";"
+    TT_COLON             = 12, // ":"
+    TT_PLUS              = 13, // "+"
+    TT_MINUS             = 14, // "-"
+    TT_ASTERISK          = 15, // "*"
+    TT_SLASH             = 16, // "/"    
+    TT_IDENTIFIER        = 17,
+    TT_INT_LITERAL       = 18,
+    TT_FLOAT_LITERAL     = 19,
+    TT_STRING_LITERAL    = 20
 } tokenType_t;
 
 typedef union tokenValue_u
