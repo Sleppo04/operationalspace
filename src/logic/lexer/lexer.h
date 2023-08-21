@@ -13,31 +13,29 @@ typedef struct lexer_s
     int   line;
 } lexer_t;
 
-typedef enum tokenType_e
-{
-    TT_EOF               = 0,
-    TT_LEFT_BRACKET      = 1,  // "["
-    TT_RIGHT_BRACKET     = 2,  // "]"
-    TT_LEFT_PARENTHESIS  = 3,  // "("
-    TT_RIGHT_PARENTHESIS = 4,  // ")"
-    TT_LEFT_BRACE        = 5,  // "{"
-    TT_RIGHT_BRACE       = 6,  // "}"
-    TT_LESS_THAN         = 7,  // "<"
-    TT_GREATER_THAN      = 8,  // ">"
-    TT_EQUALS            = 9,  // "="
-    TT_COMMA             = 10, // ","
-    TT_SEMICOLON         = 11, // ";"
-    TT_COLON             = 12, // ":"
-    TT_PLUS              = 13, // "+"
-    TT_MINUS             = 14, // "-"
-    TT_ASTERISK          = 15, // "*"
-    TT_SLASH             = 16, // "/" 
-    TT_DOT               = 17, // "."   
-    TT_IDENTIFIER        = 18,
-    TT_INT_LITERAL       = 19,
-    TT_FLOAT_LITERAL     = 10,
-    TT_STRING_LITERAL    = 21
-} tokenType_t;
+#define TT_EOF               0
+#define TT_LEFT_BRACKET      1  // "["
+#define TT_RIGHT_BRACKET     2  // "]"
+#define TT_LEFT_PARENTHESIS  3  // "("
+#define TT_RIGHT_PARENTHESIS 4  // ")"
+#define TT_LEFT_BRACE        5  // "{"
+#define TT_RIGHT_BRACE       6  // "}"
+#define TT_LESS_THAN         7  // "<"
+#define TT_GREATER_THAN      8  // ">"
+#define TT_EQUALS            9  // "="
+#define TT_COMMA            10  // ","
+#define TT_SEMICOLON        11  // ";"
+#define TT_COLON            12  // ":"
+#define TT_PLUS             13  // "+"
+#define TT_MINUS            14  // "-"
+#define TT_ASTERISK         15  // "*"
+#define TT_SLASH            16  // "/" 
+#define TT_DOT              17  // "."   
+#define TT_IDENTIFIER       18
+#define TT_INT_LITERAL      19
+#define TT_FLOAT_LITERAL    10
+#define TT_STRING_LITERAL   21
+
 
 typedef union tokenValue_u
 {
@@ -48,7 +46,7 @@ typedef union tokenValue_u
 
 typedef struct token_s
 {
-    tokenType_t  type;
+    int          type;
     tokenValue_t value;
     char* ptr;
     int   line;
