@@ -94,7 +94,7 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
 
     // Special tokens
     else if (!isprint(*lexer->pos)) {
-        if (*lexer->pos == NULL) {
+        if (*lexer->pos == '\0') {
             token->type = TT_EOF;
             token->ptr = lexer->pos;
             token->line = lexer->line;
