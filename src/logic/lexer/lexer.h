@@ -31,11 +31,12 @@ typedef enum tokenType_e
     TT_PLUS              = 13, // "+"
     TT_MINUS             = 14, // "-"
     TT_ASTERISK          = 15, // "*"
-    TT_SLASH             = 16, // "/"    
-    TT_IDENTIFIER        = 17,
-    TT_INT_LITERAL       = 18,
-    TT_FLOAT_LITERAL     = 19,
-    TT_STRING_LITERAL    = 20
+    TT_SLASH             = 16, // "/" 
+    TT_DOT               = 17, // "."   
+    TT_IDENTIFIER        = 18,
+    TT_INT_LITERAL       = 19,
+    TT_FLOAT_LITERAL     = 10,
+    TT_STRING_LITERAL    = 21
 } tokenType_t;
 
 typedef union tokenValue_u
