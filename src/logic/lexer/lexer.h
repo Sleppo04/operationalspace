@@ -29,8 +29,8 @@ typedef struct lexer_s
 #define TT_PLUS             13  // "+"
 #define TT_MINUS            14  // "-"
 #define TT_ASTERISK         15  // "*"
-#define TT_SLASH            16  // "/" 
-#define TT_DOT              17  // "."   
+#define TT_SLASH            16  // "/"
+#define TT_DOT              17  // "."
 #define TT_IDENTIFIER       18
 #define TT_INT_LITERAL      19
 #define TT_FLOAT_LITERAL    10
