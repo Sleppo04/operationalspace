@@ -1,10 +1,10 @@
 /** script is the goal of the compiler **/
-// Program
+/** Program **/
 script              : includelist statementlist TOKEN_EOF 
 
 
 
-// Top-level only
+/** Top-level only **/
 includelist         : include includelist
                     | include
 
@@ -12,7 +12,7 @@ include             : TOKEN_INCLUDE TOKEN_STRING_LITERAL TOKEN_SEMICOLON
 
 
 
-// Statements
+/** Statements **/
 persist             : TOKEN_PERSIST TOKEN_IDENTIFIER
 
 variable_definition : TOKEN_VAR type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
@@ -74,7 +74,7 @@ else                : TOKEN_ELSE inner_compound
 while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
 
 
-// Expression stuff
+/** Expression stuff **/
 value               : TOKEN_IDENTIFIER
                     | TOKEN_INT_LITERAL
                     | TOKEN_FLOAT_LITERAL
