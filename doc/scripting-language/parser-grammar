@@ -27,6 +27,8 @@ type_definition     : TOKEN_TYPE type_identifier TOKEN_LEFT_BRACE memberlist TOK
 
 return_statement    : TOKEN_RETURN expression TOKEN_SEMICOLON
 
+break_statement     : TOKEN_BREAK TOKEN_SEMICOLON
+
 member_lvalue       : TOKEN_DOT TOKEN_IDENTIFIER
                     | TOKEN_DOT TOKEN_IDENTIFIER member_lvalue
 
@@ -38,20 +40,22 @@ assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 top_level_statement : variable_definition
                     | persist
                     | expression
+                    | function
 					| type_definition
 					| function
                     | assignment
 
-function_statement  : variable_definition
+inner_statement     : variable_definition
 					| expression
                     | assignment
 					| return_statement
+                    | break_statement
 
-function_list       : function_statement function_list
-                    | function_statement
+inner_list          : inner_statement inner_list
+                    | inner_statement
 
-function_compound   : TOKEN_LEFT_BRACE function_list TOKEN_RIGHT_BRACE
-                    | function_statement
+inner_compound      : TOKEN_LEFT_BRACE inner_list TOKEN_RIGHT_BRACE
+                    | inner_statement
 
 statementlist       : statement statementlist
                     | statement
@@ -59,26 +63,16 @@ statementlist       : statement statementlist
 compound_statement  : TOKEN_LEFT_BRACE statementlist TOKEN_RIGHT_BRACE
                     | statement
 
-if                  : TOKEN_IF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS function_compound elif_statement else_statement
+if                  : TOKEN_IF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound elif_statement else_statement
 
-elif                : TOKEN_ELIF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS function_compound
+elif                : TOKEN_ELIF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
                     |
 
-else                : TOKEN_ELSE function_compound
+else                : TOKEN_ELSE inner_compound
+                    | 
 
-while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS while_compound
+while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
 
-while_compound      : TOKEN_LEFT_BRACE while_list TOKEN_RIGHT_BRACE
-                    | while_statement
-
-while_list          : while_statement while_list
-                    | while_statement
-
-while_statement     : variable_definition
-                    | expression
-                    | assignment
-                    | TOKEN_BREAK
-                    | TOKEN_RETURN
 
 // Expression stuff
 value               : TOKEN_IDENTIFIER
