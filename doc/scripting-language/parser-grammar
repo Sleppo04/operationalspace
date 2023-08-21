@@ -31,7 +31,7 @@ member_lvalue       : TOKEN_DOT TOKEN_IDENTIFIER
                     | TOKEN_DOT TOKEN_IDENTIFIER member_lvalue
 
 lvalue              : TOKEN_IDENTIFIER
-                    | TOKEN_IDENTIFIER member_lvalue
+                    | TOKEN_IDENTIFIER TOKEN_DOT member_lvalue
 
 assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 
@@ -40,9 +40,11 @@ top_level_statement : variable_definition
                     | expression
 					| type_definition
 					| function
+                    | assignment
 
 function_statement  : variable_definition
 					| expression
+                    | assignment
 					| return_statement
 
 function_list       : function_statement function_list
@@ -69,9 +71,16 @@ binop_expression    : expression TOKEN_PLUS expression
                     | expression TOKEN_MINUS expression 
                     | expression TOKEN_ASTERISK expression
                     | expression TOKEN_SLASH expression
+                    | expression TOKEN_LESS_THAN expression
+                    | expression TOKEN_GREATER_THAN expression
+                    | expression TOKEN_LESS_THAN TOKEN_EQUALS expression
+                    | expression TOKEN_GREATER_THAN TOKEN_EQUALS expression
                     | expression TOKEN_EQUALS TOKEN_EQUALS expression
+                    | expression TOKEN_AMPERSAND TOKEN_AMPERSAND expression
+                    | expression TOKEN_PIPE TOKEN_PIPE expression
 
 unop_expression     : TOKEN_MINUS expression
+                    | TOKEN_BANG expression
 
 paren_expression    : TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
 
