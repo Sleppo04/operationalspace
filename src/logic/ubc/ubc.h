@@ -42,5 +42,8 @@
 #define UBC_OP_POP8    0x16
 #define UBC_OP_POP16   0x17
 #define UBC_OP_POP32   0x18
+// Comparison functions
+#define UBC_OP_CMPI    0x19
+#define UBC_OP_CMPF    0x1A
 
 #endif
