@@ -79,3 +79,7 @@ maximum of 5 Bytes (40 Bits). The size of the instruction depends on the opcode.
       |         | address given as the argument.
  0x18 | POP32   | Pops a 32bit value off the stack and saves it to the memory
       |         | address given as the argument.
+ 0x19 | CMPI    | Looks at the top two Integers on stack, and sets the flags
+      |         | like the SUBI instruction without changing anything else.
+ 0x20 | CMPF    | Looks at the top two Floats on stack, and sets the flags
+      |         | like the SUBF instruction without changing anything else.
