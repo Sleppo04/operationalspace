@@ -16,6 +16,10 @@ Language-specific keywords
 	"include"	TOKEN_INCLUDE
 	"false"		TOKEN_FALSE
 	"true"		TOKEN_TRUE
+	"int"       TOKEN_INT
+	"float"     TOKEN_FLOAT
+	"string"    TOKEN_STRING
+	"bool"      TOKEN_BOOL
 
 Language-Unspecific keywords
 	"["		TOKEN_LEFT_BRACKET
