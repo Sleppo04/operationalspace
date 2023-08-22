@@ -1,13 +1,19 @@
 #ifndef UBCPARSER_H
 #define UBCPARSER_H
 
-typedef int (*UBCFileRequestFunction) (void* userdata, char* filename, char** destination);
+#include <stdint.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#include "lexer.h"
+
 typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message);
 
 typedef struct UbcParserConfig {
     void* userdata;
-    UBCFileRequestFunction file_request;
     UBCErrorReportFunction error_report;
+    ubcfile_t* files;
+    uint16_t file_count;
 } ubcparserconfig_t;
 
 typedef struct UbcParser {
@@ -18,5 +24,7 @@ typedef struct UbcFile {
     char* fileName;
     char* source;
 } ubcfile_t;
+
+int Parser_Parse(struct UbcParserConfig config, void** bytecode_destination);
 
 #endif //UBCPARSER_H
