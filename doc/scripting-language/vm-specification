@@ -1,0 +1,22 @@
+UBC VM Specifications
+2023 Sleppo04
+
+
+
+NOTE: In this document, "kilobyte" (kB) refers to 10^3 (1000) bytes. To refer to
+1024 Bytes, "kibibyte" (KiB) is used. The ambiguous unit symbol KB is not used.
+
+
+
+=== INTRODUCTION ===============================================================
+
+The UBC VM is a simple stack-based VM designed to execute compiled UBC-Script
+code. Like UBC-Script, it is designed for reapeating runs of a multiple scripts,
+with minimal switching overhead between different scripts on the same instance.
+
+Some features are:
+* stack based architecture
+* quick context switching
+* area of persistent memory for each context
+* defineable callbacks
+* simple C interface
