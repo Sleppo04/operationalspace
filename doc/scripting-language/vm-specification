@@ -20,3 +20,66 @@ Some features are:
 * area of persistent memory for each context
 * defineable callbacks
 * simple C interface
+
+
+
+=== OPCODES ====================================================================
+
+Instructions for the UBC VM have a variable size, with a minimum of 1 Byte and a
+maximum of 5 Bytes (40 Bits). The size of the instruction depends on the opcode.
+
+
+
+
+--- Opcodes --------------------------------------------------------------------
+ #    | NAME    | Description
+------+---------+---------------------------------------------------------------
+ 0x00 | HLT     | Halts the VM.
+ 0x01 | CALL    | Calls a subroutine and pushes the current PC to the stack.
+ 0x02 | JMP     | Sets PC to address on stack.
+ 0x03 | JMPi    | Jumps to given immediate address.
+ 0x04 | JZ      | Jumps to address on stack if the ZERO status flag is set.
+ 0x05 | JOV     | Jumps to address on stack if the OVERFLOW status flag is set.
+ 0x06 | JSO     | Jumps to address on stack if the STACK OVERFLOW status flag is
+      |         | set.
+ 0x07 |         | INVALID
+ 0x08 | ADDI    | Pops two Integer values from stack, adds them and pushes the
+      |         | result to the stack. The ZERO and OVERFLOW flags are set
+      |         | accordingly. 
+ 0x09 | ADDF    | Pops two Float values from stack, adds them and pushes the
+      |         | result to the stack. The ZERO flag is set accordingly.
+ 0x0A | SUBI    | Pops two Integer values from stack, subtracts the top from the
+      |         | bottom and pushes the result to the stack. The ZERO and
+      |         | OVERFLOW flags are set accordingly.
+ 0x0B | SUBF    | Pops two Float values from stack, subtracts the top from the
+      |         | bottom and pushes the result to the stack. The ZERO flag is
+      |         | set accordingly.
+ 0x0C | MULI    | Pops two Integer values from stack, multiplies them and pushes
+      |         | the result to the stack. The ZERO and OVERFLOW flags are set
+      |         | accordingly.
+ 0x0D | MULF    | Pops two Float values from stack, multiplies them and pushes
+      |         | the result to the stack. The ZERO flag is set accordingly.
+ 0x0E | DIVI    | Pops two Integer values from stack, performs integer division
+      |         | (bottom/top) and pushes the result to the stack. The ZERO flag
+      |         | is set accordingly, THE OVERFLOW FLAG IS RESET.
+ 0x0F | DIVF    | Pops two Float values from stack, divides the bottom by the
+      |         | top and pushes the result to the stack. The ZERO flag is set
+      |         | accordingly.
+ 0x10 | PUSH8   | Pops a 32bit-address from stack, and pushes the 8bit value at
+      |         | that address to the stack.
+ 0x11 | PUSH16  | Pops a 32bit-address from stack, and pushes the 16bit value at
+      |         | that address to the stack.
+ 0x12 | PUSH32  | Pops a 32bit-address from stack, and pushes the 32bit value at
+      |         | that address to the stack.
+ 0x13 | PUSH8i  | Pushes given 8bit argument to stack.
+ 0x14 | PUSH16i | Pushes given 16bit argument to stack.
+ 0x15 | PUSH32i | Pushes given 32bit argument to stack.
+ 0x16 | POP8    | Pops an 8bit value off the stack and saves it to the memory
+      |         | address given as the argument. The STACK OVERFLOW flag is set
+      |         | accordingly.
+ 0x17 | POP16   | Pops a 16bit value off the stack and saves it to the memory
+      |         | address given as the argument. The STACK OVERFLOW flag is set
+      |         | accordingly.
+ 0x18 | POP32   | Pops a 32bit value off the stack and saves it to the memory
+      |         | address given as the argument. The STACK OVERFLOW flag is set
+      |         | accordingly.
