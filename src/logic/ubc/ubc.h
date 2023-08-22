@@ -45,5 +45,6 @@
 // Comparison functions
 #define UBC_OP_CMPI    0x19
 #define UBC_OP_CMPF    0x1A
+#define UBC_OP_CMPB    0x1B
 
 #endif
