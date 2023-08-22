@@ -14,4 +14,9 @@ typedef struct UbcParser {
     ubcparserconfig_t config;
 } ubcparser_t;
 
+typedef struct UbcFile {
+    char* fileName;
+    char* source;
+} ubcfile_t;
+
 #endif //UBCPARSER_H
