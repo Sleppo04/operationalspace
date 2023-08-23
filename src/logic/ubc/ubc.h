@@ -39,12 +39,26 @@
 #define UBC_OP_PUSH8i  0x13
 #define UBC_OP_PUSH16i 0x14
 #define UBC_OP_PUSH32i 0x15
-#define UBC_OP_POP8    0x16
-#define UBC_OP_POP16   0x17
-#define UBC_OP_POP32   0x18
+#define UBC_OP_PUSHBP  0x16
+#define UBC_OP_PUSHSP  0x17
+#define UBC_OP_POP8    0x18
+#define UBC_OP_POP16   0x19
+#define UBC_OP_POP32   0x1A
+#define UBC_OP_POPBP   0x1B
+#define UBC_OP_POPSP   0x1C
 // Comparison functions
-#define UBC_OP_CMPI    0x19
-#define UBC_OP_CMPF    0x1A
-#define UBC_OP_CMPB    0x1B
+#define UBC_OP_CMPI    0x1D
+#define UBC_OP_CMPF    0x1E
+#define UBC_OP_CMPB    0x1F
+
+// TODO: Implement
+typedef void ubcContext_t;
+
+typedef struct ubcVM_s
+{
+    uint8_t  sr; // Status register
+    uint32_t ip; // Instruction pointer
+    void* memory;
+} ubcVM_t;
 
 #endif
