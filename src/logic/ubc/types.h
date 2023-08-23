@@ -24,6 +24,6 @@ typedef struct UbcCustomType
     char*   field_names;
     void*   fields;
     int     field_count;
-} ubcCustomType_t;
+} ubccustomtype_t;
 
 #endif //UBCTYPES

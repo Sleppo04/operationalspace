@@ -5,7 +5,10 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "lexer.h"
+#include "../lexer/lexer.h"
+#include "types.h"
+
+#include "../dynamicbuffer/dynamicbuffer.h"
 
 typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message);
 
@@ -20,7 +23,7 @@ typedef struct UbcForeignFunction {
 	char**   argument_typenames;
 	char*    return_typename;
 	int (*callable) (void* vm, void* user_data);
-}
+} ubcforeignfunction_t;
 
 typedef struct UbcParserConfig {
     void* userdata;
