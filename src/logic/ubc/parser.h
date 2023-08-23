@@ -44,6 +44,7 @@ typedef struct ParserStack {
 
 typedef struct UbcParser {
     struct ParserStack parser_stack;
+    dynamic_buffer_t* bytecode_buffer;
     ubcparserconfig_t config;
 } ubcparser_t;
 
