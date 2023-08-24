@@ -5,9 +5,10 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#include "../lexer/lexer.h"
+#include "ubc.h"
 #include "types.h"
 
+#include "../lexer/lexer.h"
 #include "../dynamicbuffer/dynamicbuffer.h"
 
 typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message);
@@ -28,6 +29,7 @@ typedef struct UbcForeignFunction {
 typedef struct UbcParserConfig {
     void* userdata;
     UBCErrorReportFunction error_report;
+    int report_return;
     
     ubcfile_t* files;
     uint16_t   file_count;
@@ -50,9 +52,9 @@ typedef struct UbcParserLookahead {
 } ubcparserlookahead_t;
 
 typedef struct UbcParser {
-    struct UbcLexerStack lexer_stack;
-    dynamic_buffer_t* bytecode_buffer;
-    ubcparserconfig_t config;
+    struct UbcLexerStack      lexer_stack;
+    dynamic_buffer_t          bytecode_buffer;
+    ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
 } ubcparser_t;
 
