@@ -73,15 +73,21 @@ maximum of 5 Bytes (40 Bits). The size of the instruction depends on the opcode.
  0x13 | PUSH8i  | Pushes given 8bit argument to stack.
  0x14 | PUSH16i | Pushes given 16bit argument to stack.
  0x15 | PUSH32i | Pushes given 32bit argument to stack.
- 0x16 | POP8    | Pops an 8bit value off the stack and saves it to the memory
+ 0x16 | PUSHBP  | Pushes the 16bit base pointer to stack.
+ 0x17 | PUSHSP  | Pushes the 16bit stack pointer (pre-push) to stack.
+ 0x18 | POP8    | Pops an 8bit value off the stack and saves it to the memory
       |         | address given as the argument.
- 0x17 | POP16   | Pops a 16bit value off the stack and saves it to the memory
+ 0x19 | POP16   | Pops a 16bit value off the stack and saves it to the memory
       |         | address given as the argument.
- 0x18 | POP32   | Pops a 32bit value off the stack and saves it to the memory
+ 0x1A | POP32   | Pops a 32bit value off the stack and saves it to the memory
       |         | address given as the argument.
- 0x19 | CMPI    | Looks at the top two Integers on stack, and sets the flags
+ 0x1B | POPBP   | Pops a 16bit address from stack and puts it in the BP
+      |         | register.
+ 0x1C | POPSP   | Pops a 16bit address from stack and puts it in the SP
+      |         | register.
+ 0x1D | CMPI    | Looks at the top two Integers on stack, and sets the flags
       |         | like the SUBI instruction without changing anything else.
- 0x1A | CMPF    | Looks at the top two Floats on stack, and sets the flags
+ 0x1E | CMPF    | Looks at the top two Floats on stack, and sets the flags
       |         | like the SUBF instruction without changing anything else.
- 0x1B | CMPB    | Compares The two topmost bytes on the stack. If they are equal
+ 0x1F | CMPB    | Compares The two topmost bytes on the stack. If they are equal
       |         | the ZERO flag is set.
