@@ -51,6 +51,15 @@
 #define UBC_OP_CMPF    0x1E
 #define UBC_OP_CMPB    0x1F
 
+// Stuff I need for the parser so I just added them myself
+// Feel free to change the values as needed, the macros will need a refactor tool across files
+#define UBC_OP_ADDU   0x20 // Unsigned 32-bit add
+#define UBC_OP_SUBU   0x21
+#define UBC_OP_MULU   0x22
+#define UBC_OP_DIVU   0x23
+
+#define UBC_OP_CMPU   0x24
+
 // TODO: Implement
 typedef void ubcContext_t;
 
