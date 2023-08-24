@@ -7,11 +7,19 @@
 
 #include "ubc.h"
 #include "types.h"
+#include "tokenreader.h"
 
 #include "../lexer/lexer.h"
 #include "../dynamicbuffer/dynamicbuffer.h"
 
-typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message);
+
+
+enum UbcParserErrorType {
+    UBCPARSERERROR_ERRORMESSAGE,
+    UBCPARSERERROR_TRACEBACK,
+};
+
+typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
 
 typedef struct UbcFile {
     char* fileName;
@@ -60,6 +68,6 @@ typedef struct UbcParser {
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
 
-int Parser_Parse(ubcparser_t* parser, char* filename, void** bytecode_destination);
+int Parser_Parse(ubcparser_t* parser, char* filename);
 
 #endif //UBCPARSER_H
