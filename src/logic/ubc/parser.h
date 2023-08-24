@@ -39,18 +39,25 @@ typedef struct UbcParserConfig {
     uint16_t              function_count;
 } ubcparserconfig_t;
 
-typedef struct ParserStack {
-    ubcfile_t* files;
-    lexer_t*   lexers;
-    uint16_t   stack_size;
-} parserstack_t;
+typedef struct UbcLexerStack {
+    uint16_t stack_size;
+    lexer_t* lexers;
+} ubclexerstack_t;
+
+typedef struct UbcParserLookahead {
+    uint32_t available;
+    token_t  tokens[2];
+} ubcparserlookahead_t;
 
 typedef struct UbcParser {
-    struct ParserStack parser_stack;
+    struct UbcLexerStack lexer_stack;
     dynamic_buffer_t* bytecode_buffer;
     ubcparserconfig_t config;
+    struct UbcParserLookahead lookahead;
 } ubcparser_t;
 
-int Parser_Parse(struct UbcParserConfig config, void** bytecode_destination);
+int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
+
+int Parser_Parse(ubcparser_t* parser, char* filename, void** bytecode_destination);
 
 #endif //UBCPARSER_H
