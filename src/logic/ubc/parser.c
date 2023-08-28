@@ -40,7 +40,7 @@ int _Parser_AddParseFile(ubcparser_t* parser, char* filename, size_t length)
     for (file_index = 0; file_index < parser->config.file_count; file_index++) {
         registered_name = parser->config.files[file_index].fileName;
         if (strncmp(registered_name, filename, length) == 0) {
-            // No difference
+            // No difference, file is located
             break;
         }
     }
@@ -196,18 +196,21 @@ int _Parser_ParseInclude(ubcparser_t* parser)
         _Parser_ReportTopTracebackError(parser, "Expected String literal token at position 2 of include statement");
         return ECANCELED;
     }
+    _Parser_ConsumeToken(parser);
 
     token_t semicolon_token;
     lookahead_code = _Parser_LookAhead(parser, 0, &semicolon_token);
+    _Parser_AssumeLookaheadFill(parser);
 
     if (lookahead_code) {
         _Parser_ReportTopTracebackError(parser, "Unable to get next token, expected TOKEN_SEMICOLON");
         return ECANCELED;
     }
-    if (filename_token.type != TT_SEMICOLON) {
+    if (semicolon_token.type != TT_SEMICOLON) {
         _Parser_ReportTopTracebackError(parser, "Expected semicolon token at position 3 of include statement");
         return ECANCELED;
     }
+    _Parser_ConsumeToken(parser);
 
     // All tokens were extracted successfully
 
@@ -225,7 +228,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
     uint8_t state_include    = 0x01;
     uint8_t state_statements = 0x02;
     token_t token;
-    int lookahead_code, parse_code;
+    int lookahead_code = 0, parse_code = 0;
     uint8_t* states = _Parser_Malloc(parser, sizeof(uint8_t));
     uint16_t state_count = parser->lexer_stack.stack_size;
     if (states == NULL) {
@@ -234,6 +237,12 @@ int _Parser_ParseScript(ubcparser_t* parser)
     memset(states, state_include, sizeof(uint8_t) * state_count);
 
     while (states != NULL) {
+        if (state_count == 0) {
+            free(states);
+            states = NULL;
+            continue;
+        }
+
         _Parser_AssumeLookaheadFill(parser);
         lookahead_code = _Parser_LookAhead(parser, 0, &token);
         if (lookahead_code) {
@@ -249,12 +258,20 @@ int _Parser_ParseScript(ubcparser_t* parser)
         if (states[state_count - 1] == state_statements && token.type == TT_EOF) {
             // We need not bother with reallocation here because why
             state_count -= 1;
-        }
-        if (state_count == 0) {
-            free(states);
-            states = NULL;
             continue;
         }
+
+        // File is in statement state
+        if (states[state_count - 1] == state_statements) {
+            //parse_code = _Parser_ParseTopLevelStatement(parser);
+            _Parser_AssumeLookaheadFill(parser);
+            parse_code = _Parser_ConsumeToken(parser);
+        }
+        if (parse_code) {
+            _Parser_Free(parser, states);
+            return EXIT_FAILURE;
+        }
+
 
         // File is in include state
         if (states[state_count - 1] == state_include) {
@@ -281,15 +298,6 @@ int _Parser_ParseScript(ubcparser_t* parser)
             // Free old state array
             _Parser_Free(parser, states);
             states = new_states;
-        }
-
-        if (states[state_count - 1] == state_statements) {
-            //parse_code = _Parser_ParseTopLevelStatement(parser);
-            _Parser_AssumeLookaheadFill(parser);
-            parse_code = _Parser_ConsumeToken(parser);
-        }
-        if (parse_code) {
-            return EXIT_FAILURE;
         }
     }
 

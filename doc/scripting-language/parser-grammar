@@ -83,7 +83,7 @@ value               : TOKEN_IDENTIFIER
                     | TOKEN_TRUE
 
 binop_expression    : expression TOKEN_PLUS expression
-                    | expression TOKEN_MINUS expression 
+                    | expression TOKEN_MINUS expression
                     | expression TOKEN_ASTERISK expression
                     | expression TOKEN_SLASH expression
                     | expression TOKEN_LESS_THAN expression
