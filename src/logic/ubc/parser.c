@@ -258,6 +258,11 @@ int _Parser_ParseScript(ubcparser_t* parser)
         if (states[state_count - 1] == state_statements && token.type == TT_EOF) {
             // We need not bother with reallocation here because why
             state_count -= 1;
+
+            // Clear the lookahead because it's possibly filled with EOF tokens from the ending file
+            parser->lookahead.available = 0;
+            _Parser_AssumeLookaheadFill(parser);
+            
             continue;
         }
 
