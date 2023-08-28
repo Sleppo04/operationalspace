@@ -82,17 +82,17 @@ value               : TOKEN_IDENTIFIER
                     | TOKEN_FALSE
                     | TOKEN_TRUE
 
-binop_expression    : expression TOKEN_PLUS expression
-                    | expression TOKEN_MINUS expression
-                    | expression TOKEN_ASTERISK expression
-                    | expression TOKEN_SLASH expression
-                    | expression TOKEN_LESS_THAN expression
-                    | expression TOKEN_GREATER_THAN expression
-                    | expression TOKEN_LESS_THAN TOKEN_EQUALS expression
-                    | expression TOKEN_GREATER_THAN TOKEN_EQUALS expression
-                    | expression TOKEN_EQUALS TOKEN_EQUALS expression
-                    | expression TOKEN_AMPERSAND TOKEN_AMPERSAND expression
-                    | expression TOKEN_PIPE TOKEN_PIPE expression
+binop_expression    : evalue TOKEN_PLUS expression
+                    | evalue TOKEN_MINUS expression
+                    | evalue TOKEN_ASTERISK expression
+                    | evalue TOKEN_SLASH expression
+                    | evalue TOKEN_LESS_THAN expression
+                    | evalue TOKEN_GREATER_THAN expression
+                    | evalue TOKEN_LESS_THAN TOKEN_EQUALS expression
+                    | evalue TOKEN_GREATER_THAN TOKEN_EQUALS expression
+                    | evalue TOKEN_EQUALS TOKEN_EQUALS expression
+                    | evalue TOKEN_AMPERSAND TOKEN_AMPERSAND expression
+                    | evalue TOKEN_PIPE TOKEN_PIPE expression
 
 unop_expression     : TOKEN_MINUS expression
                     | TOKEN_BANG expression
@@ -104,7 +104,9 @@ expression          : value
                     | unop_expression
                     | paren_expression
 
-type_identifier	    : TOKEN_IDENTIFIER
+evalue              : value
+                    | lvalue
 
+type_identifier	    : TOKEN_IDENTIFIER
 
 function            : TOKEN_FUNCTION type_identifier TOKEN_IDENTIFIER TOKEN_LEFT_PARENTHESES (TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_COMMA)* TOKEN_IDENTIFIER TOKEN_IDENTIFIER TOKEN_RIGHT_PARENTHESES function_compound
