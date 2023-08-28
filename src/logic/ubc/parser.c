@@ -36,8 +36,11 @@ void _Parser_Free(ubcparser_t* parser, void* address)
 int _Parser_AddParseFile(ubcparser_t* parser, char* filename, size_t length)
 {
     uint16_t file_index;
+    char* registered_name;
     for (file_index = 0; file_index < parser->config.file_count; file_index++) {
-        if (strncmp(parser->config.files[file_index].fileName, filename, length)) {
+        registered_name = parser->config.files[file_index].fileName;
+        if (strncmp(registered_name, filename, length) == 0) {
+            // No difference
             break;
         }
     }
@@ -228,6 +231,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
     if (states == NULL) {
         return ENOMEM;
     }
+    memset(states, state_include, sizeof(uint8_t) * state_count);
 
     while (states != NULL) {
         _Parser_AssumeLookaheadFill(parser);
@@ -300,9 +304,9 @@ int Parser_Parse(ubcparser_t* parser, char* filename)
         return init_code;
     }
 
-    int loop_code = _Parser_ParseScript(parser);
-    if (loop_code) {
-        return loop_code;
+    int script_code = _Parser_ParseScript(parser);
+    if (script_code) {
+        return script_code;
     }
 
 
