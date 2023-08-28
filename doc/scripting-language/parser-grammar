@@ -75,37 +75,59 @@ while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_
 
 
 /** Expression stuff **/
-value               : TOKEN_IDENTIFIER
+expression          : value
+                    | expression_p0
+
+
+expression_p0       : expression_compare
+
+expression_compare  : expression_p1 TOKEN_LESS_THAN                 expression_p1
+                    | expression_p1 TOKEN_GREATER_THAN              expression_p1
+                    | expression_p1 TOKEN_LESS_THAN    TOKEN_EQUALS expression_p1
+                    | expression_p1 TOKEN_GREATER_THAN TOKEN_EQUALS expression_p1
+
+
+expression_p1       : expression_addition
+
+expression_addition : expression_p2 addition_list
+
+addition_list       : expression_p2 TOKEN_PLUS expression_p2 addition_list
+                    | expression_p2 TOKEN_MINUS expression_p2 addition_list
+                    | 
+
+
+expression_p2       : expression_division
+
+expression_division : expression_p3 division_list
+
+division_list       : expression_p3 TOKEN_ASTERISK expression_p3 division_list
+                    | expression_p3 TOKEN_SLASH expression_p3 division_list
+                    | 
+
+
+expression_p3       : expression_not
+                    | expression_negative
+
+expression_not      : TOKEN_BANG expression_p4
+
+expression_negative : TOKEN_MINUS expression_p4
+
+
+expression_p4       : expression_parentheses
+                    | evalue
+
+expression_paren    : TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
+
+
+evalue              : literal
+                    | lvalue
+
+literal             : TOKEN_IDENTIFIER
                     | TOKEN_INT_LITERAL
                     | TOKEN_FLOAT_LITERAL
                     | TOKEN_STRING_LITERAL
                     | TOKEN_FALSE
                     | TOKEN_TRUE
-
-binop_expression    : evalue TOKEN_PLUS expression
-                    | evalue TOKEN_MINUS expression
-                    | evalue TOKEN_ASTERISK expression
-                    | evalue TOKEN_SLASH expression
-                    | evalue TOKEN_LESS_THAN expression
-                    | evalue TOKEN_GREATER_THAN expression
-                    | evalue TOKEN_LESS_THAN TOKEN_EQUALS expression
-                    | evalue TOKEN_GREATER_THAN TOKEN_EQUALS expression
-                    | evalue TOKEN_EQUALS TOKEN_EQUALS expression
-                    | evalue TOKEN_AMPERSAND TOKEN_AMPERSAND expression
-                    | evalue TOKEN_PIPE TOKEN_PIPE expression
-
-unop_expression     : TOKEN_MINUS expression
-                    | TOKEN_BANG expression
-
-paren_expression    : TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
-
-expression          : value
-                    | binop_expression
-                    | unop_expression
-                    | paren_expression
-
-evalue              : value
-                    | lvalue
 
 type_identifier	    : TOKEN_IDENTIFIER
 
