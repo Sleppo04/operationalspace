@@ -14,7 +14,7 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
     _Parser_ReportError(parser, top_lexer.file, top_lexer.line, "Error occured in file", UBCPARSERERROR_TRACEBACK);
 
     // Skip first file
-    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index > -1; lexer_index++) {
+    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index + 1 != 0 ; lexer_index--) {
         lexer_t* lexer = parser->lexer_stack.lexers + lexer_index;
         _Parser_ReportError(parser, lexer->file, lexer->line, "File was included in", UBCPARSERERROR_TRACEBACK);
     }
@@ -33,13 +33,17 @@ void _Parser_Free(ubcparser_t* parser, void* address)
 }
 
 // This function does not report errors to the user
-int _Parser_AddParseFile(ubcparser_t* parser, char* filename)
+int _Parser_AddParseFile(ubcparser_t* parser, char* filename, size_t length)
 {
     uint16_t file_index;
     for (file_index = 0; file_index < parser->config.file_count; file_index++) {
-        if (strcmp(parser->config.files[file_index].fileName, filename)) {
+        if (strncmp(parser->config.files[file_index].fileName, filename, length)) {
             break;
         }
+    }
+    if (file_index == parser->config.file_count) {
+        // No file found
+        return EXIT_FAILURE;
     }
 
     parser->lexer_stack.stack_size += 1;
@@ -74,9 +78,6 @@ int _Parser_LookAhead(ubcparser_t* parser, uint32_t range, token_t* destination)
     if (range >= parser->lookahead.available) {
         return ENOMEDIUM;
     }
-    if (range < 0) {
-        return ERANGE;
-    }
 
     destination[0] = parser->lookahead.tokens[range];
 
@@ -86,8 +87,6 @@ int _Parser_LookAhead(ubcparser_t* parser, uint32_t range, token_t* destination)
 // This function does not report errors to the user
 int _Parser_NextLexToken(ubcparser_t* parser, token_t* destination)
 {
-    token_t token;
-
     if (parser->lexer_stack.stack_size == 0) {
         return EBADFD;
     }
@@ -130,7 +129,31 @@ int _Parser_ConsumeToken(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
+{
+    if (parser->lexer_stack.stack_size == 0) {
+        _Parser_ReportError(parser, "No file", -1, message, UBCPARSERERROR_ERRORMESSAGE);
+        return;
+    }
 
+    lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
+    _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_ERRORMESSAGE);
+    _Parser_ReportLexerTraceback(parser);
+
+}
+
+// This function will inform the user
+int _Parser_AssumeLookaheadFill(ubcparser_t* parser)
+{
+    int lookahead_code = _Parser_FillLookahead(parser);
+    if (lookahead_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to generate the next token.");
+        _Parser_ReportLexerTraceback(parser);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
 
 /// Parsing Functions
 
@@ -139,28 +162,59 @@ int _Parser_ParseInclude(ubcparser_t* parser)
 {
     token_t include_token;
     int lookahead_code;
+    _Parser_AssumeLookaheadFill(parser);
     lookahead_code = _Parser_LookAhead(parser, 0, &include_token);
     
     // No token available
     if (lookahead_code == ENOMEDIUM) {
-        lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
-        _Parser_ReportError(parser, top_lexer->file, top_lexer->line, "Expected tokens to parse include statement", UBCPARSERERROR_ERRORMESSAGE);
-        _Parser_ReportLexerTraceback(parser);
+        _Parser_ReportTopTracebackError(parser, "Expected token");
         return ECANCELED;
     }
 
     if (include_token.type != TT_UBC_INCLUDE) {
-        lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
-        _Parser_ReportError(parser, top_lexer->file, top_lexer->line, "Expected Include keyword at start of include statement", UBCPARSERERROR_ERRORMESSAGE);
-        _Parser_ReportLexerTraceback(parser);
+        _Parser_ReportTopTracebackError(parser, "Expected Include keyword at start of include statement");
         return ECANCELED;
     }
 
     // This is guaranteed to suceed because we were able to look ahead earlier
+    // Consume include token
     _Parser_ConsumeToken(parser);
-    token_t filename_literal;
-    // TODO: Continue parsing this
+    _Parser_AssumeLookaheadFill(parser);
 
+    // Check for string literal
+    token_t filename_token;
+    lookahead_code = _Parser_LookAhead(parser, 0, &filename_token);
+
+    if (lookahead_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to get token, expected STRING_LITERAL");
+        return ECANCELED;
+    }
+    if (filename_token.type != TT_STRING_LITERAL) {
+        _Parser_ReportTopTracebackError(parser, "Expected String literal token at position 2 of include statement");
+        return ECANCELED;
+    }
+
+    token_t semicolon_token;
+    lookahead_code = _Parser_LookAhead(parser, 0, &semicolon_token);
+
+    if (lookahead_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to get next token, expected TOKEN_SEMICOLON");
+        return ECANCELED;
+    }
+    if (filename_token.type != TT_SEMICOLON) {
+        _Parser_ReportTopTracebackError(parser, "Expected semicolon token at position 3 of include statement");
+        return ECANCELED;
+    }
+
+    // All tokens were extracted successfully
+
+    int add_code = _Parser_AddParseFile(parser, filename_token.ptr, filename_token.value.length);
+    if (add_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to find file referenced in include statement");
+        return ECANCELED;
+    }
+    
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ParseScript(ubcparser_t* parser)
@@ -176,9 +230,21 @@ int _Parser_ParseScript(ubcparser_t* parser)
     }
 
     while (states != NULL) {
+        _Parser_AssumeLookaheadFill(parser);
+        lookahead_code = _Parser_LookAhead(parser, 0, &token);
+        if (lookahead_code) {
+            return EXIT_FAILURE;
+        }
 
+        // switch from include to statement stage of scripts
         if (states[state_count - 1] == state_include && token.type != TT_UBC_INCLUDE) {
             states[state_count - 1] = state_statements;
+        }
+
+        // switch from statement state to removing the file
+        if (states[state_count - 1] == state_statements && token.type == TT_EOF) {
+            // We need not bother with reallocation here because why
+            state_count -= 1;
         }
 
         // File is in include state
@@ -187,6 +253,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
         }
         if (parse_code) {
             _Parser_Free(parser, states);
+            return EXIT_FAILURE;
         } else {
             // Parsing was successful
 
@@ -208,7 +275,12 @@ int _Parser_ParseScript(ubcparser_t* parser)
         }
 
         if (states[state_count - 1] == state_statements) {
-            parse_code = _Parser_ParseTopLevelStatement(parser);
+            //parse_code = _Parser_ParseTopLevelStatement(parser);
+            _Parser_AssumeLookaheadFill(parser);
+            parse_code = _Parser_ConsumeToken(parser);
+        }
+        if (parse_code) {
+            return EXIT_FAILURE;
         }
     }
 
@@ -218,7 +290,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
 // This function will call ReportError to report errors
 int Parser_Parse(ubcparser_t* parser, char* filename)
 {
-    int init_code = _Parser_AddParseFile(parser, filename);
+    int init_code = _Parser_AddParseFile(parser, filename, strlen(filename));
     if (init_code) {
         return init_code;
     }
