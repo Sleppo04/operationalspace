@@ -33,7 +33,7 @@ member_lvalue       : TOKEN_DOT TOKEN_IDENTIFIER
                     | TOKEN_DOT TOKEN_IDENTIFIER member_lvalue
 
 lvalue              : TOKEN_IDENTIFIER
-                    | TOKEN_IDENTIFIER TOKEN_DOT member_lvalue
+                    | TOKEN_IDENTIFIER member_lvalue
 
 assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 
