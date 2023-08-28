@@ -250,6 +250,11 @@ int _Parser_ParseScript(ubcparser_t* parser)
             // We need not bother with reallocation here because why
             state_count -= 1;
         }
+        if (state_count == 0) {
+            free(states);
+            states = NULL;
+            continue;
+        }
 
         // File is in include state
         if (states[state_count - 1] == state_include) {
