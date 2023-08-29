@@ -39,10 +39,9 @@ assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 
 top_level_statement : variable_definition
                     | persist
-                    | expression
-                    | function
 					| type_definition
 					| function
+                    | expression
                     | assignment
 
 inner_statement     : variable_definition
