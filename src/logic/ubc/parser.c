@@ -227,14 +227,33 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+int _Parser_ParseTypeDefinition(ubcparser_t* parser)
+{
+    // TODO: Implement
+    return EXIT_FAILURE;
+}
+
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
 {
-    token_t lookahead;
-    int lookahead_code = _Parser_LookAhead(parser, 0, &lookahead);
-    if (lookahead_code) {
-        _Parser_ReportTopTracebackError(parser, "Expected token when parsing Top Level Statement");
+    int fill_code = _Parser_FillLookahead(parser);
+    if (fill_code) {
+        _Parser_ReportTopTracebackError(parser, "Unable to fill lookahead, needed at least 3 tokens to parse a top level statement.");
         return EXIT_FAILURE;
     }
+
+    if (parser->lookahead.tokens[0].type = TT_UBC_VAR) {
+        return _Parser_ParseVariableDefinition(parser);
+    }
+    else if (parser->lookahead.tokens[0].type == TT_UBC_PERSIST) {
+        return _Parser_ParsePersist(parser);
+    }
+    else if (parser->lookahead.tokens[0].type == TT_UBC_TYPE) {
+        return _Parser_ParseTypeDefinition(parser);
+    } 
+    else if (parser->lookahead.tokens[0].type == TT_UBC_FUNCTION) {
+        return _Parser_ParseFunctionDefinition(parser);
+    } 
+    else if (parser->lookahead.tokens[0].type == TT_IDENTIFIER) 
 
     return EXIT_SUCCESS;
 }
