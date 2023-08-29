@@ -105,7 +105,8 @@ int _Parser_FillLookahead(ubcparser_t* parser)
 {
     token_t* destination;
     int lex_code;
-    while (parser->lookahead.available < 2) {
+    uint32_t lookahead_capacity = sizeof(parser->lookahead.tokens) / sizeof(token_t);
+    while (parser->lookahead.available < lookahead_capacity) {
         destination = parser->lookahead.tokens + parser->lookahead.available;
         lex_code = _Parser_NextLexToken(parser, destination);
         if (lex_code) {
@@ -223,6 +224,34 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
+{
+    token_t lookahead;
+    int lookahead_code = _Parser_LookAhead(parser, 0, &lookahead);
+    if (lookahead_code) {
+        _Parser_ReportTopTracebackError(parser, "Expected token when parsing Top Level Statement");
+        return EXIT_FAILURE;
+    }
+
+    switch (lookahead.type)
+    {
+    case TT_UBC_VAR:
+        // TODO: Implement this
+        break;
+    
+    case TT_UBC_PERSIST:
+        // TODO: Implement this
+        break;
+
+    case TT_
+    
+    default:
+        break;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_ParseScript(ubcparser_t* parser)
 {
     uint8_t state_include    = 0x01;
@@ -270,7 +299,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
         if (states[state_count - 1] == state_statements) {
             //parse_code = _Parser_ParseTopLevelStatement(parser);
             _Parser_AssumeLookaheadFill(parser);
-            parse_code = _Parser_ConsumeToken(parser);
+            parse_code = _Parser_ParseTopLevelStatement(parser);
         }
         if (parse_code) {
             _Parser_Free(parser, states);

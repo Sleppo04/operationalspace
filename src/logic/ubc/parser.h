@@ -56,7 +56,7 @@ typedef struct UbcLexerStack {
 
 typedef struct UbcParserLookahead {
     uint32_t available;
-    token_t  tokens[2];
+    token_t  tokens[3];
 } ubcparserlookahead_t;
 
 typedef struct UbcParser {
