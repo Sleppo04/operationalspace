@@ -124,7 +124,10 @@ int _Parser_ConsumeToken(ubcparser_t* parser)
         return EXIT_FAILURE;
     }
 
-    parser->lookahead.tokens[0] = parser->lookahead.tokens[1];
+    uint32_t lookahead_capacity = sizeof(parser->lookahead.tokens) / sizeof(token_t);
+    for (uint32_t i = 0; i < lookahead_capacity - 1; i++) {
+        parser->lookahead.tokens[i] = parser->lookahead.tokens[i + 1];
+    }
     parser->lookahead.available--;
 
     _Parser_FillLookahead(parser);
@@ -231,22 +234,6 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     if (lookahead_code) {
         _Parser_ReportTopTracebackError(parser, "Expected token when parsing Top Level Statement");
         return EXIT_FAILURE;
-    }
-
-    switch (lookahead.type)
-    {
-    case TT_UBC_VAR:
-        // TODO: Implement this
-        break;
-    
-    case TT_UBC_PERSIST:
-        // TODO: Implement this
-        break;
-
-    case TT_
-    
-    default:
-        break;
     }
 
     return EXIT_SUCCESS;
