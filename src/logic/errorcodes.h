@@ -1,14 +1,11 @@
 #ifndef ERRORCODES_H
 #define ERRORCODES_H
 
+// Standard codes
+
 #ifndef EBADFD
 // File descriptor in bad state
 #define EBADFD 77
-#endif
-
-#ifndef ENOTFOUND
-// Object requested could not be found
-#define ENOTFOUND 129
 #endif
 
 #ifndef EINVAL
@@ -19,6 +16,18 @@
 #ifndef EDESTADDRREQ
 // Destination address required
 #define EDESTADDRREQ 89
+#endif
+
+#ifndef ENOMEM
+// Not enough memory
+#define ENOMEM 12
+#endif
+
+// Custom codes
+
+#ifndef ENOTFOUND
+// Object requested could not be found
+#define ENOTFOUND 129
 #endif
 
 #endif
