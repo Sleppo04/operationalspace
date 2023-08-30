@@ -92,7 +92,7 @@ char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
     return dupstr;
 }
 
-bool _Parser_IsBuiltInTypename(ubcparser_t* parser, char* typename, int32_t name_length)
+bool _Parser_IsBuiltInTypename(char* typename, int32_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
         return true;
@@ -108,12 +108,13 @@ bool _Parser_IsBuiltInTypename(ubcparser_t* parser, char* typename, int32_t name
 
 bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t name_length)
 {
-    if (_Parser_IsBuiltInTypename(parser, typename, name_length))
+    if (_Parser_IsBuiltInTypename(typename, name_length))
         return true;
 
     for (uint16_t i = 0; i != parser->type_count; i++) {
         char* defined_typename = parser->defined_types[i].name;
-        if (strlen(defined_typename) != name_length) continue;
+        int32_t length = strlen(defined_typename);
+        if (length != name_length) continue;
         if (strncmp(defined_typename, typename, name_length) == 0) {
             return true;
         }
@@ -121,7 +122,8 @@ bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t n
 
     for (uint16_t i = 0; i != parser->config.type_count; i++) {
         char* foreign_typename = parser->config.foreign_types[i].name;
-        if (strlen(foreign_typename) != name_length) continue;
+        int32_t length = strlen(foreign_typename);
+        if (length != name_length) continue;
         if (strncmp(foreign_typename, typename, name_length)) {
             return true;
         }
@@ -142,7 +144,7 @@ bool _IsTypenameIdentifierToken(token_t* token)
     return false;
 }
 
-size_t _Parser_BuiltInTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
+size_t _Parser_BuiltInTypeSize(char* typename, int32_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
         return 8;
@@ -159,14 +161,15 @@ size_t _Parser_BuiltInTypeSize(ubcparser_t* parser, char* typename, int32_t name
 // This function returns 0 if the type does not exist
 size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
 {
-    if (_Parser_IsBuiltInTypename(parser, typename, name_length)) {
-        return _Parser_BuiltInTypeSize(parser, typename, name_length);
+    if (_Parser_IsBuiltInTypename(typename, name_length)) {
+        return _Parser_BuiltInTypeSize(typename, name_length);
     }
 
     // User defined types
     for (uint16_t i = 0; i != parser->type_count; i++) {
         ubccustomtype_t* type = parser->defined_types + i;
-        if (strlen(type->name) != name_length) continue;
+        int32_t length        = strlen(type->name);
+        if (length != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
             return type->type_size;
         }
@@ -175,7 +178,8 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
     // foreign types
     for (uint16_t i = 0; i != parser->config.type_count; i++) {
         ubccustomtype_t* type = parser->config.foreign_types + i;
-        if (strlen(type->name) != name_length) continue;
+        int32_t length        = strlen(type->name);
+        if (length != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
             return type->type_size;
         }
@@ -636,7 +640,10 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
 
     // Successfully parsed type definition statement
     int register_code = _Parser_RegisterCustomType(parser, new_type);
-
+    if (register_code) {
+        _Parser_DestroyCustomType(parser, &new_type);
+        return register_code;
+    }
 
     return EXIT_SUCCESS;
 }
