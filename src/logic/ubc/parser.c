@@ -291,7 +291,7 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     else if (parser->lookahead.tokens[0].type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
     } 
-    else if (parser->lookahead.tokens[0].type == TT_IDENTIFIER) {
+    else if (parser->lookahead.tokens[0].type == TT_UBC_DISCARD) {
         return _Parser_ParseDiscardExpression(parser);
     } else {
         return _Parser_ParseAssignment(parser);
