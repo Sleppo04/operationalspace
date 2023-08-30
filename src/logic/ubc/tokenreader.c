@@ -20,10 +20,10 @@ void Ubc_ReadNextToken(lexer_t* lexer, token_t* token)
         MAPTOKEN("include", TT_UBC_INCLUDE);
         MAPTOKEN("false", TT_UBC_FALSE);
         MAPTOKEN("true", TT_UBC_TRUE);
-        MAPTOKEN("int", TT_UBC_INT);
-        MAPTOKEN("float", TT_UBC_FLOAT);
-        MAPTOKEN("string", TT_UBC_STRING);
-        MAPTOKEN("bool", TT_UBC_BOOL);
+        MAPTOKEN(TT_UBC_INT_TYPENAME, TT_UBC_INT);
+        MAPTOKEN(TT_UBC_BOOL_TYPENAME, TT_UBC_BOOL);
+        MAPTOKEN(TT_UBC_FLOAT_TYPENAME, TT_UBC_FLOAT);
+        MAPTOKEN(TT_UBC_STRING_TYPENAME, TT_UBC_STRING);
         MAPTOKEN("discard", TT_UBC_DISCARD);
     }
 
