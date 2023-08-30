@@ -788,6 +788,9 @@ int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config)
     
     destination->lookahead.available = 0;
 
+    destination->defined_types = NULL;
+    destination->type_count    = 0;
+
     return 0;
 }
 
@@ -803,6 +806,13 @@ int Parser_Destroy(ubcparser_t* parser)
 
     if (parser->lexer_stack.lexers != NULL)
     _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));
+
+    if (parser->defined_types != NULL) {
+        for (uint16_t i = 0; i != parser->type_count; i++) {
+            _Parser_DestroyCustomType(parser, parser->defined_types + i);
+        }
+        _Parser_Free(parser, parser->defined_types, sizeof(ubccustomtype_t) * parser->type_count);
+    }
 
     return EXIT_SUCCESS;
 }
