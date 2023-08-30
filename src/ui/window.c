@@ -55,7 +55,7 @@ int Window_CreateWindow(int width, int height, window_t* win)
     outMode |= 0x0004; // ENABLE_VIRTUAL_TERMINAL_PROCESSING
     SetConsoleMode(stdoutHandle, outMode);
     // Activate Raw Input Mode
-    inMode = ENABLE_PROCESSED_INPUT | ENABLE_EXTENDED_FLAGS;
+    inMode = ENABLE_PROCESSED_INPUT | 0x0200 | ENABLE_EXTENDED_FLAGS; // ENABLE_VIRTUAL_TERMINAL_INPUT
     SetConsoleMode(stdinHandle, inMode);
 
     // TODO: Resize Console Window
