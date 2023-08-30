@@ -165,7 +165,7 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
 }
 
 // This function copies the specified type and does not keep a reference
-int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t* new_type)
+int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t new_type)
 {
     if (parser->type_count == 0) {
         parser->defined_types = _Parser_Malloc(parser, sizeof(ubccustomtype_t) * 1);
@@ -179,9 +179,10 @@ int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t* new_type)
         if (new_array == NULL) {
             return ENOMEM;
         }
+        parser->defined_types = new_array;
     }
 
-    parser->defined_types[parser->type_count] = new_type[0];
+    parser->defined_types[parser->type_count] = new_type;
     parser->type_count++;
 
     return EXIT_SUCCESS;
@@ -614,7 +615,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
 
 
     // Successfully parsed type definition statement
-    int register_code = _Parser_RegisterCustomType(parser, &new_type);
+    int register_code = _Parser_RegisterCustomType(parser, new_type);
 
 
     return EXIT_SUCCESS;
