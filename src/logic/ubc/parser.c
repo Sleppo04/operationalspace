@@ -74,6 +74,24 @@ void* _Parser_Memdup(ubcparser_t* parser, void* memory, size_t size)
     return dupmem;
 }
 
+char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
+{
+    size_t strnlen = 0;
+    while (source[strnlen] != '\0' && strnlen < length) {
+        strnlen++;
+    }
+
+    char* dupstr = _Parser_Malloc(parser, strnlen + 1);
+    if (dupstr == NULL) {
+        return NULL;
+    }
+
+    memcpy(dupstr, source, strnlen);
+    dupstr[strnlen] = '\0';
+
+    return dupstr;
+}
+
 bool _Parser_IsBuiltInTypename(ubcparser_t* parser, char* typename, int32_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
@@ -350,7 +368,7 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
         }
 
         type->field_typenames = _Parser_Malloc(parser, sizeof(char*) * 1);
-        if (type->field_typenames) {
+        if (type->field_typenames == NULL) {
             _Parser_Free(parser, type->field_names, sizeof(char*) * 1);
             type->field_names = NULL;
 
@@ -378,12 +396,12 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
 
     int new_member_index = type->field_count;
     type->field_count++;
-    type->field_names[new_member_index] = _Parser_Memdup(parser, member_name->ptr, member_name->value.length + sizeof(char));
+    type->field_names[new_member_index] = _Parser_strndup(parser, member_name->ptr, member_name->value.length);
     if (type->field_names[new_member_index] == NULL) {
         return ENOMEM;
     }
     
-    type->field_typenames[new_member_index] = _Parser_Memdup(parser, member_type->ptr, member_type->value.length + sizeof(char));
+    type->field_typenames[new_member_index] = _Parser_strndup(parser, member_type->ptr, member_type->value.length);
     if (type->field_typenames[new_member_index] == NULL) {
         return ENOMEM;
     }
@@ -503,7 +521,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     if (lookahead_code) return EXIT_FAILURE;
 
     ubccustomtype_t new_type;
-    new_type.name = _Parser_Memdup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length + 1));
+    new_type.name = _Parser_strndup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length));
     if (new_type.name == NULL) {
         return EXIT_FAILURE;
     }
@@ -566,6 +584,13 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
             _Parser_DestroyCustomType(parser, &new_type);
             return add_code;
         }
+
+        // Refresh lookahead token
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead_token)) {
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
     }
 
     if (new_type.field_count == 0) {
@@ -585,6 +610,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
         _Parser_ReportTopTracebackError(parser, "Expected right brace token after member declarations of type definition.");
         return EXIT_FAILURE;
     }
+    _Parser_ConsumeToken(parser);
 
 
     // Successfully parsed type definition statement
@@ -725,10 +751,10 @@ int _Parser_ParseScript(ubcparser_t* parser)
         if (states[state_count - 1] == state_include) {
             parse_code = _Parser_ParseInclude(parser);
         }
-        if (parse_code) {
+        if (states[state_count - 1] == state_include  && parse_code) {
             _Parser_Free(parser, states, sizeof(uint8_t) * state_count);
             return EXIT_FAILURE;
-        } else {
+        } else if (states[state_count - 1] == state_include && !parse_code) {
             // Parsing was successful
 
             // Expand state array for new files
