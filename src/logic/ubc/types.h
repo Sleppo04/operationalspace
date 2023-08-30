@@ -20,10 +20,11 @@ enum UbcType {
 
 typedef struct UbcCustomType
 {
-    enum UbcType field_types;
-    char*   field_names;
-    void*   fields;
+    char*   name;
+    char**  field_typenames;
+    char**  field_names;
     int     field_count;
+    size_t  type_size;
 } ubccustomtype_t;
 
 #endif //UBCTYPES
