@@ -103,6 +103,18 @@ bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t n
     return false;
 }
 
+bool _IsTypenameIdentifierToken(token_t* token)
+{
+    if (token->type == TT_UBC_INT) return true;
+    if (token->type == TT_UBC_BOOL) return true;
+    if (token->type == TT_UBC_FLOAT) return true;
+    if (token->type == TT_UBC_STRING) return true;
+
+    if (token->type == TT_IDENTIFIER) return true;
+
+    return false;
+}
+
 size_t _Parser_BuiltInTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
@@ -491,18 +503,17 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     if (lookahead_code) return EXIT_FAILURE;
 
     ubccustomtype_t new_type;
-    new_type.name = _Parser_Malloc(parser, sizeof(char) * (typename_token.value.length + 1));
+    new_type.name = _Parser_Memdup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length + 1));
     if (new_type.name == NULL) {
         return EXIT_FAILURE;
     }
-    strncpy(new_type.name, typename_token.ptr, typename_token.value.length);
     new_type.field_count     = 0;
     new_type.type_size       = 0;
     new_type.field_names     = NULL;
     new_type.field_typenames = NULL;
 
     token_t member_type, member_name, semicolon;
-    while (lookahead_token.type == TT_IDENTIFIER)
+    while (_IsTypenameIdentifierToken(&lookahead_token))
     {
         // Collect tokens
         _Parser_AssumeLookaheadFill(parser);
@@ -510,7 +521,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
             _Parser_DestroyCustomType(parser, &new_type);
             return EXIT_FAILURE;
         }
-        if (member_type.type != TT_IDENTIFIER) {
+        if (!_IsTypenameIdentifierToken(&member_type)) {
             _Parser_ReportTopTracebackError(parser, "Expected type identifier token at the beginning of the member declaration");
             _Parser_DestroyCustomType(parser, &new_type);
             return EXIT_FAILURE;
