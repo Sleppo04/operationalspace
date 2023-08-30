@@ -25,13 +25,6 @@ void UI_WorldViewRender(worldview_t* view)
         for (unsigned int j = 0; j < view->width; j++) {
             tile = World_GetTile(view->world, view->worldX + j, view->worldY + i);
             
-            char color = tile->color;
-            char glyph = tile->glyph;
-            if (tile->object != NULL) {
-                color = tile->color;
-                glyph = tile->glyph;
-            }
-
             if (tile == NULL) {
                 Window_SetColor(15, 1);
                 Window_SetBlinking(true);
@@ -42,8 +35,8 @@ void UI_WorldViewRender(worldview_t* view)
                 Window_SetColor(0, 3);
                 Window_PrintGlyph(' ');
             } else {
-                Window_SetColor(color, 0);
-                Window_PrintGlyph(glyph);
+                Window_SetColor(tile->color, 0);
+                Window_PrintGlyph(tile->glyph);
             }
         }
     }
