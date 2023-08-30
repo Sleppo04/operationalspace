@@ -24,12 +24,20 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
 // This function does not report errors to the user
 void* _Parser_Malloc(ubcparser_t* parser, size_t size)
 {
-    return malloc(size);
+    if (parser->config.malloc_function != NULL) {
+        return parser->config.malloc_function(parser->config.userdata, size);
+    } else {
+        return malloc(size);
+    }
 }
 
-void _Parser_Free(ubcparser_t* parser, void* address)
+void _Parser_Free(ubcparser_t* parser, void* address, size_t size)
 {
-    free(address);
+    if (parser->config.free_function != NULL) {
+        parser->config.free_function(parser->config.userdata, address, size);
+    } else {
+        free(address);
+    }
 }
 
 // This function does not report errors to the user
@@ -325,7 +333,20 @@ int _Parser_ParseScript(ubcparser_t* parser)
 
         // switch from statement state to removing the file
         if (states[state_count - 1] == state_statements && token.type == TT_EOF) {
-            // We need not bother with reallocation here because why
+            size_t old_size = sizeof(uint8_t) * (state_count);
+            size_t new_size = old_size - sizeof(uint8_t);
+
+            uint8_t* new_states = _Parser_Malloc(parser, new_size);
+            if (new_states == NULL) {
+                _Parser_Free(parser, states, old_size);
+                return EXIT_FAILURE;
+            }
+
+            memcpy(new_states, states, new_size);
+            _Parser_Free(parser, states, old_size);
+
+            states = new_states;
+            
             state_count -= 1;
 
             // Clear the lookahead because it's possibly filled with EOF tokens from the ending file
@@ -342,7 +363,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
             parse_code = _Parser_ParseTopLevelStatement(parser);
         }
         if (parse_code) {
-            _Parser_Free(parser, states);
+            _Parser_Free(parser, states, sizeof(uint8_t) * state_count);
             return EXIT_FAILURE;
         }
 
@@ -352,7 +373,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
             parse_code = _Parser_ParseInclude(parser);
         }
         if (parse_code) {
-            _Parser_Free(parser, states);
+            _Parser_Free(parser, states, sizeof(uint8_t) * state_count);
             return EXIT_FAILURE;
         } else {
             // Parsing was successful
@@ -360,7 +381,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
             // Expand state array for new files
             uint8_t* new_states = _Parser_Malloc(parser, sizeof(uint8_t) * parser->lexer_stack.stack_size);
             if (new_states == NULL) {
-                _Parser_Free(parser, states);
+                _Parser_Free(parser, states, state_count * sizeof(uint8_t));
                 return ENOMEM;
             }
 
@@ -370,7 +391,7 @@ int _Parser_ParseScript(ubcparser_t* parser)
             new_states[state_count - 1] = state_include;
             
             // Free old state array
-            _Parser_Free(parser, states);
+            _Parser_Free(parser, states, state_count * sizeof(uint8_t));
             states = new_states;
         }
     }
@@ -439,7 +460,7 @@ int Parser_Destroy(ubcparser_t* parser)
     DynamicBuffer_Destroy(&(parser->bytecode_buffer));
 
     if (parser->lexer_stack.lexers != NULL)
-    _Parser_Free(parser, parser->lexer_stack.lexers);
+    _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));
 
     return EXIT_SUCCESS;
 }

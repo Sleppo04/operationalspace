@@ -19,7 +19,9 @@ enum UbcParserErrorType {
     UBCPARSERERROR_TRACEBACK,
 };
 
-typedef int (*UBCErrorReportFunction) (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
+typedef int   (*UBCErrorReportFunction)  (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
+typedef void  (*UBCCustomFreeFunction)   (void* userdata, void* address, size_t size);
+typedef void* (*UBCCustomMallocFunction) (void* userdata, size_t size);
 
 typedef struct UbcFile {
     char* fileName;
@@ -47,6 +49,9 @@ typedef struct UbcParserConfig {
 
     ubcforeignfunction_t* foreign_functions;
     uint16_t              function_count;
+
+    UBCCustomMallocFunction malloc_function;
+    UBCCustomFreeFunction   free_function;
 } ubcparserconfig_t;
 
 typedef struct UbcLexerStack {
