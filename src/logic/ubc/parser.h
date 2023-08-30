@@ -3,12 +3,12 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include "ubc.h"
 #include "types.h"
 #include "tokenreader.h"
 
+#include "../errorcodes.h"
 #include "../lexer/lexer.h"
 #include "../dynamicbuffer/dynamicbuffer.h"
 

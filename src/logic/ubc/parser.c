@@ -79,7 +79,7 @@ int _Parser_LookAhead(ubcparser_t* parser, uint32_t range, token_t* destination)
         return EINVAL;
     }
     if (range >= parser->lookahead.available) {
-        return ENOMEDIUM;
+        return ERANGE;
     }
 
     destination[0] = parser->lookahead.tokens[range];
@@ -173,7 +173,7 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     lookahead_code = _Parser_LookAhead(parser, 0, &include_token);
     
     // No token available
-    if (lookahead_code == ENOMEDIUM) {
+    if (lookahead_code == ERANGE) {
         _Parser_ReportTopTracebackError(parser, "Expected token");
         return ECANCELED;
     }
