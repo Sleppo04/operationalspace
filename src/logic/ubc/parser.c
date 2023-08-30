@@ -108,12 +108,21 @@ bool _Parser_IsBuiltInTypename(ubcparser_t* parser, char* typename, int32_t name
 
 bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t name_length)
 {
-    if (_Parser_IsBuiltInTypename(parser, typename, name_length))  
+    if (_Parser_IsBuiltInTypename(parser, typename, name_length))
         return true;
 
     for (uint16_t i = 0; i != parser->type_count; i++) {
         char* defined_typename = parser->defined_types[i].name;
+        if (strlen(defined_typename) != name_length) continue;
         if (strncmp(defined_typename, typename, name_length) == 0) {
+            return true;
+        }
+    }
+
+    for (uint16_t i = 0; i != parser->config.type_count; i++) {
+        char* foreign_typename = parser->config.foreign_types[i].name;
+        if (strlen(foreign_typename) != name_length) continue;
+        if (strncmp(foreign_typename, typename, name_length)) {
             return true;
         }
     }
@@ -154,8 +163,19 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
         return _Parser_BuiltInTypeSize(parser, typename, name_length);
     }
 
+    // User defined types
     for (uint16_t i = 0; i != parser->type_count; i++) {
         ubccustomtype_t* type = parser->defined_types + i;
+        if (strlen(type->name) != name_length) continue;
+        if (strncmp(type->name, typename, name_length) == 0) {
+            return type->type_size;
+        }
+    }
+
+    // foreign types
+    for (uint16_t i = 0; i != parser->config.type_count; i++) {
+        ubccustomtype_t* type = parser->config.foreign_types + i;
+        if (strlen(type->name) != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
             return type->type_size;
         }
