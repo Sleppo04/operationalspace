@@ -233,6 +233,36 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     return EXIT_FAILURE;
 }
 
+int _Parser_ParseFunctionDefinition(ubcparser_t* parser)
+{
+    // TODO: Implement
+    return EXIT_FAILURE;
+}
+
+int _Parser_ParseVariableDefinition(ubcparser_t* parser)
+{
+    // TODO: Implement
+    return EXIT_FAILURE;
+}
+
+int _Parser_ParsePersist(ubcparser_t* parser)
+{
+    //TODO: Implement
+    return EXIT_FAILURE;
+}
+
+int _Parser_ParseDiscardExpression(ubcparser_t* parser)
+{
+    //TODO: Implement
+    return EXIT_FAILURE;
+}
+
+int _Parser_ParseAssignment(ubcparser_t* parser)
+{
+    //TODO: Implement
+    return EXIT_FAILURE;
+}
+
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
 {
     int fill_code = _Parser_FillLookahead(parser);
@@ -241,7 +271,7 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
         return EXIT_FAILURE;
     }
 
-    if (parser->lookahead.tokens[0].type = TT_UBC_VAR) {
+    if (parser->lookahead.tokens[0].type == TT_UBC_VAR) {
         return _Parser_ParseVariableDefinition(parser);
     }
     else if (parser->lookahead.tokens[0].type == TT_UBC_PERSIST) {
@@ -253,7 +283,11 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     else if (parser->lookahead.tokens[0].type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
     } 
-    else if (parser->lookahead.tokens[0].type == TT_IDENTIFIER) 
+    else if (parser->lookahead.tokens[0].type == TT_IDENTIFIER) {
+        return _Parser_ParseDiscardExpression(parser);
+    } else {
+        return _Parser_ParseAssignment(parser);
+    }
 
     return EXIT_SUCCESS;
 }
