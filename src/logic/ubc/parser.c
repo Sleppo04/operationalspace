@@ -40,6 +40,123 @@ void _Parser_Free(ubcparser_t* parser, void* address, size_t size)
     }
 }
 
+void* _Parser_Realloc(ubcparser_t* parser, void* address, size_t new_size, size_t old_size)
+{
+    if (parser->config.realloc_function != NULL) {
+        return parser->config.realloc_function(parser->config.userdata, address, new_size, old_size);
+    }
+
+    if (parser->config.malloc_function == NULL && parser->config.free_function == NULL) {
+        // No other function is defined, we can use sysrealloc
+        return realloc(address, new_size);
+    }
+
+
+    void* new_array = _Parser_Malloc(parser, new_size);
+    if (new_array == NULL) {
+        return NULL;
+    }
+
+    memcpy(new_array, address, old_size);
+    _Parser_Free(parser, address, old_size);
+
+    return new_array;
+}
+
+void* _Parser_Memdup(ubcparser_t* parser, void* memory, size_t size)
+{
+    void* dupmem = _Parser_Malloc(parser, size);
+    if (dupmem == NULL) {
+        return NULL;
+    }
+
+    memcpy(dupmem, memory, size);
+    return dupmem;
+}
+
+bool _Parser_IsBuiltInTypename(ubcparser_t* parser, char* typename, int32_t name_length)
+{
+    if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
+        return true;
+    if (strncmp(typename, TT_UBC_INT_TYPENAME, name_length) == 0) 
+        return true;
+    if (strncmp(typename, TT_UBC_FLOAT_TYPENAME, name_length) == 0) 
+        return true;
+    if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
+        return true;
+    
+    return false;
+}
+
+bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t name_length)
+{
+    if (_Parser_IsBuiltInTypename(parser, typename, name_length))  
+        return true;
+
+    for (uint16_t i = 0; i != parser->type_count; i++) {
+        char* defined_typename = parser->defined_types[i].name;
+        if (strncmp(defined_typename, typename, name_length) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+size_t _Parser_BuiltInTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
+{
+    if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
+        return 8;
+    if (strncmp(typename, TT_UBC_INT_TYPENAME, name_length) == 0) 
+        return 32;
+    if (strncmp(typename, TT_UBC_FLOAT_TYPENAME, name_length) == 0) 
+        return 32;
+    if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
+        return 32;
+    
+    return 0;
+}
+
+// This function returns 0 if the type does not exist
+size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
+{
+    if (_Parser_IsBuiltInTypename(parser, typename, name_length)) {
+        return _Parser_BuiltInTypeSize(parser, typename, name_length);
+    }
+
+    for (uint16_t i = 0; i != parser->type_count; i++) {
+        ubccustomtype_t* type = parser->defined_types + i;
+        if (strncmp(type->name, typename, name_length) == 0) {
+            return type->type_size;
+        }
+    }
+
+    return 0;
+}
+
+// This function copies the specified type and does not keep a reference
+int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t* new_type)
+{
+    if (parser->type_count == 0) {
+        parser->defined_types = _Parser_Malloc(parser, sizeof(ubccustomtype_t) * 1);
+        if (parser->defined_types == NULL) {
+            return ENOMEM;
+        }
+    } else {
+        size_t old_size = sizeof(ubccustomtype_t) * parser->type_count;
+        size_t new_size = old_size + sizeof(ubccustomtype_t);
+        ubccustomtype_t* new_array = _Parser_Realloc(parser, parser->defined_types, new_size, old_size);
+        if (new_array == NULL) {
+            return ENOMEM;
+        }
+    }
+
+    parser->defined_types[parser->type_count] = new_type[0];
+    parser->type_count++;
+
+    return EXIT_SUCCESS;
+}
+
 // This function does not report errors to the user
 int _Parser_AddParseFile(ubcparser_t* parser, char* filename, size_t length)
 {
@@ -170,6 +287,100 @@ int _Parser_AssumeLookaheadFill(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+int _Parser_DestroyCustomType(ubcparser_t* parser, ubccustomtype_t* type)
+{
+    if (type == NULL) {
+        return EDESTADDRREQ;
+    }
+
+    if (type->name != NULL) {
+        size_t name_length = strlen(type->name) + 1;
+        _Parser_Free(parser, type->name, sizeof(char) * name_length);
+        type->name = NULL;
+    }
+
+    if (type->field_names != NULL) {
+        for (int i = 0; i < type->field_count; i++) {
+            char*  field_name         = type->field_names[i];
+            size_t name_buffer_length = strlen(field_name) + 1;
+            _Parser_Free(parser, field_name, name_buffer_length);
+            // Don't set it to NULL because we free it right after the loop finishes
+        }
+
+        size_t array_bytes = sizeof(char*) * type->field_count;
+        _Parser_Free(parser, type->field_names, array_bytes);
+        type->field_names = NULL;
+    }
+
+    if (type->field_typenames != NULL) {
+        for (int i = 0; i < type->field_count; i++) {
+            char*  field_typename    = type->field_typenames[i];
+            size_t namebuffer_length = strlen(field_typename) + 1;
+            _Parser_Free(parser, field_typename, namebuffer_length);
+        }
+
+        size_t array_bytes = sizeof(char*) * type->field_count;
+        _Parser_Free(parser, type->field_typenames, array_bytes);
+        type->field_typenames = NULL;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+// This function assumes that the member type exists
+int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, token_t* member_type, token_t* member_name)
+{
+
+    if (type->field_count == 0) {
+        type->field_names = _Parser_Malloc(parser, sizeof(char*) * 1);
+        if (type->field_names == NULL) {
+            return ENOMEM;
+        }
+
+        type->field_typenames = _Parser_Malloc(parser, sizeof(char*) * 1);
+        if (type->field_typenames) {
+            _Parser_Free(parser, type->field_names, sizeof(char*) * 1);
+            type->field_names = NULL;
+
+            return ENOMEM;
+        }
+    } else {
+        size_t old_names_size  = sizeof(char*) * type->field_count;
+        size_t new_names_size  = old_names_size + sizeof(char*);
+        char** new_names_array = _Parser_Realloc(parser, type->field_names, new_names_size, old_names_size);
+        if (new_names_array == NULL) {
+            return ENOMEM;
+        }
+        type->field_names = new_names_array;
+
+        size_t old_types_size = sizeof(char*) * type->field_count;
+        size_t new_types_size = sizeof(char*) + old_types_size;
+        char** new_types_array = _Parser_Realloc(parser, type->field_typenames, new_types_size, old_types_size);
+        if (new_types_array == NULL) {
+            _Parser_Free(parser, type->field_names, new_names_size);
+            type->field_names = NULL;
+            return ENOMEM;
+        }
+        type->field_typenames = new_types_array;
+    }
+
+    int new_member_index = type->field_count;
+    type->field_count++;
+    type->field_names[new_member_index] = _Parser_Memdup(parser, member_name->ptr, member_name->value.length + sizeof(char));
+    if (type->field_names[new_member_index] == NULL) {
+        return ENOMEM;
+    }
+    
+    type->field_typenames[new_member_index] = _Parser_Memdup(parser, member_type->ptr, member_type->value.length + sizeof(char));
+    if (type->field_typenames[new_member_index] == NULL) {
+        return ENOMEM;
+    }
+
+    type->type_size += _Parser_GetTypeSize(parser, member_type->ptr, member_type->value.length);
+
+    return EXIT_SUCCESS;
+}
+
 /// Parsing Functions
 
 
@@ -237,8 +448,139 @@ int _Parser_ParseInclude(ubcparser_t* parser)
 
 int _Parser_ParseTypeDefinition(ubcparser_t* parser)
 {
-    // TODO: Implement
-    return EXIT_FAILURE;
+    token_t type_token;
+    _Parser_AssumeLookaheadFill(parser);
+    int lookahead_code = _Parser_LookAhead(parser, 0, &type_token);
+    if (lookahead_code) {
+        return EXIT_FAILURE;
+    }
+
+    if (type_token.type != TT_UBC_TYPE) {
+        _Parser_ReportTopTracebackError(parser, "Expected type keyword token.");
+        return EXIT_FAILURE;
+    }
+    _Parser_ConsumeToken(parser);
+
+    token_t typename_token;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &typename_token)) return EXIT_FAILURE;
+    if (typename_token.type != TT_IDENTIFIER) {
+        _Parser_ReportTopTracebackError(parser, "Expected type identifer token after type keyword.");
+        return EXIT_FAILURE;
+    }
+    _Parser_ConsumeToken(parser);
+
+    if (_Parser_IsTypenameRegistered(parser, typename_token.ptr, typename_token.value.length)) {
+        _Parser_ReportTopTracebackError(parser, "Bad typename, a type with this name already exists.");
+        return EXIT_FAILURE;
+    }
+
+
+    token_t left_brace_token, right_brace_token;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &left_brace_token)) return EXIT_FAILURE;
+    if (left_brace_token.type != TT_LEFT_BRACE) {
+        _Parser_ReportTopTracebackError(parser, "Expected left brace token after type identifier in type definition.");
+        return EXIT_FAILURE;
+    }
+    _Parser_ConsumeToken(parser);
+
+    token_t lookahead_token;
+    _Parser_AssumeLookaheadFill(parser);
+    lookahead_code = _Parser_LookAhead(parser, 0, &lookahead_token);
+    if (lookahead_code) return EXIT_FAILURE;
+
+    ubccustomtype_t new_type;
+    new_type.name = _Parser_Malloc(parser, sizeof(char) * (typename_token.value.length + 1));
+    if (new_type.name == NULL) {
+        return EXIT_FAILURE;
+    }
+    strncpy(new_type.name, typename_token.ptr, typename_token.value.length);
+    new_type.field_count     = 0;
+    new_type.type_size       = 0;
+    new_type.field_names     = NULL;
+    new_type.field_typenames = NULL;
+
+    token_t member_type, member_name, semicolon;
+    while (lookahead_token.type == TT_IDENTIFIER)
+    {
+        // Collect tokens
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &member_type)) {
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        if (member_type.type != TT_IDENTIFIER) {
+            _Parser_ReportTopTracebackError(parser, "Expected type identifier token at the beginning of the member declaration");
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        _Parser_ConsumeToken(parser);
+
+        // Check whether the type exists
+        bool type_exists = _Parser_IsTypenameRegistered(parser, member_type.ptr, member_type.value.length);
+        if (!type_exists) {
+            _Parser_ReportTopTracebackError(parser, "Unknown member type, cannot add member with unkown size to custom type.");
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &member_name)) {
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        if (member_name.type != TT_IDENTIFIER) {
+            _Parser_ReportTopTracebackError(parser, "Expected name identifier token after typename identifier token in member declaration.");
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        _Parser_ConsumeToken(parser);
+
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &semicolon)) {
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        if (semicolon.type != TT_SEMICOLON) {
+            _Parser_ReportTopTracebackError(parser, "Expected semicolon after type identifier and name identifer in member declaration.");
+            _Parser_DestroyCustomType(parser, &new_type);
+            return EXIT_FAILURE;
+        }
+        _Parser_ConsumeToken(parser);
+
+        // All tokens gathered now
+        int add_code = _Parser_AddCustomTypeMember(parser, &new_type, &member_type, &member_name);
+        if (add_code) {
+            _Parser_DestroyCustomType(parser, &new_type);
+            return add_code;
+        }
+    }
+
+    if (new_type.field_count == 0) {
+        _Parser_ReportTopTracebackError(parser, "Empty custom types (without any members) are not allowed.");
+        _Parser_DestroyCustomType(parser, &new_type);
+        return EXIT_FAILURE;
+    }
+
+    // Successfully parsed members
+
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &right_brace_token)) {
+        _Parser_DestroyCustomType(parser, &new_type);
+        return EXIT_FAILURE;
+    }
+    if (right_brace_token.type != TT_RIGHT_BRACE) {
+        _Parser_ReportTopTracebackError(parser, "Expected right brace token after member declarations of type definition.");
+        return EXIT_FAILURE;
+    }
+
+
+    // Successfully parsed type definition statement
+    int register_code = _Parser_RegisterCustomType(parser, &new_type);
+
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ParseFunctionDefinition(ubcparser_t* parser)

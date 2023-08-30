@@ -1,6 +1,7 @@
 #ifndef UBCPARSER_H
 #define UBCPARSER_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -19,9 +20,10 @@ enum UbcParserErrorType {
     UBCPARSERERROR_TRACEBACK,
 };
 
-typedef int   (*UBCErrorReportFunction)  (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
-typedef void  (*UBCCustomFreeFunction)   (void* userdata, void* address, size_t size);
-typedef void* (*UBCCustomMallocFunction) (void* userdata, size_t size);
+typedef int   (*UBCErrorReportFunction)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
+typedef void* (*UBCCustomReallocFunction) (void* userdata, void* address, size_t new_size, size_t old_size);
+typedef void  (*UBCCustomFreeFunction)    (void* userdata, void* address, size_t size);
+typedef void* (*UBCCustomMallocFunction)  (void* userdata, size_t size);
 
 typedef struct UbcFile {
     char* fileName;
@@ -50,8 +52,9 @@ typedef struct UbcParserConfig {
     ubcforeignfunction_t* foreign_functions;
     uint16_t              function_count;
 
-    UBCCustomMallocFunction malloc_function;
-    UBCCustomFreeFunction   free_function;
+    UBCCustomMallocFunction  malloc_function;
+    UBCCustomFreeFunction    free_function;
+    UBCCustomReallocFunction realloc_function;
 } ubcparserconfig_t;
 
 typedef struct UbcLexerStack {
@@ -69,6 +72,9 @@ typedef struct UbcParser {
     dynamic_buffer_t          bytecode_buffer;
     ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
+
+    ubccustomtype_t* defined_types;
+    uint16_t         type_count;
 } ubcparser_t;
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
