@@ -24,6 +24,7 @@ void Ubc_ReadNextToken(lexer_t* lexer, token_t* token)
         MAPTOKEN("float", TT_UBC_FLOAT);
         MAPTOKEN("string", TT_UBC_STRING);
         MAPTOKEN("bool", TT_UBC_BOOL);
+        MAPTOKEN("discard", TT_UBC_DISCARD);
     }
 
     return;

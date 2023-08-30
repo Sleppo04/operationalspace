@@ -21,6 +21,7 @@
 #define TT_UBC_FLOAT    1014
 #define TT_UBC_STRING   1015
 #define TT_UBC_BOOL     1016
+#define TT_UBC_DISCARD  1017
 
 void Ubc_ReadNextToken(lexer_t* lexer, token_t* token);
 
