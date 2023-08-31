@@ -73,13 +73,37 @@ typedef struct UbcParserTypeArray {
     uint16_t         count;
 } ubcparsertypearray_t;
 
+typedef struct UbcParserBuffer {
+    void* memory;
+    size_t capacity;
+    size_t used;
+} ubcparserbuffer_t;
+
+enum UbcScopeType {
+    UBCSCOPE_FILE,
+    UBCSCOPE_FUNCTION,
+    UBCSCOPE_WHILE,
+    UBCSCOPE_LOCAL
+};
+
+typedef struct UbcVariable {
+    char* name;
+    enum UbcType type;
+    char* typename;
+} ubcvariable_t;
+
+typedef struct UbcScope {
+    enum UbcScopeType type;
+    ubcparserbuffer_t variables;
+} ubcscope_t;
+
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
     dynamic_buffer_t          bytecode_buffer;
     ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
-
     struct UbcParserTypeArray types;
+    ubcparserbuffer_t         scopes;
 } ubcparser_t;
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
