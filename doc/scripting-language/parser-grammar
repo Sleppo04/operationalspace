@@ -13,9 +13,9 @@ include             : TOKEN_INCLUDE TOKEN_STRING_LITERAL TOKEN_SEMICOLON
 
 
 /** Statements **/
-persist             : TOKEN_PERSIST TOKEN_IDENTIFIER
 
 variable_definition : TOKEN_VAR type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
+                    | TOKEN_PERSIST TOKEN_VAR type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
 
 
 member              : type_identifier TOKEN_IDENTIFIER TOKEN_SEMICOLON
@@ -38,7 +38,6 @@ lvalue              : TOKEN_IDENTIFIER
 assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 
 top_level_statement : variable_definition
-                    | persist
                     | type_definition
                     | function
                     | expression
