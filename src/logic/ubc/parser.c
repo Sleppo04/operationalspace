@@ -694,16 +694,9 @@ int _Parser_ParsePersist(ubcparser_t* parser)
     return EXIT_FAILURE;
 }
 
-int _Parser_ParseDiscardExpression(ubcparser_t* parser)
+int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 {
-    //TODO: Implement
-    return EXIT_FAILURE;
-}
-
-int _Parser_ParseAssignment(ubcparser_t* parser)
-{
-    //TODO: Implement
-    return EXIT_FAILURE;
+    
 }
 
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
@@ -725,11 +718,8 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     } 
     else if (lookahead_token.type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
-    } 
-    else if (lookahead_token.type == TT_UBC_DISCARD) {
-        return _Parser_ParseDiscardExpression(parser);
     } else {
-        return _Parser_ParseAssignment(parser);
+        return _Parser_ParseAssignmentExpression(parser);
     }
 
     return EXIT_SUCCESS;
