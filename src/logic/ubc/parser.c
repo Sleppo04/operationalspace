@@ -696,8 +696,10 @@ int _Parser_ParsePersist(ubcparser_t* parser)
 
 int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 {
-    
+    token_t root_variable_name;
 }
+
+int _Parser_ParseTopLEvelExpression(ubcparser_t* parser, )
 
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
 {
@@ -718,6 +720,8 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     } 
     else if (lookahead_token.type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
+    } else if (lookahead_token.type != TT_IDENTIFIER) {
+        return _Parser_ParseTopLEvelExpression(parser, NULL);
     } else {
         return _Parser_ParseAssignmentExpression(parser);
     }
