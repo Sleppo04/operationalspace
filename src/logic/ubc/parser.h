@@ -68,14 +68,18 @@ typedef struct UbcParserLookahead {
     token_t  tokens[3];
 } ubcparserlookahead_t;
 
+typedef struct UbcParserTypeArray {
+    ubccustomtype_t* array;
+    uint16_t         count;
+} ubcparsertypearray_t;
+
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
     dynamic_buffer_t          bytecode_buffer;
     ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
 
-    ubccustomtype_t* defined_types;
-    uint16_t         type_count;
+    struct UbcParserTypeArray types;
 } ubcparser_t;
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);

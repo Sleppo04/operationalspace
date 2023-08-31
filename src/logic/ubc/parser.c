@@ -153,8 +153,8 @@ bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t n
     if (_Parser_IsBuiltInTypename(typename, name_length))
         return true;
 
-    for (uint16_t i = 0; i != parser->type_count; i++) {
-        char* defined_typename = parser->defined_types[i].name;
+    for (uint16_t i = 0; i != parser->types.count; i++) {
+        char* defined_typename = parser->types.array[i].name;
         int32_t length = strlen(defined_typename);
         if (length != name_length) continue;
         if (strncmp(defined_typename, typename, name_length) == 0) {
@@ -208,8 +208,8 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
     }
 
     // User defined types
-    for (uint16_t i = 0; i != parser->type_count; i++) {
-        ubccustomtype_t* type = parser->defined_types + i;
+    for (uint16_t i = 0; i != parser->types.count; i++) {
+        ubccustomtype_t* type = parser->types.array + i;
         int32_t length        = strlen(type->name);
         if (length != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
@@ -233,23 +233,23 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
 // This function copies the specified type and does not keep a reference
 int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t new_type)
 {
-    if (parser->type_count == 0) {
-        parser->defined_types = _Parser_Malloc(parser, sizeof(ubccustomtype_t) * 1);
-        if (parser->defined_types == NULL) {
+    if (parser->types.count == 0) {
+        parser->types.array = _Parser_Malloc(parser, sizeof(ubccustomtype_t) * 1);
+        if (parser->types.array == NULL) {
             return ENOMEM;
         }
     } else {
-        size_t old_size = sizeof(ubccustomtype_t) * parser->type_count;
+        size_t old_size = sizeof(ubccustomtype_t) * parser->types.count;
         size_t new_size = old_size + sizeof(ubccustomtype_t);
-        ubccustomtype_t* new_array = _Parser_Realloc(parser, parser->defined_types, new_size, old_size);
+        ubccustomtype_t* new_array = _Parser_Realloc(parser, parser->types.array, new_size, old_size);
         if (new_array == NULL) {
             return ENOMEM;
         }
-        parser->defined_types = new_array;
+        parser->types.array = new_array;
     }
 
-    parser->defined_types[parser->type_count] = new_type;
-    parser->type_count++;
+    parser->types.array[parser->types.count] = new_type;
+    parser->types.count++;
 
     return EXIT_SUCCESS;
 }
@@ -697,6 +697,8 @@ int _Parser_ParsePersist(ubcparser_t* parser)
 int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 {
     token_t root_variable_name;
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ParseTopLEvelExpression(ubcparser_t* parser, void* data)
@@ -878,8 +880,8 @@ int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config)
     
     destination->lookahead.available = 0;
 
-    destination->defined_types = NULL;
-    destination->type_count    = 0;
+    destination->types.array = NULL;
+    destination->types.count = 0;
 
     return 0;
 }
@@ -897,11 +899,11 @@ int Parser_Destroy(ubcparser_t* parser)
     if (parser->lexer_stack.lexers != NULL)
     _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));
 
-    if (parser->defined_types != NULL) {
-        for (uint16_t i = 0; i != parser->type_count; i++) {
-            _Parser_DestroyCustomType(parser, parser->defined_types + i);
+    if (parser->types.array != NULL) {
+        for (uint16_t i = 0; i != parser->types.count; i++) {
+            _Parser_DestroyCustomType(parser, parser->types.array + i);
         }
-        _Parser_Free(parser, parser->defined_types, sizeof(ubccustomtype_t) * parser->type_count);
+        _Parser_Free(parser, parser->types.array, sizeof(ubccustomtype_t) * parser->types.count);
     }
 
     return EXIT_SUCCESS;
