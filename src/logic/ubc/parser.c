@@ -701,7 +701,7 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
-int _Parser_ParseTopLEvelExpression(ubcparser_t* parser, void* data)
+int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
     return EXIT_FAILURE;
 }
@@ -714,11 +714,8 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
         return EXIT_FAILURE;
     }
 
-    if (lookahead_token.type == TT_UBC_VAR) {
+    if (lookahead_token.type == TT_UBC_VAR || lookahead_token.type == TT_UBC_PERSIST) {
         return _Parser_ParseVariableDefinition(parser);
-    }
-    else if (lookahead_token.type == TT_UBC_PERSIST) {
-        return _Parser_ParsePersist(parser);
     }
     else if (lookahead_token.type == TT_UBC_TYPE) {
         return _Parser_ParseTypeDefinition(parser);
@@ -726,7 +723,7 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     else if (lookahead_token.type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
     } else if (lookahead_token.type != TT_IDENTIFIER) {
-        return _Parser_ParseTopLEvelExpression(parser, NULL);
+        return _Parser_ParseTopLevelExpression(parser, NULL);
     } else {
         return _Parser_ParseAssignmentExpression(parser);
     }
