@@ -39,15 +39,15 @@ assignment          : lvalue TOKEN_EQUALS expression TOKEN_SEMICOLON
 
 top_level_statement : variable_definition
                     | persist
-					| type_definition
-					| function
+                    | type_definition
+                    | function
                     | expression
                     | assignment
 
 inner_statement     : variable_definition
-					| expression
+                    | expression
                     | assignment
-					| return_statement
+                    | return_statement
                     | break_statement
 
 inner_list          : inner_statement inner_list
@@ -62,19 +62,22 @@ statementlist       : statement statementlist
 compound_statement  : TOKEN_LEFT_BRACE statementlist TOKEN_RIGHT_BRACE
                     | statement
 
-if                  : TOKEN_IF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound elif_statement else_statement
+if                  : TOKEN_IF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound elif_list else_statement
 
-elif                : TOKEN_ELIF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
+elif_list           : elif_statement elif_list
+                    | elif_statement
+
+elif_statement      : TOKEN_ELIF TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
                     |
 
-else                : TOKEN_ELSE inner_compound
+else_statement      : TOKEN_ELSE inner_compound
                     | 
 
 while               : TOKEN_WHILE TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS inner_compound
 
 
 /** Expression stuff **/
-expression          : value
+expression          : evalue
                     | expression_p0
 
 
@@ -120,13 +123,20 @@ expression_paren    : TOKEN_LEFT_PARENTHESIS expression TOKEN_RIGHT_PARENTHESIS
 
 evalue              : literal
                     | lvalue
+                    | function_call
 
-literal             : TOKEN_IDENTIFIER
-                    | TOKEN_INT_LITERAL
+literal             : TOKEN_INT_LITERAL
                     | TOKEN_FLOAT_LITERAL
                     | TOKEN_STRING_LITERAL
                     | TOKEN_FALSE
                     | TOKEN_TRUE
+
+function_call       : TOKEN_IDENTIFIER TOKEN_LEFT_PARENTHESIS argument_list TOKEN_RIGHT_PARENTHESIS TOKEN_SEMICOLON
+
+argument_list       : argument argument_list
+                    | argument
+
+argument            : expression
 
 type_identifier	    : TOKEN_IDENTIFIER
 
