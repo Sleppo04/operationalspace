@@ -699,7 +699,10 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     token_t root_variable_name;
 }
 
-int _Parser_ParseTopLEvelExpression(ubcparser_t* parser, )
+int _Parser_ParseTopLEvelExpression(ubcparser_t* parser, void* data)
+{
+    return EXIT_FAILURE;
+}
 
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
 {
