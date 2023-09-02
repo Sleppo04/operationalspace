@@ -75,6 +75,71 @@ char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
 }
 
 
+// UpcParserBuffer
+
+int _UbcParserBuffer_Create(ubcparser_t* parser, ubcparserbuffer_t* buffer)
+{
+	if (parser == NULL) return EINVAL;
+	if (buffer == NULL) return EDESTADDRREQ;
+	buffer->memory   = NULL;
+	buffer->capacity = 0;
+	buffer->used     = 0;
+
+	return EXIT_SUCCESS;
+}
+
+bool _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* buffer, size_t needed)
+{
+	if (parser == NULL) return false;
+	if (buffer == NULL) return false;
+
+	if (buffer->memory = NULL) {
+		buffer->memory = _Parser_Malloc(parser, needed);
+		if (memory == NULL) {
+			return false;
+		}
+	} else if (needed > (buffer->capacity - buffer->needed)) {
+		size_t new_capacity = buffer->capacity * 2;
+		if (needed > (new_capacty - buffer->needed)) {
+			new_capapacity = buffer->capacity + needed;
+		}
+
+		void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
+		if (new_memory == NULL) return false;
+		buffer->memory = memory;
+	}
+
+	return true;
+}
+
+int _UbcParserBuffer_Write(ubcparser_t* parser, ubcparserbuffer_t* buffer, void* memory, size_t length)
+{
+	if (parser == NULL) return EINVAL;
+	if (memory == NULL) return EINVAL;
+	if (buffer == NULL) return EDESTADDRREQ;
+
+	if (_UbcParserBuffer_EnsureFreeCapacity(parser, buffer, length)) return ENOMEM;
+
+	void* destination = void* ((char*) (buffer->memory) + length);
+	memcpy(destination, memory, length);
+
+	return EXIT_SUCCESS;
+}
+
+void _UbcParserBuffer_Destroy(ubcparser_t* parser, ubcparserbuffer_t* buffer)
+{
+	if (parser == NULL) return;
+	if (buffer == NULL) return;
+	if (buffer->memory != NULL) {
+		_Parser_Free(parser, buffer->memory, buffer->capacity);
+	}
+	buffer->memory   = NULL;
+	buffer->used     = 0;
+	buffer->capacity = 0;
+
+	return;
+}
+
 // Group of error reporting functions
 
 // This function does report an error to the user
