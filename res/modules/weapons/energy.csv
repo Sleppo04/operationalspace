@@ -1,0 +1,3 @@
+Name,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Shield Regeneration,Hull Regeneration,Armor Damage,Shield Damage,Area Armor Damage,Area Shield Damage,Armor Damage Area,Shield Damage Area,Charges,Charge Cooldown,Activation Energy,Recharge Energy,Range,Metal Cost,Crystal Cost,Gas Cost,Description
+Small Laser,0,0,0,1,0,2,0,0,0,0,1,1,0,0,0,0,1,-1,2,1,2,1,2,1,Light focused on a small point hitting both shields and armor
+Electromagnetic Pulse,0,0,0,2,0,5,0,0,0,0,0,20,0,20,0,3,1,5,5,1,0,2,7,3,Electromagnetic Pulse disabling all shields nearby
