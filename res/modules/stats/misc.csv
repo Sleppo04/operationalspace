@@ -1,0 +1,4 @@
+Name,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Activatable,Activation Energy,Hull,Shield,Speed,Mass,Storage,Battery,Energy Consumption,Energy Regeneration,Hull Regeneration,Shield Regeneration,Metal Cost,Crystal Cost,Gas Cost,Description
+Storage,0,0,0,1,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
+Battery,0,0,0,1,0,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
+Crystal Battery,0,0,0,1,0,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,
