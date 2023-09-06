@@ -803,7 +803,13 @@ int _Parser_ParsePersist(ubcparser_t* parser)
 
 int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 {
-    token_t root_variable_name;
+    char* variable_path;
+    uintptr_t path_length;
+    if (_Parser_ParseLValue(parser, &variable_path, &path_length)) {
+        return EXIT_FAILURE;
+    }
+
+    // Decide whether it is going to be an assignment or an expression
 
     return EXIT_SUCCESS;
 }
