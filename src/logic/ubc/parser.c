@@ -93,7 +93,7 @@ bool _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t*
 	if (parser == NULL) return false;
 	if (buffer == NULL) return false;
 
-	if (buffer->memory = NULL) {
+	if (buffer->memory == NULL) {
 		buffer->memory = _Parser_Malloc(parser, needed);
 		if (buffer->memory == NULL) {
 			return false;
