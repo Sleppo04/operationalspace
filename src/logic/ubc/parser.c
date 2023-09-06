@@ -319,48 +319,6 @@ int _Parser_RegisterCustomType(ubcparser_t* parser, ubccustomtype_t new_type)
     return EXIT_SUCCESS;
 }
 
-int _Parser_ParseLValue(ubcparser_t* parser, char** path_destination, uintptr_t* length_destination)
-{
-    token_t lookahead;
-    token_t last;
-    token_t start;
-
-    _Parser_AssumeLookaheadFill(parser);
-    if (_Parser_LookAhead(parser, 0, &start)) return EXIT_FAILURE;
-    if (start.type != TT_IDENTIFIER) {
-        _Parser_ReportUnexpectedToken(parser, "Unexpected token type when parsing lvalue", "identifier", start);
-        return EXIT_FAILURE;
-    }
-    last = start;
-
-    _Parser_AssumeLookaheadFill(parser);
-    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
-    
-    while (lookahead.type == TT_DOT) {
-
-        // Consume dot
-        _Parser_ConsumeToken(parser);
-
-        _Parser_AssumeLookaheadFill(parser);
-        if (_Parser_LookAhead(parser, 0, &last)) return EXIT_FAILURE;
-
-        if (last.type != TT_IDENTIFIER) {
-            _Parser_ReportUnexpectedToken(parser, "Unexpected token after TOKEN_DOT in lvalue.", "identifier", last);
-            return EXIT_FAILURE;
-        }
-        _Parser_ConsumeToken(parser);
-
-        // refresh dot lookahead token
-        _Parser_AssumeLookaheadFill(parser);
-        if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
-    }
-
-    path_destination[0]   = start.ptr;
-    length_destination[0] = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
-
-    return EXIT_SUCCESS;
-}
-
 // This function does not report errors to the user
 int _Parser_AddParseFile(ubcparser_t* parser, char* filename, size_t length)
 {
@@ -573,6 +531,48 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
 
 /// Parsing Functions
 
+
+int _Parser_ParseLValue(ubcparser_t* parser, char** path_destination, uintptr_t* length_destination)
+{
+    token_t lookahead;
+    token_t last;
+    token_t start;
+
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &start)) return EXIT_FAILURE;
+    if (start.type != TT_IDENTIFIER) {
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token type when parsing lvalue", "identifier", start);
+        return EXIT_FAILURE;
+    }
+    last = start;
+
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+    
+    while (lookahead.type == TT_DOT) {
+
+        // Consume dot
+        _Parser_ConsumeToken(parser);
+
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &last)) return EXIT_FAILURE;
+
+        if (last.type != TT_IDENTIFIER) {
+            _Parser_ReportUnexpectedToken(parser, "Unexpected token after TOKEN_DOT in lvalue.", "identifier", last);
+            return EXIT_FAILURE;
+        }
+        _Parser_ConsumeToken(parser);
+
+        // refresh dot lookahead token
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+    }
+
+    path_destination[0]   = start.ptr;
+    length_destination[0] = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
+
+    return EXIT_SUCCESS;
+}
 
 int _Parser_ParseInclude(ubcparser_t* parser)
 {
