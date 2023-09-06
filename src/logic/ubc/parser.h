@@ -58,6 +58,10 @@ typedef struct UbcParserConfig {
     UBCCustomReallocFunction realloc_function;
 } ubcparserconfig_t;
 
+typedef struct UbcParserLValue {
+    char* path;
+} ubcparserlvalue_t;
+
 typedef struct UbcLexerStack {
     uint16_t stack_size;
     lexer_t* lexers;
