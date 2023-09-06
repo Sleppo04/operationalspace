@@ -95,18 +95,18 @@ bool _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t*
 
 	if (buffer->memory = NULL) {
 		buffer->memory = _Parser_Malloc(parser, needed);
-		if (memory == NULL) {
+		if (buffer->memory == NULL) {
 			return false;
 		}
-	} else if (needed > (buffer->capacity - buffer->needed)) {
+	} else if (needed > (buffer->capacity - buffer->used)) {
 		size_t new_capacity = buffer->capacity * 2;
-		if (needed > (new_capacty - buffer->needed)) {
-			new_capapacity = buffer->capacity + needed;
+		if (needed > (new_capacity - buffer->used)) {
+			new_capacity = buffer->capacity + needed;
 		}
 
 		void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
 		if (new_memory == NULL) return false;
-		buffer->memory = memory;
+		buffer->memory = new_memory;
 	}
 
 	return true;
@@ -120,7 +120,7 @@ int _UbcParserBuffer_Write(ubcparser_t* parser, ubcparserbuffer_t* buffer, void*
 
 	if (_UbcParserBuffer_EnsureFreeCapacity(parser, buffer, length)) return ENOMEM;
 
-	void* destination = void* ((char*) (buffer->memory) + length);
+	void* destination = (void*) ((char*) (buffer->memory) + length);
 	memcpy(destination, memory, length);
 
 	return EXIT_SUCCESS;
