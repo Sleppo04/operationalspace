@@ -881,7 +881,18 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         break;
     
     case UBCEXPRESSIONTYPE_PARENTHESES:
-        // TODO: Finish
+        if (expression->as->parenthesized->parenthesized == NULL) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
+        break;
+    
+    case UBCEXPRESSIONTYPE_VALUE:
+        ubcvalueexpression_t* value = expression->as->value;
+        if (value->call == NULL && value->lvalue == NULL && value->literal == NULL) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
         break;
     
     default:
