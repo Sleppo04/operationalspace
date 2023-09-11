@@ -91,9 +91,11 @@ expression_compare  : expression_p1 TOKEN_LESS_THAN                 expression_p
 expression_p1       : expression_addition
 
 expression_addition : expression_p2 addition_list
+                    | TOKEN_PLUS  expression_p2 addition_list
+                    | TOKEN_MINUS expression_p2 addition_list
 
-addition_list       : expression_p2 TOKEN_PLUS expression_p2 addition_list
-                    | expression_p2 TOKEN_MINUS expression_p2 addition_list
+addition_list       : TOKEN_PLUS expression_p2 addition_list
+                    | TOKEN_MINUS expression_p2 addition_list
                     | 
 
 
@@ -107,12 +109,9 @@ division_list       : expression_p3 TOKEN_ASTERISK expression_p3 division_list
 
 
 expression_p3       : expression_not
-                    | expression_negative
+                    | expression_p4
 
 expression_not      : TOKEN_BANG expression_p4
-
-expression_negative : TOKEN_MINUS expression_p4
-
 
 expression_p4       : expression_parentheses
                     | evalue
@@ -132,7 +131,7 @@ literal             : TOKEN_INT_LITERAL
 
 function_call       : TOKEN_IDENTIFIER TOKEN_LEFT_PARENTHESIS argument_list TOKEN_RIGHT_PARENTHESIS TOKEN_SEMICOLON
 
-argument_list       : argument argument_list
+argument_list       : argument TOKEN_COMMA argument_list
                     | argument
 
 argument            : expression

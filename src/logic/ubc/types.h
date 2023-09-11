@@ -12,10 +12,11 @@ typedef struct UbcString
 enum UbcType {
     UBCTYPE_INTEGER,
     UBCTYPE_BOOLEAN,
-    UBCTYPE_CUSTOM,
     UBCTYPE_STRING,
     //UBCTYPE_VECTOR
     UBCTYPE_FLOAT,
+    
+    UBCTYPE_CUSTOM,
 };
 
 typedef struct UbcCustomType

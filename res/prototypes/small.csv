@@ -1,0 +1,5 @@
+Name,Slot Capacity,Speed,Mass,glyph,color,Metal Cost,Crystal Cost,Gas Cost
+Buoy,1,0,1,46,10,1,0,0
+Probe,2,5,1,112,6,1,0,0
+Drone,4,13,2,100,15,2,0,0
+Shuttle,8,18,3,115,15,2,1,0

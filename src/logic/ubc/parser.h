@@ -86,15 +86,23 @@ enum UbcScopeType {
     UBCSCOPE_LOCAL
 };
 
+enum UbcVariableType {
+    UBCVARIABLETYPE_LOCAL,
+    UBCVARIABLETYPE_PERSISTENT,
+    UBCVARIABLETYPE_PARAMETER
+};
+
 typedef struct UbcVariable {
     char* name;
     enum UbcType type;
+    char flags;
     char* typename;
 } ubcvariable_t;
 
 typedef struct UbcScope {
     enum UbcScopeType type;
     ubcparserbuffer_t variables;
+    uint32_t temporary_bytes; // Bytes on the stack above variables for temporary use
 } ubcscope_t;
 
 typedef struct UbcParser {
@@ -106,8 +114,143 @@ typedef struct UbcParser {
     ubcparserbuffer_t         scopes;
 } ubcparser_t;
 
+enum UbcExpressionType {
+    UBCEXPRESSIONTYPE_COMPARE,
+    UBCEXPRESSIONTYPE_ADDITION,
+    UBCEXPRESSIONTYPE_DIVISION,
+    UBCEXPRESSIONTYPE_NEGATE,
+    UBCEXPRESSIONTYPE_PARENTHESES,
+    UBCEXPRESSIONTYPE_VALUE,
+};
+
+typedef struct UbcExpressionBase {
+	char* result_typename; // Not owned by this struct but by the type
+} ubcexpressionbase_t;
+
+typedef enum UbcComparatorType {
+	UBCCOMPARATORTYPE_EQUALITY,      // ==
+	UBCCOMPARATORTYPE_LESSTHAN,      // <
+	UBCCOMPARATORTYPE_GREATERTHAN,   // >
+	UBCCOMPARATORTYPE_INEQUALITY,    // !=
+	UBCCOMPARATORTYPE_LESSEQUALS,    // <=
+	UBCCOMPARATORTYPE_GREATEREQUALS, // >=
+} ubccomparatortype_t;
+
+typedef struct UbcCompareExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcAdditionExpression* left_hand_side;
+	// Mandatory
+
+	// Optional Fields
+	// This expression can also have no comparison :d, it then evaluates to the type of the addition expression
+	// otherwise, result_type is bool
+	enum   UbcComparatorType      comparator_type;
+	struct UbcAdditionExpression* right_hand_side;
+} ubccompareexpression_t;
+
+typedef enum UbcAdditionOperator {
+	UBCADDITIONOPERATOR_PLUS,
+	UBCADDITIONOPERATOR_MINUS
+} ubcadditionoperator_t;
+
+typedef struct UbcAdditionExpression {
+	struct UbcExpressionBase base;
+	
+	struct   UbcDivisionExpression* operands;
+	enum     UbcAdditionOperator*   operators;
+	
+	uint16_t operand_count;
+	// There is an operator for each operand.
+	// If there is none explicitly specified, it will add a implicit +
+} ubcadditionexpression_t;
+
+typedef enum UbcDivisionOperator {
+	UBCDIVISIONOPERATOR_MULTIPLY,
+	UBCDIVISIONOPERATOR_DIVIDE
+} ubcdivisionoperator_t;
+
+typedef struct UbcDivisionExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcNegateExpression* operands;
+	enum UbcDivisionOperator*   operators;
+
+	uint16_t operand_count;
+	// There is one less operator than operands because the first operand doesn't need one
+} ubcdivisionexpression_t;
+
+typedef struct UbcNegateExpression {
+	struct UbcExpressionBase base;
+	
+	bool negation;
+
+	// Only one of these is non-null at the same time
+	struct UbcParenthesesExpression* paren;
+	struct UbcValueExpression*       value;
+} ubcnegateexpression_t;
+
+typedef struct UbcParenthesesExpression {
+	struct UbcExpressionBase base;
+	
+	struct UbcCompareExpression* parenthesized;
+} ubcparenthesesexpression_t;
+
+typedef struct UbcValueExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcCallExpression* call;
+	struct UbcLiteral*        literal;
+	struct UbcLValue*         vlalue;
+} ubcvalueexpression_t;
+
+typedef struct UbcCallExpression {
+	struct UbcExpressionBase base;
+	
+	char*  function_name;
+	size_t name_length;
+
+	ubccompareexpression_t* arguments;
+	uint16_t argument_count;
+} ubccallexpression_t;
+
+enum UbcLiteralType {
+	UBCLITERALTYPE_BOOL,
+	UBCLITERALTYPE_INT,
+	UBCLITERALTYPE_FLOAT,
+	UBCLITERALTYPE_STRING
+};
+
+union UbcLiteralValue {
+	bool    boolean;
+	int32_t integer;
+	float   floating;
+	char*   string;
+};
+
+typedef struct UbcLiteral {
+	enum UbcLiteralType type;
+	union UbcLiteralValue as;
+} ubcliteral_t;
+
+union UbcExpressionUnion {
+    ubcparenthesesexpression_t parenthesized;
+    ubcdivisionexpression_t    division;
+    ubcadditionexpression_t    addition;
+    ubccompareexpression_t     comparison;
+    ubcnegateexpression_t      negate;
+    ubcvalueexpression_t       value;
+};
+
+typedef struct UbcExpression {
+    union UbcExpressionUnion* as;
+    enum UbcExpressionType    type;
+} ubcexpression_t;
+
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
 
 int Parser_Parse(ubcparser_t* parser, char* filename);
+
+int Parser_Destroy(ubcparser_t* parser);
 
 #endif //UBCPARSER_H

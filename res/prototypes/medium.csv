@@ -1,0 +1,8 @@
+Name,Slot Capacity,Speed,Mass,glyph,color,Metal Cost,Crystal Cost,Gas Cost
+Spaceshuttle,16,24,6,117,15,3,1,0
+Transporter,32,30,8,72,15,4,1,0
+Small Station,48,0,30,42,8,4,0,3
+Spaceship,64,34,9,118,15,7,1,1
+Medium Station,96,0,60,43,8,5,0,5
+Cruiser,128,49,11,99,12,12,2,2
+Frigate,196,58,14,70,12,17,2,3

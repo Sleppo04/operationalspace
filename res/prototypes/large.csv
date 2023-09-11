@@ -1,0 +1,5 @@
+Name,Slot Capacity,Speed,Mass,glyph,color,Metal Cost,Crystal Cost,Gas Cost
+Large Station,128,0,90,36,8,7,0,7
+Battleship,256,52,17,66,12,22,4,4
+Colony Ship,384,69,25,,,,,
+Capital Ship,512,80,32,,,,,
