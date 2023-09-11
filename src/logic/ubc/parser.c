@@ -816,7 +816,24 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
-    return EXIT_FAILURE;
+    ubccompareexpression_t expression;
+    if (_Parse_ParseExpression(parser, NULL, &expression)) {
+        return EXIT_FAILURE;
+    }
+
+    if (_Parser_GenerateExpressionByteCode(parser, &expression)) {
+        _Parser_DestroyExpression(parser, &expression);
+        return EXIT_FAILURE;
+    }
+
+    size_t typesize = _Parser_GetTypeSize(parser, expression.base.result_typename, strlen(expression.base.result_typename));
+    _Parser_DestroyExpression(parser, &expression);
+
+    if (_Parser_BytecodePopUnusedBytes(parser, typesize)) {
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
