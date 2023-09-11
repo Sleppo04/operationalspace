@@ -115,7 +115,8 @@ typedef struct UbcParser {
 } ubcparser_t;
 
 enum UbcExpressionType {
-    UBCEXPRESSIONTYPE_COMPARE,
+    UBCEXPRESSIONTYPE_NONE,
+	UBCEXPRESSIONTYPE_COMPARE,
     UBCEXPRESSIONTYPE_ADDITION,
     UBCEXPRESSIONTYPE_DIVISION,
     UBCEXPRESSIONTYPE_NEGATE,
@@ -123,11 +124,15 @@ enum UbcExpressionType {
     UBCEXPRESSIONTYPE_VALUE,
 };
 
+struct UbcExpression;
+
 typedef struct UbcExpressionBase {
-	char* result_typename; // Not owned by this struct but by the type
+	struct UbcExpression* parent;
+	char*                 result_typename; // Not owned by this struct but by the type
 } ubcexpressionbase_t;
 
 typedef enum UbcComparatorType {
+	UBCCOMPARATORTYPE_NONE,          // 
 	UBCCOMPARATORTYPE_EQUALITY,      // ==
 	UBCCOMPARATORTYPE_LESSTHAN,      // <
 	UBCCOMPARATORTYPE_GREATERTHAN,   // >
@@ -234,12 +239,12 @@ typedef struct UbcLiteral {
 } ubcliteral_t;
 
 union UbcExpressionUnion {
-    ubcparenthesesexpression_t parenthesized;
-    ubcdivisionexpression_t    division;
-    ubcadditionexpression_t    addition;
-    ubccompareexpression_t     comparison;
-    ubcnegateexpression_t      negate;
-    ubcvalueexpression_t       value;
+    ubcparenthesesexpression_t* parenthesized;
+    ubcdivisionexpression_t*    division;
+    ubcadditionexpression_t*    addition;
+    ubccompareexpression_t*     comparison;
+    ubcnegateexpression_t*      negate;
+    ubcvalueexpression_t*       value;
 };
 
 typedef struct UbcExpression {

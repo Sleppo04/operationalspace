@@ -535,6 +535,30 @@ int _Parser_DestroyExpression(ubcparser_t* parser, ubccompareexpression_t* expre
     return EXIT_FAILURE;
 }
 
+/// Constructors
+
+void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
+{
+    base->result_typename = NULL;
+    base->parent->type    = UBCEXPRESSIONTYPE_NONE;
+    base->parent->as->comparison = NULL;
+}
+
+ubccompareexpression_t* _Parser_NewCompareExpression(ubcparser_t* parser)
+{
+    ubccompareexpression_t* expression = _Parser_Malloc(parser, sizeof(ubccompareexpression_t));
+    if (expression == NULL) {
+        return NULL;
+    }
+
+    _Parser_InitExpressionBase(&(expression->base));
+    expression->comparator_type = UBCCOMPARATORTYPE_NONE;
+    expression->left_hand_side  = NULL;
+    expression->right_hand_side = NULL;
+
+    return expression;
+}
+
 
 /// Bytecode functions
 
@@ -805,8 +829,103 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* expression, bool* destination)
+{
+    token_t lookahead_1, lookahead_2;
+    switch (expression->type)
+    {
+    case UBCEXPRESSIONTYPE_COMPARE:
+        if (expression->as->comparison->left_hand_side == NULL) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
+
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
+        if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
+        destination[0] = lookahead_1.type == TT_EQUALS
+                        || lookahead_1.type == TT_LESS_THAN
+                        || lookahead_1.type == TT_GREATER_THAN
+                        || (lookahead_1.type == TT_BANG && lookahead_2.type == TT_EQUALS);
+        break;
+    
+
+    case UBCEXPRESSIONTYPE_ADDITION:
+        if (expression->as->addition->operand_count == 0) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
+        
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
+        destination[0] = lookahead_1.type == TT_PLUS || lookahead_1.type == TT_MINUS;
+        break;
+    
+
+    case UBCEXPRESSIONTYPE_DIVISION:
+        if (expression->as->division->operand_count == 0) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
+
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
+        destination[0] == lookahead_1.type == TT_ASTERISK || lookahead_1.type == TT_SLASH;
+        break;
+    
+    case UBCEXPRESSIONTYPE_NEGATE:
+        if (expression->as->negate->paren == NULL && expression->as->negate->value == NULL) {
+            destination[0] = true;
+            return EXIT_SUCCESS;
+        }
+        break;
+    
+    case UBCEXPRESSIONTYPE_PARENTHESES:
+        // TODO: Finish
+        break;
+    
+    default:
+        destination[0] = false;
+        break;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* root, ubccompareexpression_t* destination)
 {
+    if (root == NULL) {
+        root = _Parser_NewCompareExpression(parser);
+    }
+    if (root == NULL) {
+        return ENOMEM;
+    }
+
+    ubcexpression_t* current;
+    current->type = UBCEXPRESSIONTYPE_COMPARE;
+    current->as->comparison = root;
+
+    bool parsing_needed = false;
+    while (current != NULL) {
+        // While there is a expression to continue parsing
+
+        // Check if the current expression can be parsed further
+        if (_Parser_ExpressionNeedsParsing(parser, current, &parsing_needed)) {
+            _Parser_DestroyExpression(parser, root);
+            return EXIT_FAILURE;
+        }
+
+        // Expand the expression if needed
+        if (parsing_needed) {
+            if (_Parser_ExpandExpression(current, &current)) {
+                _Parser_DestroyExpression(parser, root);
+                return EXIT_FAILURE;
+            }
+        } else {
+            current = ((ubcexpressionbase_t*) (current->as))->parent;
+        }
+    }
+
     return EXIT_FAILURE;
 }
 
