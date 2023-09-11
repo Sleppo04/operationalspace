@@ -5,4 +5,5 @@
 .settings/
 tests/a.out
 bin/*
+build/
 ANFORDERUNGEN
