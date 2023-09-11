@@ -529,6 +529,28 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
     return EXIT_SUCCESS;
 }
 
+int _Parser_DestroyExpression(ubcparser_t* parser, ubccompareexpression_t* expression)
+{
+    // TODO: Implement
+    return EXIT_FAILURE;
+}
+
+
+/// Bytecode functions
+
+int _Parser_GenerateExpressionBytecode(ubcparser_t* parser, ubccompareexpression_t* expression)
+{
+    if (parser == NULL || expression == NULL) return EXIT_FAILURE;
+
+    return EXIT_FAILURE;
+}
+
+int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
+{
+    
+}
+
+
 /// Parsing Functions
 
 
@@ -783,6 +805,11 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     return EXIT_SUCCESS;
 }
 
+int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* root, ubccompareexpression_t* destination)
+{
+    return EXIT_FAILURE;
+}
+
 int _Parser_ParseFunctionDefinition(ubcparser_t* parser)
 {
     // TODO: Implement
@@ -792,12 +819,6 @@ int _Parser_ParseFunctionDefinition(ubcparser_t* parser)
 int _Parser_ParseVariableDefinition(ubcparser_t* parser)
 {
     // TODO: Implement
-    return EXIT_FAILURE;
-}
-
-int _Parser_ParsePersist(ubcparser_t* parser)
-{
-    //TODO: Implement
     return EXIT_FAILURE;
 }
 
@@ -817,11 +838,11 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
     ubccompareexpression_t expression;
-    if (_Parse_ParseExpression(parser, NULL, &expression)) {
+    if (_Parser_ParseExpression(parser, NULL, &expression)) {
         return EXIT_FAILURE;
     }
 
-    if (_Parser_GenerateExpressionByteCode(parser, &expression)) {
+    if (_Parser_GenerateExpressionBytecode(parser, &expression)) {
         _Parser_DestroyExpression(parser, &expression);
         return EXIT_FAILURE;
     }
@@ -1002,7 +1023,7 @@ int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config)
     destination->lexer_stack.stack_size    = 0;
     
     destination->bytecode_buffer.capacity = 0;
-    destination->bytecode_buffer.array    = NULL;
+    destination->bytecode_buffer.memory   = NULL;
     destination->bytecode_buffer.used     = 0;
     
     destination->lookahead.available = 0;
@@ -1020,8 +1041,8 @@ int Parser_Destroy(ubcparser_t* parser)
         return EINVAL;
     }
 
-    if (parser->bytecode_buffer.array != NULL)
-    DynamicBuffer_Destroy(&(parser->bytecode_buffer));
+    if (parser->bytecode_buffer.memory != NULL)
+    _UbcParserBuffer_Destroy(parser, &(parser->bytecode_buffer));
 
     if (parser->lexer_stack.lexers != NULL)
     _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));

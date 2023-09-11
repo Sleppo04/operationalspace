@@ -107,7 +107,7 @@ typedef struct UbcScope {
 
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
-    dynamic_buffer_t          bytecode_buffer;
+    ubcparserbuffer_t         bytecode_buffer;
     ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
     struct UbcParserTypeArray types;
