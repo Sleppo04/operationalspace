@@ -206,7 +206,7 @@ typedef struct UbcValueExpression {
 
 	struct UbcCallExpression* call;
 	struct UbcLiteral*        literal;
-	struct UbcLValue*         vlalue;
+	struct UbcLValue*         lvalue;
 } ubcvalueexpression_t;
 
 typedef struct UbcCallExpression {
