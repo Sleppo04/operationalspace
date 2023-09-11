@@ -159,15 +159,17 @@ typedef enum UbcAdditionOperator {
 	UBCADDITIONOPERATOR_MINUS
 } ubcadditionoperator_t;
 
+typedef struct UbcAdditionOperand {
+	struct UbcDivisionExpression* expression;
+	enum UbcAdditionOperator      operator;
+} ubcadditionelement_t;
+
 typedef struct UbcAdditionExpression {
 	struct UbcExpressionBase base;
-	
-	struct   UbcDivisionExpression** operands;
-	enum     UbcAdditionOperator*    operators;
+
+	struct UbcAdditionOperand* operands;
 	
 	uint16_t operand_count;
-	// There is an operator for each operand.
-	// If there is none explicitly specified, it will add a implicit +
 } ubcadditionexpression_t;
 
 typedef enum UbcDivisionOperator {
@@ -175,11 +177,15 @@ typedef enum UbcDivisionOperator {
 	UBCDIVISIONOPERATOR_DIVIDE
 } ubcdivisionoperator_t;
 
+typedef struct UbcDivisionOperand {
+	struct UbcNegateExpression* expression;
+	enum   UbcDivisionOperator  operator;
+} ubcdivisionoperand_t;
+
 typedef struct UbcDivisionExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcNegateExpression* operands;
-	enum UbcDivisionOperator*   operators;
+	struct UbcDivisionOperand* operands;
 
 	uint16_t operand_count;
 	// There is one less operator than operands because the first operand doesn't need one
