@@ -1,4 +1,4 @@
-target_sources(operational-space
+target_sources(operational-space PRIVATE
 			RotatingLogs/rotatinglogs.c
 			arraylist/arraylist.c
 			buffer/buffer.c

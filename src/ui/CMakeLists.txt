@@ -1,4 +1,4 @@
-target_sources(operational-space
+target_sources(operational-space PRIVATE
 			sidebar.c
 			ui.c
 			window.c

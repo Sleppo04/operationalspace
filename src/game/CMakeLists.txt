@@ -1,4 +1,4 @@
-target_sources(operationsl-space
+target_sources(operational-space PRIVATE
 			game.c
 			gameobject.c
 			modulestore.h
