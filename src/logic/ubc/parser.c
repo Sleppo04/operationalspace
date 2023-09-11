@@ -544,6 +544,34 @@ void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
     base->parent->as->comparison = NULL;
 }
 
+ubcdivisionexpression_t* _Parser_NewDivisionExpression(ubcparser_t* parser)
+{
+    ubcdivisionexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcdivisionexpression_t));
+    if (expression == NULL) {
+        return NULL;
+    }
+
+    _Parser_InitExpressionBase(&(expression->base));
+    expression->operand_count = 0;
+    expression->operators     = NULL,
+    expression->operands      = NULL;
+}
+
+ubcadditionexpression_t* _Parser_NewAdditionExpression(ubcparser_t* parser)
+{
+    ubcadditionexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcadditionexpression_t));
+    if (expression == NULL) {
+        return NULL;
+    }
+
+    _Parser_InitExpressionBase(&(expression->base));
+    expression->operand_count = 0;
+    expression->operands      = NULL;
+    expression->operators     = NULL;
+
+    return expression;
+}
+
 ubccompareexpression_t* _Parser_NewCompareExpression(ubcparser_t* parser)
 {
     ubccompareexpression_t* expression = _Parser_Malloc(parser, sizeof(ubccompareexpression_t));
@@ -903,6 +931,150 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     return EXIT_SUCCESS;
 }
 
+int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubccompareexpression_t* comparison = expression->as->comparison;
+    if (comparison->left_hand_side == NULL) {
+        comparison->left_hand_side = _Parser_NewAdditionExpression(parser);
+        if (comparison->left_hand_side == NULL) {
+            return ENOMEM;
+        }
+        comparison->left_hand_side->base.parent->type           = UBCEXPRESSIONTYPE_COMPARE;
+        comparison->left_hand_side->base.parent->as->comparison = comparison;
+        
+        expression->as->addition = comparison->left_hand_side;
+        expression->type = UBCEXPRESSIONTYPE_ADDITION;
+        return EXIT_SUCCESS;
+    }
+
+    // Left hand side is present, parse operator and right hand side
+    token_t lookahead1, lookahead2;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead1)) return EXIT_FAILURE;
+    if (_Parser_LookAhead(parser, 1, &lookahead2)) return EXIT_FAILURE;
+
+    if (lookahead1.type == TT_EQUALS && lookahead2.type == TT_EQUALS) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_EQUALITY;
+        _Parser_ConsumeToken(parser);
+        _Parser_ConsumeToken(parser);
+    } else if (lookahead1.type == TT_LESS_THAN && lookahead2.type == TT_EQUALS) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_LESSEQUALS;
+        _Parser_ConsumeToken(parser);
+        _Parser_ConsumeToken(parser);
+    } else if (lookahead1.type == TT_GREATER_THAN && lookahead2.type == TT_EQUALS) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_GREATEREQUALS;
+        _Parser_ConsumeToken(parser);
+        _Parser_ConsumeToken(parser);
+    } else if (lookahead1.type == TT_BANG && lookahead2.type == TT_EQUALS) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_INEQUALITY;
+        _Parser_ConsumeToken(parser);
+        _Parser_ConsumeToken(parser);
+    } else if (lookahead1.type == TT_LESS_THAN) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_LESSTHAN;
+        _Parser_ConsumeToken(parser);
+    } else if (lookahead1.type == TT_GREATER_THAN) {
+        comparison->comparator_type = UBCCOMPARATORTYPE_GREATERTHAN;
+        _Parser_ConsumeToken(parser);
+    } else {
+        // This function should only be called if there is something like this to parse, so this is an error
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token when parsing comparison expression", "Comparator !><=", lookahead1);
+        return EXIT_FAILURE;
+    }
+    // The consuming cannot fail because the lookahead did not
+    comparison->right_hand_side = _Parser_NewAdditionExpression(parser);
+    if (comparison->right_hand_side == NULL) {
+        return ENOMEM;
+    }
+    ubcadditionexpression_t* rhs     = comparison->right_hand_side;
+    rhs->base.parent->type           = UBCEXPRESSIONTYPE_COMPARE;
+    rhs->base.parent->as->comparison = comparison;
+    rhs->operand_count               = 0;
+    rhs->operands                    = NULL;
+    rhs->operators                   = NULL;
+
+    // forward the addition to being parsed
+    expression->type = UBCEXPRESSIONTYPE_ADDITION;
+    expression->as->addition = rhs;
+
+    return EXIT_SUCCESS;
+}
+
+int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcadditionexpression_t* addition = expression->as->addition;
+    token_t operator_token;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &operator_token)) return EXIT_FAILURE;
+
+    ubcdivisionexpression_t** new_operands;
+    size_t array_size = sizeof(ubcdivisionexpression_t) * (1 + addition->operand_count);
+    if (addition->operands = NULL) {
+        new_operands = _Parser_Malloc(parser, sizeof(ubcdivisionexpression_t));
+    } else {
+        size_t old_size = array_size - sizeof(ubcdivisionexpression_t);
+        new_operands = _Parser_Realloc(parser, addition->operands, array_size, old_size);
+    }
+    if (new_operands == NULL) {
+        return ENOMEM;
+    }
+    addition->operands = new_operands;
+
+    ubcadditionoperator_t* new_operators;
+    array_size = sizeof(ubcadditionoperator_t) * (1 + addition->operand_count);
+    if (addition->operators = NULL) {
+        new_operators = _Parser_Malloc(parser, array_size);
+    } else {
+        size_t old_size = array_size - sizeof(ubcadditionoperator_t);
+        new_operators = _Parser_Realloc(parser, addition->operators, array_size, old_size);
+    }
+    if (new_operands == NULL) {
+        return ENOMEM;
+    }
+    addition->operators = new_operators;
+
+    if (operator_token.type == TT_PLUS) {
+        addition->operators[addition->operand_count] = UBCADDITIONOPERATOR_PLUS;
+    } else if (operator_token.type == TT_MINUS) {
+        addition->operators[addition->operand_count] = UBCADDITIONOPERATOR_MINUS;
+    } else {
+        addition->operators[addition->operand_count] = UBCADDITIONOPERATOR_PLUS;
+    }
+
+    ubcdivisionexpression_t* new_operand = _Parser_NewDivisionExpression(parser);
+    if (new_operand == NULL) {
+        return ENOMEM;
+    }
+    new_operand->base.parent->type = UBCEXPRESSIONTYPE_ADDITION;
+    new_operand->base.parent->as->addition = addition;
+    addition->operands[addition->operand_count] = new_operand;
+
+
+    // new operand will be processed from now on
+    expression->type = UBCEXPRESSIONTYPE_DIVISION;
+    expression->as->division = new_operand;
+
+    return EXIT_SUCCESS;
+}
+
+int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    switch (expression->type)
+    {
+    case UBCEXPRESSIONTYPE_COMPARE:
+        return _Parser_ExpandComparisonExpression(parser, expression);
+        break;
+    
+    case UBCEXPRESSIONTYPE_ADDITION:
+        return _Parser_ExpandAdditionExpression(parser, expression);
+        break;
+    
+    // TODO: More functions for more types
+    
+    default:
+        break;
+    }
+}
+
 int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* root, ubccompareexpression_t* destination)
 {
     if (root == NULL) {
@@ -912,28 +1084,28 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* root, u
         return ENOMEM;
     }
 
-    ubcexpression_t* current;
-    current->type = UBCEXPRESSIONTYPE_COMPARE;
-    current->as->comparison = root;
+    ubcexpression_t current;
+    current.type = UBCEXPRESSIONTYPE_COMPARE;
+    current.as->comparison = root;
 
     bool parsing_needed = false;
-    while (current != NULL) {
+    while (current.type != UBCEXPRESSIONTYPE_NONE) {
         // While there is a expression to continue parsing
 
         // Check if the current expression can be parsed further
-        if (_Parser_ExpressionNeedsParsing(parser, current, &parsing_needed)) {
+        if (_Parser_ExpressionNeedsParsing(parser, &current, &parsing_needed)) {
             _Parser_DestroyExpression(parser, root);
             return EXIT_FAILURE;
         }
 
         // Expand the expression if needed
         if (parsing_needed) {
-            if (_Parser_ExpandExpression(current, &current)) {
+            if (_Parser_ExpandExpression(parser, &current)) {
                 _Parser_DestroyExpression(parser, root);
                 return EXIT_FAILURE;
             }
         } else {
-            current = ((ubcexpressionbase_t*) (current->as))->parent;
+            current = (((ubcexpressionbase_t*) (current.as))->parent)[0];
         }
     }
 

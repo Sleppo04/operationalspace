@@ -162,8 +162,8 @@ typedef enum UbcAdditionOperator {
 typedef struct UbcAdditionExpression {
 	struct UbcExpressionBase base;
 	
-	struct   UbcDivisionExpression* operands;
-	enum     UbcAdditionOperator*   operators;
+	struct   UbcDivisionExpression** operands;
+	enum     UbcAdditionOperator*    operators;
 	
 	uint16_t operand_count;
 	// There is an operator for each operand.
