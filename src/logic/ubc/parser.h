@@ -249,7 +249,7 @@ union UbcExpressionUnion {
     ubcdivisionexpression_t*    division;
     ubcadditionexpression_t*    addition;
     ubccompareexpression_t*     comparison;
-    ubcnegateexpression_t*      negate;
+    ubcnegateexpression_t*      negation;
     ubcvalueexpression_t*       value;
 };
 
