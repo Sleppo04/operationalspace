@@ -544,6 +544,34 @@ void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
     base->parent->as->comparison = NULL;
 }
 
+ubcvalueexpression_t* _Parser_NewValueExpression(ubcparser_t* parser)
+{
+    ubcvalueexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcvalueexpression_t));
+    if (expression == NULL) {
+        return NULL;
+    }
+
+    _Parser_InitExpressionBase(&(expression->base));
+    expression->literal = NULL;
+    expression->lvalue  = NULL;
+    expression->call    = NULL;
+
+    return expression;
+}
+
+ubcparenthesesexpression_t* _Parser_NewParenExpression(ubcparser_t* parser)
+{
+    ubcparenthesesexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcparenthesesexpression_t));
+    if (expression == NULL) {
+        return NULL;
+    }
+
+    _Parser_InitExpressionBase(&(expression->base));
+    expression->parenthesized = NULL;
+
+    return expression;
+}
+
 ubcnegateexpression_t* _Parser_NewNegateExpression(ubcparser_t* parser)
 {
     ubcnegateexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcnegateexpression_t));
@@ -555,6 +583,8 @@ ubcnegateexpression_t* _Parser_NewNegateExpression(ubcparser_t* parser)
     expression->negation = false;
     expression->paren    = NULL;
     expression->value    = NULL;
+
+    return expression;
 }
 
 ubcdivisionexpression_t* _Parser_NewDivisionExpression(ubcparser_t* parser)
@@ -567,6 +597,8 @@ ubcdivisionexpression_t* _Parser_NewDivisionExpression(ubcparser_t* parser)
     _Parser_InitExpressionBase(&(expression->base));
     expression->operand_count = 0;
     expression->operands      = NULL;
+
+    return expression;
 }
 
 ubcadditionexpression_t* _Parser_NewAdditionExpression(ubcparser_t* parser)
@@ -913,7 +945,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         break;
     
     case UBCEXPRESSIONTYPE_NEGATE:
-        if (expression->as->negate->paren == NULL && expression->as->negate->value == NULL) {
+        if (expression->as->negation->paren == NULL && expression->as->negation->value == NULL) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -1104,7 +1136,45 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 
     // Update current expression to parse
     expression->type       = UBCEXPRESSIONTYPE_NEGATE;
-    expression->as->negate = operand->expression;
+    expression->as->negation = operand->expression;
+
+    return EXIT_SUCCESS;
+}
+
+int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcnegateexpression_t* negation = expression->as->negation;
+    token_t lookahead;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+
+    if (lookahead.type == TT_BANG) {
+        negation->negation = true;
+        _Parser_ConsumeToken(parser);
+
+        // Refresh lookahead
+        _Parser_AssumeLookaheadFill(parser);
+        if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+    }
+
+    if (lookahead.type == TT_LEFT_PARENTHESIS) {
+        negation->paren = _Parser_NewParenExpression(parser);
+        if (negation->paren == NULL) {
+            return ENOMEM;
+        }
+        
+        expression->type = UBCEXPRESSIONTYPE_PARENTHESES;
+        expression->as->parenthesized = negation->paren;
+    
+    } else {
+        negation->value = _Parser_NewValueExpression(parser);
+        if (negation->value == NULL) {
+            return ENOMEM;
+        }
+
+        expression->type = UBCEXPRESSIONTYPE_VALUE;
+        expression->as->value = negation->value;
+    }
 
     return EXIT_SUCCESS;
 }
@@ -1126,6 +1196,7 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
         break;
     
     case UBCEXPRESSIONTYPE_NEGATE:
+        return _Parser_ExpandNegateExpression(parser, expression);
         break;
     
     // TODO: More functions for more types
