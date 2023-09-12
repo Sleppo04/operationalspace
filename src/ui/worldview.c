@@ -34,6 +34,9 @@ void UI_WorldViewRender(worldview_t* view)
                 // Draw selection cursor
                 Window_SetColor(0, 3);
                 Window_PrintGlyph(' ');
+            } else if (tile->object != NULL) {
+                Window_SetColor(tile->object->color, 0);
+		Window_PrintGlyph(tile->object->glyph);
             } else {
                 Window_SetColor(tile->color, 0);
                 Window_PrintGlyph(tile->glyph);
