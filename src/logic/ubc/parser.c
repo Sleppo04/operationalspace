@@ -351,7 +351,7 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
     ubclvalue_t      current_path = member_path[0];
 
     size_t name_length;
-    char* next, member_typename;
+    char* next, *member_typename;
 
     while (current_path.path_length != 0) {
         next = strnchr(current_path.variable_path, '.', current_path.path_length);
@@ -372,7 +372,7 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
 
         // We can assume this to succeed because we tested that the member exists
         member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
-        current               = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
+        current         = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
 
         current_path.path_length   -= name_length;
         current_path.variable_path += name_length;
@@ -387,7 +387,7 @@ bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ub
     ubclvalue_t      current_path = member_path[0];
 
     size_t name_length;
-    char* next, member_typename;
+    char* next, *member_typename;
     while (current_path.path_length != 0) {
         next = strnchr(current_path.variable_path, '.', current_path.path_length);
         if (next == NULL) {
@@ -406,7 +406,7 @@ bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ub
 
         // We can assume this to succeed because we tested that the member exists
         member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
-        current               = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
+        current         = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
 
         current_path.path_length   -= name_length;
         current_path.variable_path += name_length;
@@ -907,6 +907,8 @@ char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
             return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
         }
     }
+
+    return NULL;
 }
 
 
@@ -1463,7 +1465,7 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
             return EXIT_FAILURE;
         }
         value->base.needs_parsing   = false;
-        value->base.result_typename = _Parser_GetLValueTypename(parser, &(value->as.lvalue));
+        value->base.result_typename = _Parser_LValueTypename(parser, &(value->as.lvalue));
 
     } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_PAREN;
