@@ -116,7 +116,7 @@ typedef struct UbcParser {
 
 enum UbcExpressionType {
     UBCEXPRESSIONTYPE_NONE,
-	UBCEXPRESSIONTYPE_COMPARE,
+	UBCEXPRESSIONTYPE_COMPARISON,
     UBCEXPRESSIONTYPE_ADDITION,
     UBCEXPRESSIONTYPE_DIVISION,
     UBCEXPRESSIONTYPE_NEGATE,
@@ -152,8 +152,9 @@ typedef struct UbcCallExpression {
 } ubccallexpression_t;
 
 enum UbcLiteralType {
-	UBCLITERALTYPE_BOOL,
+	UBCLITERALTYPE_NONE,
 	UBCLITERALTYPE_INT,
+	UBCLITERALTYPE_BOOL,
 	UBCLITERALTYPE_FLOAT,
 	UBCLITERALTYPE_STRING
 };
@@ -175,12 +176,26 @@ typedef struct UbcLiteral {
 	union UbcLiteralValue as;
 } ubcliteral_t;
 
+typedef enum UbcValueExpressionType {
+	UBCVALUEEXPRESSIONTYPE_NONE,
+	UBCVALUEEXPRESSIONTYPE_LITERAL,
+	UBCVALUEEXPRESSIONTYPE_LVALUE,
+	UBCVALUEEXPRESSIONTYPE_PAREN,
+	UBCVALUEEXPRESSIONTYPE_CALL,
+} ubcvalueexpressiontype_t;
+
+typedef union UbcValueExpressionMember {
+	struct UbcLiteral               literal;
+	struct UbcLValue                lvalue;
+	struct UbcParenthesesExpression paren;
+	struct UbcCallExpression        call;
+} ubcvalueexpressionmember_t;
+
 typedef struct UbcValueExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcCallExpression call;
-	struct UbcLiteral        literal;
-	struct UbcLValue         lvalue;
+	enum  UbcValueExpressionType   type;
+	union UbcValueExpressionMember as;
 } ubcvalueexpression_t;
 
 
@@ -191,8 +206,6 @@ typedef struct UbcNegateExpression {
 	
 	bool negation;
 
-	// Only one of these is non-null at the same time
-	struct UbcParenthesesExpression paren;
 	struct UbcValueExpression       value;
 } ubcnegateexpression_t;
 
@@ -214,9 +227,6 @@ typedef struct UbcDivisionExpression {
 
 	struct UbcDivisionOperand former;
 	struct UbcDivisionOperand current;
-
-	uint16_t operand_count;
-	// There is one less operator than operands because the first operand doesn't need one
 } ubcdivisionexpression_t;
 
 
@@ -237,8 +247,6 @@ typedef struct UbcAdditionExpression {
 
 	struct UbcAdditionOperand current;
 	struct UbcAdditionOperand former;
-	
-	uint16_t operand_count;
 } ubcadditionexpression_t;
 
 
