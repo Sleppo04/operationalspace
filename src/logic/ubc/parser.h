@@ -132,77 +132,8 @@ typedef struct UbcExpressionBase {
 	bool                  needs_parsing;
 } ubcexpressionbase_t;
 
-typedef enum UbcComparatorType {
-	UBCCOMPARATORTYPE_NONE,          // 
-	UBCCOMPARATORTYPE_EQUALITY,      // ==
-	UBCCOMPARATORTYPE_LESSTHAN,      // <
-	UBCCOMPARATORTYPE_GREATERTHAN,   // >
-	UBCCOMPARATORTYPE_INEQUALITY,    // !=
-	UBCCOMPARATORTYPE_LESSEQUALS,    // <=
-	UBCCOMPARATORTYPE_GREATEREQUALS, // >=
-} ubccomparatortype_t;
 
-typedef struct UbcCompareExpression {
-	struct UbcExpressionBase base;
-
-	struct UbcAdditionExpression left_hand_side;
-	// Mandatory
-
-	// Optional Fields
-	// This expression can also have no comparison :d, it then evaluates to the type of the addition expression
-	// otherwise, result_type is bool
-	enum   UbcComparatorType     comparator_type;
-	struct UbcAdditionExpression right_hand_side;
-} ubccompareexpression_t;
-
-typedef enum UbcAdditionOperator {
-	UBCADDITIONOPERATOR_PLUS,
-	UBCADDITIONOPERATOR_MINUS
-} ubcadditionoperator_t;
-
-typedef struct UbcAdditionOperand {
-	struct UbcDivisionExpression  expression;
-	enum UbcAdditionOperator      operator;
-} ubcadditionelement_t;
-
-typedef struct UbcAdditionExpression {
-	struct UbcExpressionBase base;
-
-	struct UbcAdditionOperand current;
-	struct UbcAdditionOperand former;
-	
-	uint16_t operand_count;
-} ubcadditionexpression_t;
-
-typedef enum UbcDivisionOperator {
-	UBCDIVISIONOPERATOR_MULTIPLY,
-	UBCDIVISIONOPERATOR_DIVIDE
-} ubcdivisionoperator_t;
-
-typedef struct UbcDivisionOperand {
-	struct UbcNegateExpression  expression;
-	enum   UbcDivisionOperator  operator;
-} ubcdivisionoperand_t;
-
-typedef struct UbcDivisionExpression {
-	struct UbcExpressionBase base;
-
-	struct UbcDivisionOperand former;
-	struct UbcDivisionOperand current;
-
-	uint16_t operand_count;
-	// There is one less operator than operands because the first operand doesn't need one
-} ubcdivisionexpression_t;
-
-typedef struct UbcNegateExpression {
-	struct UbcExpressionBase base;
-	
-	bool negation;
-
-	// Only one of these is non-null at the same time
-	struct UbcParenthesesExpression paren;
-	struct UbcValueExpression       value;
-} ubcnegateexpression_t;
+// Value Expression
 
 typedef struct UbcParenthesesExpression {
 	struct UbcExpressionBase base;
@@ -216,7 +147,7 @@ typedef struct UbcCallExpression {
 	char*  function_name;
 	size_t name_length;
 
-	ubccompareexpression_t* arguments;
+	struct UbcCompareExpression* arguments;
 	uint16_t argument_count;
 } ubccallexpression_t;
 
@@ -251,6 +182,90 @@ typedef struct UbcValueExpression {
 	struct UbcLiteral        literal;
 	struct UbcLValue         lvalue;
 } ubcvalueexpression_t;
+
+
+// Negation Expression
+
+typedef struct UbcNegateExpression {
+	struct UbcExpressionBase base;
+	
+	bool negation;
+
+	// Only one of these is non-null at the same time
+	struct UbcParenthesesExpression paren;
+	struct UbcValueExpression       value;
+} ubcnegateexpression_t;
+
+
+// Division Expression
+
+typedef enum UbcDivisionOperator {
+	UBCDIVISIONOPERATOR_MULTIPLY,
+	UBCDIVISIONOPERATOR_DIVIDE
+} ubcdivisionoperator_t;
+
+typedef struct UbcDivisionOperand {
+	struct UbcNegateExpression  expression;
+	enum   UbcDivisionOperator  operator;
+} ubcdivisionoperand_t;
+
+typedef struct UbcDivisionExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcDivisionOperand former;
+	struct UbcDivisionOperand current;
+
+	uint16_t operand_count;
+	// There is one less operator than operands because the first operand doesn't need one
+} ubcdivisionexpression_t;
+
+
+// Addition Expression
+
+typedef enum UbcAdditionOperator {
+	UBCADDITIONOPERATOR_PLUS,
+	UBCADDITIONOPERATOR_MINUS
+} ubcadditionoperator_t;
+
+typedef struct UbcAdditionOperand {
+	struct UbcDivisionExpression  expression;
+	enum UbcAdditionOperator      operator;
+} ubcadditionelement_t;
+
+typedef struct UbcAdditionExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcAdditionOperand current;
+	struct UbcAdditionOperand former;
+	
+	uint16_t operand_count;
+} ubcadditionexpression_t;
+
+
+// Comparison Expression
+
+typedef enum UbcComparatorType {
+	UBCCOMPARATORTYPE_NONE,          // 
+	UBCCOMPARATORTYPE_EQUALITY,      // ==
+	UBCCOMPARATORTYPE_LESSTHAN,      // <
+	UBCCOMPARATORTYPE_GREATERTHAN,   // >
+	UBCCOMPARATORTYPE_INEQUALITY,    // !=
+	UBCCOMPARATORTYPE_LESSEQUALS,    // <=
+	UBCCOMPARATORTYPE_GREATEREQUALS, // >=
+} ubccomparatortype_t;
+
+typedef struct UbcCompareExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcAdditionExpression left_hand_side;
+	// Mandatory
+
+	// Optional Fields
+	// This expression can also have no comparison :d, it then evaluates to the type of the addition expression
+	// otherwise, result_type is bool
+	enum   UbcComparatorType     comparator_type;
+	struct UbcAdditionExpression right_hand_side;
+} ubccompareexpression_t;
 
 union UbcExpressionUnion {
     ubcparenthesesexpression_t* parenthesized;
