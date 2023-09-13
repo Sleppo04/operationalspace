@@ -660,8 +660,8 @@ int _Parser_DestroyExpression(ubcparser_t* parser, ubccompareexpression_t* expre
 void _Expressions_InitExpressionBase(ubcexpressionbase_t* base)
 {
     base->result_typename = NULL;
-    base->parent->type    = UBCEXPRESSIONTYPE_NONE;
-    base->parent->as->comparison = NULL;
+    base->parent.type    = UBCEXPRESSIONTYPE_NONE;
+    base->parent.as.comparison = NULL;
     base->needs_parsing   = true;
 }
 
@@ -691,8 +691,8 @@ void _Expressions_InitializeNegationExpression(ubcnegateexpression_t* negation)
     _Expressions_InitExpressionBase(&(negation->base));
     _Expressions_InitializeValueExpression(&(negation->value));
 
-    negation->value.base.parent->type = UBCEXPRESSIONTYPE_NEGATE;
-    negation->value.base.parent->as->negation = negation;
+    negation->value.base.parent.type = UBCEXPRESSIONTYPE_NEGATE;
+    negation->value.base.parent.as.negation = negation;
 
     // Leave the negation truth value empty for valgrind to detect if we depend on it
 }
@@ -704,10 +704,10 @@ void _Expressions_InitializeDivisionExpression(ubcdivisionexpression_t* division
     _Expressions_InitializeNegationExpression(&(division->current.expression));
 
     // Set parents
-    division->former.expression.base.parent->type  = UBCEXPRESSIONTYPE_DIVISION;
-    division->current.expression.base.parent->type = UBCEXPRESSIONTYPE_DIVISION;
-    division->current.expression.base.parent->as->division = division;
-    division->former.expression.base.parent->as->division  = division;
+    division->former.expression.base.parent.type  = UBCEXPRESSIONTYPE_DIVISION;
+    division->current.expression.base.parent.type = UBCEXPRESSIONTYPE_DIVISION;
+    division->current.expression.base.parent.as.division = division;
+    division->former.expression.base.parent.as.division  = division;
 
     // Leave the former->operator and current->operator unspecified for valgrind to detect
 }
@@ -719,10 +719,10 @@ void _Expressions_InitializeAdditionExpression(ubcadditionexpression_t* addition
     _Expressions_InitializeDivisionExpression(&(addition->current.expression));
 
     // Set parents
-    addition->former.expression.base.parent->type  = UBCEXPRESSIONTYPE_ADDITION;
-    addition->current.expression.base.parent->type = UBCEXPRESSIONTYPE_ADDITION;
-    addition->current.expression.base.parent->as->addition = addition;
-    addition->former.expression.base.parent->as->addition  = addition;
+    addition->former.expression.base.parent.type  = UBCEXPRESSIONTYPE_ADDITION;
+    addition->current.expression.base.parent.type = UBCEXPRESSIONTYPE_ADDITION;
+    addition->current.expression.base.parent.as.addition = addition;
+    addition->former.expression.base.parent.as.addition  = addition;
 
     // Leave the former->operator and current->operator unspecified for valgrind to detect
 }
@@ -734,10 +734,10 @@ void _Expressions_InitializeCompareExpression(ubccompareexpression_t* comparison
     _Expressions_InitializeAdditionExpression(&(comparison->right_hand_side));
 
     // Set parents
-    comparison->left_hand_side.base.parent->type  = UBCEXPRESSIONTYPE_COMPARISON;
-    comparison->right_hand_side.base.parent->type = UBCEXPRESSIONTYPE_COMPARISON;
-    comparison->left_hand_side.base.parent->as->comparison  = comparison;
-    comparison->right_hand_side.base.parent->as->comparison = comparison;
+    comparison->left_hand_side.base.parent.type  = UBCEXPRESSIONTYPE_COMPARISON;
+    comparison->right_hand_side.base.parent.type = UBCEXPRESSIONTYPE_COMPARISON;
+    comparison->left_hand_side.base.parent.as.comparison  = comparison;
+    comparison->right_hand_side.base.parent.as.comparison = comparison;
 
     // Leave the comparator type empty for valgrind to detect if a jump depends on it
 }
@@ -1172,7 +1172,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     switch (expression->type)
     {
     case UBCEXPRESSIONTYPE_COMPARISON:
-        if (expression->as->comparison->left_hand_side.base.needs_parsing) {
+        if (expression->as.comparison->left_hand_side.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -1188,7 +1188,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
 
     case UBCEXPRESSIONTYPE_ADDITION:
-        if (expression->as->addition->former.expression.base.needs_parsing) {
+        if (expression->as.addition->former.expression.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -1200,7 +1200,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
 
     case UBCEXPRESSIONTYPE_DIVISION:
-        if (expression->as->division->former.expression.base.needs_parsing) {
+        if (expression->as.division->former.expression.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -1211,25 +1211,21 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         break;
     
     case UBCEXPRESSIONTYPE_NEGATE:
-        if (expression->as->negation->base.needs_parsing) {
-            destination[0] = true;
-            return EXIT_SUCCESS;
-        }
+		destination[0] = expression->as.negation->base.needs_parsing;
+		return EXIT_SUCCESS;
         break;
     
     case UBCEXPRESSIONTYPE_PARENTHESES:
-        if (expression->as->parenthesized->parenthesized == NULL) {
+        if (expression->as.parenthesized->parenthesized == NULL) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
         break;
     
     case UBCEXPRESSIONTYPE_VALUE:
-        ubcvalueexpression_t* value = expression->as->value;
-        if (value->base.needs_parsing) {
-            destination[0] = true;
-            return EXIT_SUCCESS;
-        }
+        ubcvalueexpression_t* value = expression->as.value;
+		destination[0] = value->base.needs_parsing;
+		return EXIT_SUCCESS;
         break;
     
     default:
@@ -1242,7 +1238,14 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
 
 int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-    ubccompareexpression_t* comparison = expression->as->comparison;
+    ubccompareexpression_t* comparison = expression->as.comparison;
+
+    if (comparison->left_hand_side.base.needs_parsing) {
+    	ubcadditionexpression_t* lhs = &(comparison->left_hand_side);
+    	expression->as.addition      = lhs;
+    	expression->type             = UBCEXPRESSIONTYPE_ADDITION;
+    	return EXIT_SUCCESS;
+    }
 
     // Left hand side is present, parse operator and right hand side
     token_t lookahead1, lookahead2;
@@ -1279,19 +1282,17 @@ int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* exp
     }
     // The consuming cannot fail because the lookahead did not
     ubcadditionexpression_t* rhs     = &(comparison->right_hand_side);
-    rhs->base.parent->type           = UBCEXPRESSIONTYPE_COMPARISON;
-    rhs->base.parent->as->comparison = comparison;
 
     // forward the addition to being parsed
     expression->type = UBCEXPRESSIONTYPE_ADDITION;
-    expression->as->addition = rhs;
+    expression->as.addition = rhs;
 
     return EXIT_SUCCESS;
 }
 
 int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-    ubcadditionexpression_t* addition = expression->as->addition;
+    ubcadditionexpression_t* addition = expression->as.addition;
     ubcadditionelement_t*    next_target;
 
     if (!addition->former.expression.base.needs_parsing && !addition->current.expression.base.needs_parsing) {
@@ -1329,14 +1330,14 @@ int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expre
     // set next parsing target
     next_target->expression.base.needs_parsing = true;
     expression->type = UBCEXPRESSIONTYPE_DIVISION;
-    expression->as->division = &(addition->former.expression);
+    expression->as.division = &(addition->former.expression);
 
     return EXIT_SUCCESS;
 }
 
 int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-    ubcdivisionexpression_t* division = expression->as->division;
+    ubcdivisionexpression_t* division = expression->as.division;
     ubcdivisionoperand_t*    next_target;
 
     if (!division->former.expression.base.needs_parsing && !division->current.expression.base.needs_parsing) {
@@ -1361,8 +1362,10 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 
     if (lookahead.type == TT_ASTERISK && !is_first_expression) {
         next_target->operator = UBCDIVISIONOPERATOR_MULTIPLY;
+        _Parser_ConsumeToken(parser);
     } else if (lookahead.type == TT_SLASH && !is_first_expression) {
         next_target->operator = UBCDIVISIONOPERATOR_DIVIDE;
+        _Parser_ConsumeToken(parser);
     } else if (is_first_expression) {
         next_target->operator = UBCDIVISIONOPERATOR_MULTIPLY; // This operator is going to be ignored
     } else {
@@ -1370,12 +1373,11 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
         _Parser_ReportUnexpectedToken(parser, "Unexpected token when parsing division operand", "Operator */", lookahead);
         return EXIT_FAILURE;
     }
-    _Parser_ConsumeToken(parser);
 
     // Update current expression to parse
     next_target->expression.base.needs_parsing = true;
     expression->type         = UBCEXPRESSIONTYPE_NEGATE;
-    expression->as->negation = &(next_target->expression);
+    expression->as.negation = &(next_target->expression);
 
     return EXIT_SUCCESS;
 }
@@ -1383,7 +1385,7 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     // argument conversion based on function
-    ubcnegateexpression_t* negation = expression->as->negation;
+    ubcnegateexpression_t* negation = expression->as.negation;
     
     // Lookahead to determine whether the value expression is negated
     token_t lookahead;
@@ -1401,7 +1403,7 @@ int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* express
     // Determine type of the next expression
     negation->value.base.needs_parsing = true;
     expression->type = UBCEXPRESSIONTYPE_VALUE;
-    expression->as->value = &(negation->value);
+    expression->as.value = &(negation->value);
 
     return EXIT_SUCCESS;
 }
@@ -1439,19 +1441,21 @@ int _Parser_ParseLiteral(ubcparser_t* parser, ubcliteral_t* literal)
         return EXIT_FAILURE;
     }
 
+    _Parser_ConsumeToken(parser);
+
     return EXIT_SUCCESS;
 }
 
 int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-    ubcvalueexpression_t* value = expression->as->value;
+    ubcvalueexpression_t* value = expression->as.value;
     token_t lookahead1, lookahead2;
     
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead1)) return EXIT_FAILURE;
 
     _Parser_AssumeLookaheadFill(parser);
-    if (_Parser_LookAhead(parser, 0, &lookahead2)) return EXIT_FAILURE;
+    if (_Parser_LookAhead(parser, 1, &lookahead2)) return EXIT_FAILURE;
 
     // TODO: Actions to do when a value type is detected
 
@@ -1501,6 +1505,7 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
         value->type = UBCVALUETYPE_NONE;
         return EXIT_FAILURE;
     }
+    value->base.needs_parsing = false;
 
     return EXIT_SUCCESS;
 }
@@ -1553,7 +1558,7 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* supplie
 
     ubcexpression_t current;
     current.type = UBCEXPRESSIONTYPE_COMPARISON;
-    current.as->comparison = &root;
+    current.as.comparison = &root;
 
     bool parsing_needed = false;
     while (current.type != UBCEXPRESSIONTYPE_NONE) {
@@ -1572,7 +1577,7 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* supplie
                 return EXIT_FAILURE;
             }
         } else {
-            current = (((ubcexpressionbase_t*) (current.as))->parent)[0];
+            current = current.as.addition->base.parent;
         }
     }
 
