@@ -38,6 +38,7 @@ int WorldGen_PlaceFeature(tile_t* tile, feature_t* feature)
 
 int WorldGen_CheckFeaturePlacement(tile_t* tile, worldgendata_t* data, size_t x, size_t y)
 {
+    // TODO: Discuss this malloc
     uint16_t* noise_values = malloc(sizeof(uint16_t) * NOISE_COUNT);
     if (noise_values == NULL) {
         return ENOMEM;
