@@ -1362,6 +1362,7 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
             return EXIT_FAILURE;
         }
         value->base.needs_parsing   = false;
+        /// TODO: uncomment this
         //value->base.result_typename = _Parser_GetLValueTypename(parser, &(value->as.lvalue));
 
     } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
