@@ -323,10 +323,10 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, size_t name_leng
     return 0;
 }
 
-char* _Types_GetMemberTypename(ubccustomtype_t* type, char* name, size_t name_length)
+char* _Types_GetMemberTypename(ubccustomtype_t* type, char* member, size_t name_length)
 {
     for (uint16_t i = 0; i < type->field_count; i++) {
-        if (strncmp(type->field_names[i], name, name_length) == 0) {
+        if (strncmp(type->field_names[i], member, name_length) == 0) {
             return type->field_typenames[i];
         }
     }
@@ -345,13 +345,49 @@ bool _Types_MemberExists(ubccustomtype_t* type, char* name, size_t name_length)
     return false;
 }
 
+char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t* type, ubclvalue_t* member_path)
+{
+    ubccustomtype_t* current      = type;
+    ubclvalue_t      current_path = member_path[0];
+
+    size_t name_length;
+    char* next, member_typename;
+
+    while (current_path.path_length != 0) {
+        next = strnchr(current_path.variable_path, '.', current_path.path_length);
+        if (next == NULL) {
+            name_length = current_path.path_length;
+        } else {
+            name_length = (uintptr_t) next - (uintptr_t) current_path.variable_path;
+        }
+
+        /// TODO: Report errors here?
+        if (_Types_IsBuiltInTypename(current_path.variable_path, name_length)) {
+            // Can't dive further into builtin types
+            return NULL;
+        }
+        if (! _Types_MemberExists(current, current_path.variable_path, name_length)) {
+            return NULL;
+        }
+
+        // We can assume this to succeed because we tested that the member exists
+        member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
+        current               = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
+
+        current_path.path_length   -= name_length;
+        current_path.variable_path += name_length;
+    }
+
+    return current->name;
+}
+
 bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ubclvalue_t* member_path)
 {
     ubccustomtype_t* current      = type;
     ubclvalue_t      current_path = member_path[0];
 
     size_t name_length;
-    char* next;
+    char* next, member_typename;
     while (current_path.path_length != 0) {
         next = strnchr(current_path.variable_path, '.', current_path.path_length);
         if (next == NULL) {
@@ -369,7 +405,7 @@ bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ub
         }
 
         // We can assume this to succeed because we tested that the member exists
-        char* member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
+        member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
         current               = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
 
         current_path.path_length   -= name_length;
@@ -755,6 +791,7 @@ size_t _LValue_GetVariableNameLength(ubclvalue_t* path)
     return name_length;
 }
 
+// Returns NULL if the variable could not be found
 ubcvariable_t* _Scope_GetVariable(ubcscope_t* scope, ubclvalue_t* variable)
 {
     uintptr_t name_length = _LValue_GetVariableNameLength(variable);
@@ -837,6 +874,39 @@ bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
     }
 
     return false;
+}
+
+char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
+{
+    size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
+    if (lvalue->path_length == variable_name_length) {
+        return _Scope_GetVariable(scope, lvalue)->typename;
+    }
+
+    ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
+    if (variable == NULL) {
+        return NULL;
+    }
+
+    ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
+    ubclvalue_t member_path;
+    member_path.path_length        = lvalue->path_length   - variable_name_length;
+    member_path.variable_path      = lvalue->variable_path + variable_name_length;
+
+    return _Parser_TypeMemberPathResultTypename(parser, variable_type, &member_path);
+}
+
+char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
+{
+    size_t scope_count = _Parser_GetScopeCount(parser);
+
+    ubcscope_t* current_scope;
+    for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
+        current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
+        if (_Scope_VariableExists(current_scope, lvalue)) {
+            return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
+        }
+    }
 }
 
 
