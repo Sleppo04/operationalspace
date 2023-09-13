@@ -198,8 +198,11 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 	return EXIT_SUCCESS;
 }
 
+
+/// Type functions
+
 // Type registering and request functions
-bool _Parser_IsBuiltInTypename(char* typename, int32_t name_length)
+bool _Types_IsBuiltInTypename(char* typename, size_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
         return true;
@@ -213,14 +216,14 @@ bool _Parser_IsBuiltInTypename(char* typename, int32_t name_length)
     return false;
 }
 
-bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t name_length)
+bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, size_t name_length)
 {
-    if (_Parser_IsBuiltInTypename(typename, name_length))
+    if (_Types_IsBuiltInTypename(typename, name_length))
         return true;
 
     for (uint16_t i = 0; i != parser->types.count; i++) {
         char* defined_typename = parser->types.array[i].name;
-        int32_t length = strlen(defined_typename);
+        size_t length = strlen(defined_typename);
         if (length != name_length) continue;
         if (strncmp(defined_typename, typename, name_length) == 0) {
             return true;
@@ -229,7 +232,7 @@ bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t n
 
     for (uint16_t i = 0; i != parser->config.type_count; i++) {
         char* foreign_typename = parser->config.foreign_types[i].name;
-        int32_t length = strlen(foreign_typename);
+        size_t length = strlen(foreign_typename);
         if (length != name_length) continue;
         if (strncmp(foreign_typename, typename, name_length)) {
             return true;
@@ -237,6 +240,31 @@ bool _Parser_IsTypenameRegistered(ubcparser_t* parser, char* typename, int32_t n
     }
 
     return false;
+}
+
+ubccustomtype_t* _Parser_GetTypeByName(ubcparser_t* parser, char* typename, size_t name_length)
+{
+    ubccustomtype_t* current_type;
+    for (uint16_t i = 0; i != parser->types.count; i++) {
+        current_type = parser->types.array + i;
+
+        if (name_length != strlen(current_type->name)) continue;
+        if (strncmp(typename, current_type->name, name_length) == 0) {
+            return current_type;
+        }
+    }
+
+    
+    for (uint16_t i = 0; i != parser->config.type_count; i++) {
+        current_type = parser->config.foreign_types + i;
+    
+        if (name_length != strlen(current_type->name)) continue;
+        if (strncmp(typename, current_type->name, name_length) == 0) {
+            return current_type;
+        }
+    }
+
+    return NULL;
 }
 
 bool _IsTypenameIdentifierToken(token_t* token)
@@ -251,7 +279,7 @@ bool _IsTypenameIdentifierToken(token_t* token)
     return false;
 }
 
-size_t _Parser_BuiltInTypeSize(char* typename, int32_t name_length)
+size_t _Parser_BuiltInTypeSize(char* typename, size_t name_length)
 {
     if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
         return 8;
@@ -266,16 +294,16 @@ size_t _Parser_BuiltInTypeSize(char* typename, int32_t name_length)
 }
 
 // This function returns 0 if the type does not exist
-size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_length)
+size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, size_t name_length)
 {
-    if (_Parser_IsBuiltInTypename(typename, name_length)) {
+    if (_Types_IsBuiltInTypename(typename, name_length)) {
         return _Parser_BuiltInTypeSize(typename, name_length);
     }
 
     // User defined types
     for (uint16_t i = 0; i != parser->types.count; i++) {
         ubccustomtype_t* type = parser->types.array + i;
-        int32_t length        = strlen(type->name);
+        size_t length         = strlen(type->name);
         if (length != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
             return type->type_size;
@@ -285,7 +313,7 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
     // foreign types
     for (uint16_t i = 0; i != parser->config.type_count; i++) {
         ubccustomtype_t* type = parser->config.foreign_types + i;
-        int32_t length        = strlen(type->name);
+        size_t length         = strlen(type->name);
         if (length != name_length) continue;
         if (strncmp(type->name, typename, name_length) == 0) {
             return type->type_size;
@@ -293,6 +321,62 @@ size_t _Parser_GetTypeSize(ubcparser_t* parser, char* typename, int32_t name_len
     }
 
     return 0;
+}
+
+char* _Types_GetMemberTypename(ubccustomtype_t* type, char* name, size_t name_length)
+{
+    for (uint16_t i = 0; i < type->field_count; i++) {
+        if (strncmp(type->field_names[i], name, name_length) == 0) {
+            return type->field_typenames[i];
+        }
+    }
+
+    return NULL;
+}
+
+bool _Types_MemberExists(ubccustomtype_t* type, char* name, size_t name_length)
+{
+    for (uint16_t i = 0; i < type->field_count; i++) {
+        if (strncmp(type->field_names[i], name, name_length) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ubclvalue_t* member_path)
+{
+    ubccustomtype_t* current      = type;
+    ubclvalue_t      current_path = member_path[0];
+
+    size_t name_length;
+    char* next;
+    while (current_path.path_length != 0) {
+        next = strnchr(current_path.variable_path, '.', current_path.path_length);
+        if (next == NULL) {
+            name_length = current_path.path_length;
+        } else {
+            name_length = (uintptr_t) next - (uintptr_t) current_path.variable_path;
+        }
+
+        /// TODO: Report errors here?
+        if (_Types_IsBuiltInTypename(current_path.variable_path, name_length)) {
+            return false;
+        }
+        if (! _Types_MemberExists(current, current_path.variable_path, name_length)) {
+            return false;
+        }
+
+        // We can assume this to succeed because we tested that the member exists
+        char* member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
+        current               = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
+
+        current_path.path_length   -= name_length;
+        current_path.variable_path += name_length;
+    }
+
+    return current_path.path_length == 0;
 }
 
 // This function copies the specified type and does not keep a reference
@@ -535,9 +619,9 @@ int _Parser_DestroyExpression(ubcparser_t* parser, ubccompareexpression_t* expre
     return EXIT_FAILURE;
 }
 
-/// Initializers
+/// Expressions
 
-void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
+void _Expressions_InitExpressionBase(ubcexpressionbase_t* base)
 {
     base->result_typename = NULL;
     base->parent->type    = UBCEXPRESSIONTYPE_NONE;
@@ -545,31 +629,31 @@ void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
     base->needs_parsing   = true;
 }
 
-void _Parser_InitializeParenExpression(ubcparenthesesexpression_t* paren)
+void _Expressions_InitializeParenExpression(ubcparenthesesexpression_t* paren)
 {
-    _Parser_InitExpressionBase(&(paren->base));
+    _Expressions_InitExpressionBase(&(paren->base));
     paren->parenthesized = NULL;
 }
 
-void _Parser_InitializeLiteralExpression(ubcliteral_t* literal)
+void _Expressions_InitializeLiteralExpression(ubcliteral_t* literal)
 {
     literal->type = UBCLITERALTYPE_NONE;
 
     memset(&(literal->as), 0, sizeof(union UbcLiteralValue));
 }
 
-void _Parser_InitializeValueExpression(ubcvalueexpression_t* value)
+void _Expressions_InitializeValueExpression(ubcvalueexpression_t* value)
 {
-    _Parser_InitExpressionBase(&(value->base));
+    _Expressions_InitExpressionBase(&(value->base));
 
     value->type = UBCVALUETYPE_NONE;
 }
 
 
-void _Parser_InitializeNegationExpression(ubcnegateexpression_t* negation)
+void _Expressions_InitializeNegationExpression(ubcnegateexpression_t* negation)
 {
-    _Parser_InitExpressionBase(&(negation->base));
-    _Parser_InitializeValueExpression(&(negation->value));
+    _Expressions_InitExpressionBase(&(negation->base));
+    _Expressions_InitializeValueExpression(&(negation->value));
 
     negation->value.base.parent->type = UBCEXPRESSIONTYPE_NEGATE;
     negation->value.base.parent->as->negation = negation;
@@ -577,11 +661,11 @@ void _Parser_InitializeNegationExpression(ubcnegateexpression_t* negation)
     // Leave the negation truth value empty for valgrind to detect if we depend on it
 }
 
-void _Parser_InitializeDivisionExpression(ubcdivisionexpression_t* division)
+void _Expressions_InitializeDivisionExpression(ubcdivisionexpression_t* division)
 {
-    _Parser_InitExpressionBase(&(division->base));
-    _Parser_InitializeNegationExpression(&(division->former.expression));
-    _Parser_InitializeNegationExpression(&(division->current.expression));
+    _Expressions_InitExpressionBase(&(division->base));
+    _Expressions_InitializeNegationExpression(&(division->former.expression));
+    _Expressions_InitializeNegationExpression(&(division->current.expression));
 
     // Set parents
     division->former.expression.base.parent->type  = UBCEXPRESSIONTYPE_DIVISION;
@@ -592,11 +676,11 @@ void _Parser_InitializeDivisionExpression(ubcdivisionexpression_t* division)
     // Leave the former->operator and current->operator unspecified for valgrind to detect
 }
 
-void _Parser_InitializeAdditionExpression(ubcadditionexpression_t* addition)
+void _Expressions_InitializeAdditionExpression(ubcadditionexpression_t* addition)
 {
-    _Parser_InitExpressionBase(&(addition->base));
-    _Parser_InitializeDivisionExpression(&(addition->former.expression));
-    _Parser_InitializeDivisionExpression(&(addition->current.expression));
+    _Expressions_InitExpressionBase(&(addition->base));
+    _Expressions_InitializeDivisionExpression(&(addition->former.expression));
+    _Expressions_InitializeDivisionExpression(&(addition->current.expression));
 
     // Set parents
     addition->former.expression.base.parent->type  = UBCEXPRESSIONTYPE_ADDITION;
@@ -607,11 +691,11 @@ void _Parser_InitializeAdditionExpression(ubcadditionexpression_t* addition)
     // Leave the former->operator and current->operator unspecified for valgrind to detect
 }
 
-void _Parser_InitializeCompareExpression(ubccompareexpression_t* comparison)
+void _Expressions_InitializeCompareExpression(ubccompareexpression_t* comparison)
 {
-    _Parser_InitExpressionBase(&(comparison->base));
-    _Parser_InitializeAdditionExpression(&(comparison->left_hand_side));
-    _Parser_InitializeAdditionExpression(&(comparison->right_hand_side));
+    _Expressions_InitExpressionBase(&(comparison->base));
+    _Expressions_InitializeAdditionExpression(&(comparison->left_hand_side));
+    _Expressions_InitializeAdditionExpression(&(comparison->right_hand_side));
 
     // Set parents
     comparison->left_hand_side.base.parent->type  = UBCEXPRESSIONTYPE_COMPARISON;
@@ -637,10 +721,129 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
 }
 
 
+/// Scope and LValue functions
+
+size_t _Parser_GetScopeCount(ubcparser_t* parser)
+{
+    return parser->scopes.used / sizeof(ubcscope_t);
+}
+
+// Index zero is the global scope
+ubcscope_t* _Parser_GetScope(ubcparser_t* parser, size_t index)
+{
+    if (index >= _Parser_GetScopeCount(parser)) return NULL;
+    ubcscope_t* scopes = parser->scopes.memory;
+
+    return scopes + index;
+}
+
+size_t _Scope_GetVariableCount(ubcscope_t* scope)
+{
+    return scope->variables.used / sizeof(ubcvariable_t);
+}
+
+// Returns the length of the variable, not any members accessed
+size_t _LValue_GetVariableNameLength(ubclvalue_t* path)
+{
+    uintptr_t name_length = (uintptr_t) strnchr(path->variable_path, '.', path->path_length);
+    if (name_length == 0) {
+        name_length = path->path_length;
+    } else {
+        name_length = name_length - (uintptr_t) (path->variable_path);
+    }
+
+    return name_length;
+}
+
+ubcvariable_t* _Scope_GetVariable(ubcscope_t* scope, ubclvalue_t* variable)
+{
+    uintptr_t name_length = _LValue_GetVariableNameLength(variable);
+    size_t variable_count = _Scope_GetVariableCount(scope);
+    
+    ubcvariable_t* current;
+    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
+        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
+
+        // name lengths are not equal? Names can't be equal, skip it
+        if (current->name_length != name_length) {
+            continue;
+        }
+
+        // Names are equal? return true
+        if (strncmp(current->name, variable->variable_path, name_length) == 0) {
+            return current;
+        }
+    }
+
+    return NULL;
+}
+
+// Only the first name in the lvalue will be looked up
+bool _Scope_VariableExists(ubcscope_t* scope, ubclvalue_t* variable_path)
+{
+    uintptr_t name_length = _LValue_GetVariableNameLength(variable_path);
+
+    size_t variable_count = _Scope_GetVariableCount(scope);
+    ubcvariable_t* current;
+    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
+        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
+
+        // name lengths are not equal? Names can't be equal, skip it
+        if (current->name_length != name_length) {
+            continue;
+        }
+
+        // Names are equal? return true
+        if (strncmp(current->name, variable_path->variable_path, name_length) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool _Parser_ScopeLValueExists(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
+{
+    size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
+    if (lvalue->path_length == variable_name_length) {
+        return _Scope_VariableExists(scope, lvalue);
+    }
+
+    ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
+    if (variable == NULL) {
+        return false;
+    }
+
+    if (_Types_IsBuiltInTypename(variable->typename, strlen(variable->typename))) return false;
+
+    ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
+    ubclvalue_t member_path;
+    member_path.variable_path      = lvalue->variable_path + variable_name_length;
+    member_path.path_length        = lvalue->path_length   - variable_name_length;
+    
+    return  _Parser_TypeMemberPathExists(parser, variable_type, &member_path);
+}
+
+bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
+{
+    size_t scope_count = _Parser_GetScopeCount(parser);
+
+    ubcscope_t* current_scope;
+    for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
+        current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
+        if (_Scope_VariableExists(current_scope, lvalue)) {
+            return _Parser_ScopeLValueExists(parser, current_scope, lvalue);
+        }
+    }
+
+    return false;
+}
+
+
 /// Parsing Functions
 
 
-int _Parser_ParseLValue(ubcparser_t* parser, char** path_destination, uintptr_t* length_destination)
+int _Parser_ParseLValue(ubcparser_t* parser, ubclvalue_t* lvlalue)
 {
     token_t lookahead;
     token_t last;
@@ -676,8 +879,8 @@ int _Parser_ParseLValue(ubcparser_t* parser, char** path_destination, uintptr_t*
         if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
     }
 
-    path_destination[0]   = start.ptr;
-    length_destination[0] = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
+    lvlalue->path_length   = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
+    lvlalue->variable_path = start.ptr;
 
     return EXIT_SUCCESS;
 }
@@ -789,7 +992,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     if (lookahead_code) return EXIT_FAILURE;
 
     ubccustomtype_t new_type;
-    new_type.name = _Parser_strndup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length));
+    new_type.name = _Parser_strndup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length + 1));
     if (new_type.name == NULL) {
         return EXIT_FAILURE;
     }
@@ -1154,6 +1357,12 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
 
     } else if (lookahead1.type == TT_IDENTIFIER && lookahead2.type != TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_LVALUE;
+        if (_Parser_ParseLValue(parser, &(value->as.lvalue))) return EXIT_FAILURE;
+        if (! _Parser_LValueExists(parser, &(value->as.lvalue))) {
+            return EXIT_FAILURE;
+        }
+        value->base.needs_parsing   = false;
+        value->base.result_typename = _Parser_GetLValueTypename(parser, &(value->as.lvalue));
 
     } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_PAREN;
@@ -1211,7 +1420,7 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* supplie
     ubccompareexpression_t root;
 
     if (supplied_root == NULL) {
-        _Parser_InitializeCompareExpression(&root);
+        _Expressions_InitializeCompareExpression(&root);
     } else {
         root = supplied_root[0];
     }
@@ -1258,9 +1467,8 @@ int _Parser_ParseVariableDefinition(ubcparser_t* parser)
 
 int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 {
-    char* variable_path;
-    uintptr_t path_length;
-    if (_Parser_ParseLValue(parser, &variable_path, &path_length)) {
+    ubclvalue_t lvalue;
+    if (_Parser_ParseLValue(parser, &lvalue)) {
         return EXIT_FAILURE;
     }
 
