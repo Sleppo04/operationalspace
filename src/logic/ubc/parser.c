@@ -1409,6 +1409,37 @@ int _Parser_ExpandParenExpression(ubcparser_t* parser, ubcexpression_t* expressi
     return EXIT_FAILURE;
 }
 
+int _Parser_ParseLiteral(ubcparser_t* parser, ubcliteral_t* literal)
+{
+    token_t lookahead;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+
+    /// TODO: Push literals
+    if (lookahead.type == TT_INT_LITERAL) {
+        literal->type        = UBCLITERALTYPE_INT;
+        literal->as.integer  = lookahead.value.intValue;
+    } else if (lookahead.type == TT_FLOAT_LITERAL) {
+        literal->as.floating = lookahead.value.floatValue;
+        literal->type        = UBCLITERALTYPE_FLOAT;
+    } else if (lookahead.type == TT_UBC_TRUE) {
+        literal->as.boolean  = true;
+        literal->type        = UBCLITERALTYPE_BOOL;
+    } else if (lookahead.type == TT_UBC_FALSE) {
+        literal->as.boolean  = false;
+        literal->type        = UBCLITERALTYPE_BOOL;
+    } else if (lookahead.type == TT_STRING_LITERAL) {
+        literal->as.string.length  = lookahead.value.length;
+        literal->as.string.pointer = lookahead.ptr;
+        literal->type              = UBCLITERALTYPE_STRING;
+    } else {
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token while parsing literal", "int literal, float literal, bool literal, string literal", lookahead);
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     ubcvalueexpression_t* value = expression->as->value;
@@ -1432,14 +1463,36 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
             return EXIT_FAILURE;
         }
         value->base.needs_parsing   = false;
-        /// TODO: uncomment this
-        //value->base.result_typename = _Parser_GetLValueTypename(parser, &(value->as.lvalue));
+        value->base.result_typename = _Parser_GetLValueTypename(parser, &(value->as.lvalue));
 
     } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_PAREN;
 
     } else if (lookahead1.type == TT_INT_LITERAL || lookahead1.type == TT_STRING_LITERAL || lookahead1.type == TT_FLOAT_LITERAL || lookahead1.type == TT_UBC_FALSE || lookahead1.type == TT_UBC_TRUE) {
         value->type = UBCVALUETYPE_LITERAL;
+        if (_Parser_ParseLiteral(parser, &(value->as.literal))) {
+            return EXIT_FAILURE;
+        }
+        switch (value->as.literal.type)
+        {
+        case UBCLITERALTYPE_BOOL:
+            value->base.result_typename = TT_UBC_BOOL_TYPENAME;
+            break;
+        case UBCLITERALTYPE_INT:
+            value->base.result_typename = TT_UBC_INT_TYPENAME;
+            break;
+        case UBCLITERALTYPE_FLOAT:
+            value->base.result_typename = TT_UBC_FLOAT_TYPENAME;
+            break;
+        case UBCLITERALTYPE_STRING:
+            value->base.result_typename = TT_UBC_STRING_TYPENAME;
+            break;
+        
+        default:
+            _Parser_ReportTopTracebackError(parser, "Got none type when finishing parsing literal. Please tell me how you managed to get this error");
+            return EXIT_FAILURE;
+            break;
+        }
 
     } else {
         _Parser_ReportUnexpectedToken(parser, "Unexpected token while parsing value expression", "CALL(), IDENTIFIER, LITERAL, PARENTHESIS", lookahead1);
@@ -1447,7 +1500,7 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
         return EXIT_FAILURE;
     }
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)

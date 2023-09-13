@@ -161,11 +161,16 @@ enum UbcLiteralType {
 	UBCLITERALTYPE_STRING
 };
 
+typedef struct UbcStringLiteral {
+	int32_t length;
+	char*   pointer;
+} ubcstringliteral_t;
+
 union UbcLiteralValue {
 	bool    boolean;
 	int32_t integer;
 	float   floating;
-	char*   string;
+	ubcstringliteral_t string;
 };
 
 typedef struct UbcLValue {
