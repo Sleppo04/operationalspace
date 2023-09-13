@@ -176,13 +176,13 @@ typedef struct UbcLiteral {
 	union UbcLiteralValue as;
 } ubcliteral_t;
 
-typedef enum UbcValueExpressionType {
-	UBCVALUEEXPRESSIONTYPE_NONE,
-	UBCVALUEEXPRESSIONTYPE_LITERAL,
-	UBCVALUEEXPRESSIONTYPE_LVALUE,
-	UBCVALUEEXPRESSIONTYPE_PAREN,
-	UBCVALUEEXPRESSIONTYPE_CALL,
-} ubcvalueexpressiontype_t;
+typedef enum UbcValueType {
+	UBCVALUETYPE_NONE,
+	UBCVALUETYPE_LITERAL,
+	UBCVALUETYPE_LVALUE,
+	UBCVALUETYPE_PAREN,
+	UBCVALUETYPE_CALL,
+} ubcvaluetype_t;
 
 typedef union UbcValueExpressionMember {
 	struct UbcLiteral               literal;
@@ -194,8 +194,8 @@ typedef union UbcValueExpressionMember {
 typedef struct UbcValueExpression {
 	struct UbcExpressionBase base;
 
-	enum  UbcValueExpressionType   type;
 	union UbcValueExpressionMember as;
+	enum  UbcValueType             type;
 } ubcvalueexpression_t;
 
 

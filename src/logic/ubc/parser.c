@@ -562,7 +562,7 @@ void _Parser_InitializeValueExpression(ubcvalueexpression_t* value)
 {
     _Parser_InitExpressionBase(&(value->base));
 
-    value->type = UBCVALUEEXPRESSIONTYPE_NONE;
+    value->type = UBCVALUETYPE_NONE;
 }
 
 
@@ -1147,7 +1147,25 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead2)) return EXIT_FAILURE;
 
-    // TODO: Finish this function
+    // TODO: Actions to do when a value type is detected
+
+    if (lookahead1.type == TT_IDENTIFIER && lookahead2.type == TT_LEFT_PARENTHESIS) {
+        value->type = UBCVALUETYPE_CALL;
+
+    } else if (lookahead1.type == TT_IDENTIFIER && lookahead2.type != TT_LEFT_PARENTHESIS) {
+        value->type = UBCVALUETYPE_LVALUE;
+
+    } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
+        value->type = UBCVALUETYPE_PAREN;
+
+    } else if (lookahead1.type == TT_INT_LITERAL || lookahead1.type == TT_STRING_LITERAL || lookahead1.type == TT_FLOAT_LITERAL || lookahead1.type == TT_UBC_FALSE || lookahead1.type == TT_UBC_TRUE) {
+        value->type = UBCVALUETYPE_LITERAL;
+
+    } else {
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token while parsing value expression", "CALL(), IDENTIFIER, LITERAL, PARENTHESIS", lookahead1);
+        value->type = UBCVALUETYPE_NONE;
+        return EXIT_FAILURE;
+    }
 
     return EXIT_FAILURE;
 }
