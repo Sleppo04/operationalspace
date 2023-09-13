@@ -13,6 +13,7 @@
 #include "../errorcodes.h"
 #include "../lexer/lexer.h"
 #include "../dynamicbuffer/dynamicbuffer.h"
+#include "../util.h"
 
 
 
@@ -94,6 +95,7 @@ enum UbcVariableType {
 
 typedef struct UbcVariable {
     char* name;
+	size_t name_length;
     enum UbcType type;
     char flags;
     char* typename;
@@ -102,7 +104,7 @@ typedef struct UbcVariable {
 typedef struct UbcScope {
     enum UbcScopeType type;
     ubcparserbuffer_t variables;
-    uint32_t temporary_bytes; // Bytes on the stack above variables for temporary use
+    uint32_t          temporary_bytes; // Bytes on the stack above variables for temporary use
 } ubcscope_t;
 
 typedef struct UbcParser {
