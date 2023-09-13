@@ -129,6 +129,7 @@ struct UbcExpression;
 typedef struct UbcExpressionBase {
 	struct UbcExpression* parent;
 	char*                 result_typename; // Not owned by this struct but by the type
+	bool                  needs_parsing;
 } ubcexpressionbase_t;
 
 typedef enum UbcComparatorType {
@@ -144,14 +145,14 @@ typedef enum UbcComparatorType {
 typedef struct UbcCompareExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcAdditionExpression* left_hand_side;
+	struct UbcAdditionExpression left_hand_side;
 	// Mandatory
 
 	// Optional Fields
 	// This expression can also have no comparison :d, it then evaluates to the type of the addition expression
 	// otherwise, result_type is bool
-	enum   UbcComparatorType      comparator_type;
-	struct UbcAdditionExpression* right_hand_side;
+	enum   UbcComparatorType     comparator_type;
+	struct UbcAdditionExpression right_hand_side;
 } ubccompareexpression_t;
 
 typedef enum UbcAdditionOperator {
@@ -160,14 +161,15 @@ typedef enum UbcAdditionOperator {
 } ubcadditionoperator_t;
 
 typedef struct UbcAdditionOperand {
-	struct UbcDivisionExpression* expression;
+	struct UbcDivisionExpression  expression;
 	enum UbcAdditionOperator      operator;
 } ubcadditionelement_t;
 
 typedef struct UbcAdditionExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcAdditionOperand* operands;
+	struct UbcAdditionOperand current;
+	struct UbcAdditionOperand former;
 	
 	uint16_t operand_count;
 } ubcadditionexpression_t;
@@ -178,14 +180,15 @@ typedef enum UbcDivisionOperator {
 } ubcdivisionoperator_t;
 
 typedef struct UbcDivisionOperand {
-	struct UbcNegateExpression* expression;
+	struct UbcNegateExpression  expression;
 	enum   UbcDivisionOperator  operator;
 } ubcdivisionoperand_t;
 
 typedef struct UbcDivisionExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcDivisionOperand* operands;
+	struct UbcDivisionOperand former;
+	struct UbcDivisionOperand current;
 
 	uint16_t operand_count;
 	// There is one less operator than operands because the first operand doesn't need one
@@ -197,8 +200,8 @@ typedef struct UbcNegateExpression {
 	bool negation;
 
 	// Only one of these is non-null at the same time
-	struct UbcParenthesesExpression* paren;
-	struct UbcValueExpression*       value;
+	struct UbcParenthesesExpression paren;
+	struct UbcValueExpression       value;
 } ubcnegateexpression_t;
 
 typedef struct UbcParenthesesExpression {
@@ -206,14 +209,6 @@ typedef struct UbcParenthesesExpression {
 	
 	struct UbcCompareExpression* parenthesized;
 } ubcparenthesesexpression_t;
-
-typedef struct UbcValueExpression {
-	struct UbcExpressionBase base;
-
-	struct UbcCallExpression* call;
-	struct UbcLiteral*        literal;
-	struct UbcLValue*         lvalue;
-} ubcvalueexpression_t;
 
 typedef struct UbcCallExpression {
 	struct UbcExpressionBase base;
@@ -239,10 +234,23 @@ union UbcLiteralValue {
 	char*   string;
 };
 
+typedef struct UbcLValue {
+	char* variable_path; // member accesses separated by .
+	uintptr_t path_length;
+} ubclvalue_t;
+
 typedef struct UbcLiteral {
 	enum UbcLiteralType type;
 	union UbcLiteralValue as;
 } ubcliteral_t;
+
+typedef struct UbcValueExpression {
+	struct UbcExpressionBase base;
+
+	struct UbcCallExpression call;
+	struct UbcLiteral        literal;
+	struct UbcLValue         lvalue;
+} ubcvalueexpression_t;
 
 union UbcExpressionUnion {
     ubcparenthesesexpression_t* parenthesized;

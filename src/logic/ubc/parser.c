@@ -542,94 +542,8 @@ void _Parser_InitExpressionBase(ubcexpressionbase_t* base)
     base->result_typename = NULL;
     base->parent->type    = UBCEXPRESSIONTYPE_NONE;
     base->parent->as->comparison = NULL;
+    base->needs_parsing   = true;
 }
-
-ubcvalueexpression_t* _Parser_NewValueExpression(ubcparser_t* parser)
-{
-    ubcvalueexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcvalueexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->literal = NULL;
-    expression->lvalue  = NULL;
-    expression->call    = NULL;
-
-    return expression;
-}
-
-ubcparenthesesexpression_t* _Parser_NewParenExpression(ubcparser_t* parser)
-{
-    ubcparenthesesexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcparenthesesexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->parenthesized = NULL;
-
-    return expression;
-}
-
-ubcnegateexpression_t* _Parser_NewNegateExpression(ubcparser_t* parser)
-{
-    ubcnegateexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcnegateexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->negation = false;
-    expression->paren    = NULL;
-    expression->value    = NULL;
-
-    return expression;
-}
-
-ubcdivisionexpression_t* _Parser_NewDivisionExpression(ubcparser_t* parser)
-{
-    ubcdivisionexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcdivisionexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->operand_count = 0;
-    expression->operands      = NULL;
-
-    return expression;
-}
-
-ubcadditionexpression_t* _Parser_NewAdditionExpression(ubcparser_t* parser)
-{
-    ubcadditionexpression_t* expression = _Parser_Malloc(parser, sizeof(ubcadditionexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->operand_count = 0;
-    expression->operands      = NULL;
-
-    return expression;
-}
-
-ubccompareexpression_t* _Parser_NewCompareExpression(ubcparser_t* parser)
-{
-    ubccompareexpression_t* expression = _Parser_Malloc(parser, sizeof(ubccompareexpression_t));
-    if (expression == NULL) {
-        return NULL;
-    }
-
-    _Parser_InitExpressionBase(&(expression->base));
-    expression->comparator_type = UBCCOMPARATORTYPE_NONE;
-    expression->left_hand_side  = NULL;
-    expression->right_hand_side = NULL;
-
-    return expression;
-}
-
 
 /// Bytecode functions
 
@@ -906,7 +820,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     switch (expression->type)
     {
     case UBCEXPRESSIONTYPE_COMPARE:
-        if (expression->as->comparison->left_hand_side == NULL) {
+        if (expression->as->comparison->left_hand_side.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -922,7 +836,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
 
     case UBCEXPRESSIONTYPE_ADDITION:
-        if (expression->as->addition->operand_count == 0) {
+        if (expression->as->addition->former.expression.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -934,18 +848,18 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
 
     case UBCEXPRESSIONTYPE_DIVISION:
-        if (expression->as->division->operand_count == 0) {
+        if (expression->as->division->former.expression.base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
 
         _Parser_AssumeLookaheadFill(parser);
         if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
-        destination[0] == lookahead_1.type == TT_ASTERISK || lookahead_1.type == TT_SLASH;
+        destination[0] = (lookahead_1.type == TT_ASTERISK || lookahead_1.type == TT_SLASH);
         break;
     
     case UBCEXPRESSIONTYPE_NEGATE:
-        if (expression->as->negation->paren == NULL && expression->as->negation->value == NULL) {
+        if (expression->as->negation->base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -960,7 +874,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
     case UBCEXPRESSIONTYPE_VALUE:
         ubcvalueexpression_t* value = expression->as->value;
-        if (value->call == NULL && value->lvalue == NULL && value->literal == NULL) {
+        if (value->base.needs_parsing) {
             destination[0] = true;
             return EXIT_SUCCESS;
         }
@@ -977,18 +891,6 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
 int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     ubccompareexpression_t* comparison = expression->as->comparison;
-    if (comparison->left_hand_side == NULL) {
-        comparison->left_hand_side = _Parser_NewAdditionExpression(parser);
-        if (comparison->left_hand_side == NULL) {
-            return ENOMEM;
-        }
-        comparison->left_hand_side->base.parent->type           = UBCEXPRESSIONTYPE_COMPARE;
-        comparison->left_hand_side->base.parent->as->comparison = comparison;
-        
-        expression->as->addition = comparison->left_hand_side;
-        expression->type = UBCEXPRESSIONTYPE_ADDITION;
-        return EXIT_SUCCESS;
-    }
 
     // Left hand side is present, parse operator and right hand side
     token_t lookahead1, lookahead2;
@@ -1024,11 +926,7 @@ int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* exp
         return EXIT_FAILURE;
     }
     // The consuming cannot fail because the lookahead did not
-    comparison->right_hand_side = _Parser_NewAdditionExpression(parser);
-    if (comparison->right_hand_side == NULL) {
-        return ENOMEM;
-    }
-    ubcadditionexpression_t* rhs     = comparison->right_hand_side;
+    ubcadditionexpression_t* rhs     = &(comparison->right_hand_side);
     rhs->base.parent->type           = UBCEXPRESSIONTYPE_COMPARE;
     rhs->base.parent->as->comparison = comparison;
 
@@ -1042,48 +940,44 @@ int _Parser_ExpandComparisonExpression(ubcparser_t* parser, ubcexpression_t* exp
 int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     ubcadditionexpression_t* addition = expression->as->addition;
+    ubcadditionelement_t*    next_target;
+
+    if (!addition->former.expression.base.needs_parsing && !addition->current.expression.base.needs_parsing) {
+        // There has been a former and a current expression parsed
+        // TODO: Generate Bytecode for addition
+        addition->former = addition->current;
+    }
+
+    // There has not been a single expression parsed by this addition yet
+    if (addition->former.expression.base.needs_parsing) {
+        next_target = &(addition->former);
+    } else {
+        next_target = &(addition->current);
+    }
+
+    // Token indicating the operation
     token_t operator_token;
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &operator_token)) return EXIT_FAILURE;
 
-
-    // Adding new element
-    addition->operand_count++;
-    size_t array_size = sizeof(ubcadditionelement_t) * addition->operand_count;
-    ubcadditionelement_t* new_elements;
-    if (addition->operands == NULL) {
-        new_elements = _Parser_Malloc(parser, array_size);
-    } else {
-        new_elements = _Parser_Realloc(parser, addition->operands, array_size, array_size - sizeof(ubcadditionelement_t));
-    }
-    if (new_elements == NULL) {
-        return ENOMEM;
-    }
-    addition->operands = new_elements;
-    ubcadditionelement_t* element = addition->operands + addition->operand_count - 1;
-
-
     // Determine operator type
     if (operator_token.type == TT_PLUS) {
-        element->operator = UBCADDITIONOPERATOR_PLUS;
+        next_target->operator = UBCADDITIONOPERATOR_PLUS;
     } else if (operator_token.type == TT_MINUS) {
-        element->operator = UBCADDITIONOPERATOR_MINUS;
+        next_target->operator = UBCADDITIONOPERATOR_MINUS;
+    } else if (next_target == &(addition->former)) {
+        // Plus can only be omitted if this is the beginning of the addition
+        next_target->operator = UBCADDITIONOPERATOR_PLUS;
     } else {
-        element->operator = UBCADDITIONOPERATOR_PLUS;
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token while parsing addition expression", "+-", operator_token);
+        return EXIT_FAILURE;
     }
 
-    // Create new expression
-    element->expression = _Parser_NewDivisionExpression(parser);
-    if (element->expression == NULL) {
-        return ENOMEM;
-    }
-    element->expression->base.parent->type = UBCEXPRESSIONTYPE_ADDITION;
-    element->expression->base.parent->as->addition = addition;
 
-
-    // new operand will be processed from now on
+    // set next parsing target
+    next_target->expression.base.needs_parsing = true;
     expression->type = UBCEXPRESSIONTYPE_DIVISION;
-    expression->as->division = element->expression;
+    expression->as->division = &(addition->former.expression);
 
     return EXIT_SUCCESS;
 }
@@ -1091,63 +985,61 @@ int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expre
 int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     ubcdivisionexpression_t* division = expression->as->division;
+    ubcdivisionoperand_t*    next_target;
 
-    if (division->operands == NULL) {
-        division->operands = _Parser_Malloc(parser, sizeof(ubcdivisionoperand_t));
-        if (division->operands == NULL) {
-            return ENOMEM;
-        }
-        division->operand_count++;
-    } else {
-        size_t old_size = sizeof(ubcdivisionoperand_t) * division->operand_count;
-        division->operand_count++;
-        size_t new_size = sizeof(ubcdivisionoperand_t) * division->operand_count;
-        ubcdivisionoperand_t* operands = _Parser_Realloc(parser, division->operands, new_size, old_size);
-        if (operands == NULL) {
-            return ENOMEM;
-        }
-        division->operands = operands;
+    if (!division->former.expression.base.needs_parsing && !division->current.expression.base.needs_parsing) {
+        // There are two parsed expressions for which this needs to generate bytecode now
+        // TODO: Generate Bytecode
+        division->former = division->current;
     }
 
-    ubcdivisionoperand_t* operand = division->operands + division->operand_count - 1;
-    operand->expression = _Parser_NewNegateExpression(parser);
-    if (operand->expression == NULL) return ENOMEM;
-    operand->expression->base.parent->type         = UBCEXPRESSIONTYPE_DIVISION;
-    operand->expression->base.parent->as->division = division;
-
-    if (division->operand_count != 0) {
-        token_t lookahead;
-        _Parser_AssumeLookaheadFill(parser);
-        if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
-
-        if (lookahead.type == TT_ASTERISK) {
-            operand->operator = UBCDIVISIONOPERATOR_MULTIPLY;
-        } else if (lookahead.type == TT_SLASH) {
-            operand->operator = UBCDIVISIONOPERATOR_DIVIDE;
-        } else {
-            // No valid operator
-            _Parser_ReportUnexpectedToken(parser, "Unexpected token when parsing division operand", "Operator */", lookahead);
-            return EXIT_FAILURE;
-        }
-        _Parser_ConsumeToken(parser);
+    // Determine what is going to be processed
+    if (division->former.expression.base.needs_parsing) {
+        next_target = &(division->former);
     } else {
-        operand->operator = UBCDIVISIONOPERATOR_MULTIPLY;
+        next_target = &(division->current);
     }
+    bool is_first_expression = next_target == &(division->former);
+
+    // Is there a token to be processed?
+    // TODO: Fix that this allows */ at the start of a division
+    token_t lookahead;
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+
+    if (lookahead.type == TT_ASTERISK && !is_first_expression) {
+        next_target->operator = UBCDIVISIONOPERATOR_MULTIPLY;
+    } else if (lookahead.type == TT_SLASH && !is_first_expression) {
+        next_target->operator = UBCDIVISIONOPERATOR_DIVIDE;
+    } else if (is_first_expression) {
+        next_target->operator = UBCDIVISIONOPERATOR_MULTIPLY; // This operator is going to be ignored
+    } else {
+        // No valid operator
+        _Parser_ReportUnexpectedToken(parser, "Unexpected token when parsing division operand", "Operator */", lookahead);
+        return EXIT_FAILURE;
+    }
+    _Parser_ConsumeToken(parser);
 
     // Update current expression to parse
-    expression->type       = UBCEXPRESSIONTYPE_NEGATE;
-    expression->as->negation = operand->expression;
+    next_target->expression.base.needs_parsing = true;
+    expression->type         = UBCEXPRESSIONTYPE_NEGATE;
+    expression->as->negation = &(next_target->expression);
 
     return EXIT_SUCCESS;
 }
 
 int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
+    // argument conversion based on function
     ubcnegateexpression_t* negation = expression->as->negation;
+    
+    // Lookahead to 
     token_t lookahead;
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
 
+    
+    // Is there a negation?
     if (lookahead.type == TT_BANG) {
         negation->negation = true;
         _Parser_ConsumeToken(parser);
@@ -1157,26 +1049,37 @@ int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* express
         if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
     }
 
-    if (lookahead.type == TT_LEFT_PARENTHESIS) {
-        negation->paren = _Parser_NewParenExpression(parser);
-        if (negation->paren == NULL) {
-            return ENOMEM;
-        }
-        
-        expression->type = UBCEXPRESSIONTYPE_PARENTHESES;
-        expression->as->parenthesized = negation->paren;
-    
-    } else {
-        negation->value = _Parser_NewValueExpression(parser);
-        if (negation->value == NULL) {
-            return ENOMEM;
-        }
 
+    // Determine type of the next expression
+    if (lookahead.type == TT_LEFT_PARENTHESIS) {
+        negation->value.base.needs_parsing = false;
+        negation->paren.base.needs_parsing = true;
+        expression->type = UBCEXPRESSIONTYPE_PARENTHESES;
+        expression->as->parenthesized = &(negation->paren);
+    } else {
+        negation->paren.base.needs_parsing = false;
+        negation->value.base.needs_parsing = true;
         expression->type = UBCEXPRESSIONTYPE_VALUE;
-        expression->as->value = negation->value;
+        expression->as->value = &(negation->value);
     }
 
     return EXIT_SUCCESS;
+}
+
+int _Parser_ExpandParenExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    return EXIT_FAILURE;
+}
+
+int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcvalueexpression_t* value = expression->as->value;
+    token_t lookahead, lookahead2;
+    
+    _Parser_AssumeLookaheadFill(parser);
+    if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
+
+    return EXIT_FAILURE;
 }
 
 int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
@@ -1197,6 +1100,14 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
     
     case UBCEXPRESSIONTYPE_NEGATE:
         return _Parser_ExpandNegateExpression(parser, expression);
+        break;
+    
+    case UBCEXPRESSIONTYPE_VALUE:
+        return _Parser_ExpandValueExpression(parser, expression);
+        break;
+    
+    case UBCEXPRESSIONTYPE_PARENTHESES:
+        return _Parser_ExpandParenExpression(parser, expression);
         break;
     
     // TODO: More functions for more types
