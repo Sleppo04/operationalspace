@@ -1,6 +1,7 @@
 #ifndef UBCPARSER_H
 #define UBCPARSER_H
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

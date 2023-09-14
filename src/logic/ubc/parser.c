@@ -56,6 +56,35 @@ void* _Parser_Memdup(ubcparser_t* parser, void* memory, size_t size)
     return dupmem;
 }
 
+char* _Parser_vsnprintf(ubcparser_t* parser, const char* format, va_list args)
+{
+    // C99 Standard allows this
+    size_t needed_length = 1 + vsnprintf(NULL, 0, format, args);
+
+    char* string = _Parser_Malloc(parser, needed_length);
+    if (string == NULL) {
+        return NULL;
+    }
+
+    size_t truncated = vsnprintf(string, needed_length, format, args);
+    if (truncated >= needed_length) {
+	    _Parser_Free(parser, string, needed_length);
+	    return NULL;
+    }
+
+    return string;
+}
+
+char* _Parser_snprintf(ubcparser_t* parser, const char* format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	char* string = _Parser_vsnprintf(parser, format, args);
+	va_end(args);
+
+	return string;
+}
+
 char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
 {
     size_t strnlen = 0;
@@ -173,6 +202,24 @@ void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
     _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_ERRORMESSAGE);
     _Parser_ReportLexerTraceback(parser);
 
+}
+
+int _Parser_ReportFormattedTracebackError(ubcparser_t* parser, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    char* formatted = _Parser_vsnprintf(parser, format, args);
+    va_end(args);
+
+    if (formatted == NULL) {
+        return ENOMEM;
+    }
+
+    _Parser_ReportTopTracebackError(parser, formatted);
+
+    _Parser_Free(parser, formatted, strlen(formatted) + 1);
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, const char* expected, token_t unexpected)
@@ -361,10 +408,24 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
             name_length = (uintptr_t) next - (uintptr_t) current_path.variable_path;
         }
 
-        /// TODO: Report errors here?
-        if (_Types_IsBuiltInTypename(current_path.variable_path, name_length)) {
+        if (_Types_IsBuiltInTypename(member_typename, strlen(member_typename))) {
             // Can't dive further into builtin types
-            return NULL;
+            char* format_format = "Cannot access member path %%.%ds of built-in type %%.%ds";
+	    char* format = _Parser_snprintf(parser, format_format, current_path.path_length, name_length);
+	    if (format == NULL) {
+		    // printing failed for memory reasons
+		    _Parser_ReportTopTracebackError(parser, "Could not allocate detailed error message. Cannot access member of built-in type.");
+		    return NULL;
+	    }
+
+	    if (_Parser_ReportFormattedTracebackError(parser, format, current_path.variable_path, member_typename)) {
+		    // Need not free here, it is done below
+		    _Parser_ReportTopTracebackError(parser, "Could not allocated detailed error message. Cannot access member of built-in type.");
+	    }
+
+	    // If you remove this free, add one to the if above
+            _Parser_Free(parser, format, strlen(format) + 1);
+	    return NULL;
         }
         if (! _Types_MemberExists(current, current_path.variable_path, name_length)) {
             return NULL;
@@ -383,36 +444,7 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
 
 bool _Parser_TypeMemberPathExists(ubcparser_t* parser, ubccustomtype_t* type, ubclvalue_t* member_path)
 {
-    ubccustomtype_t* current      = type;
-    ubclvalue_t      current_path = member_path[0];
-
-    size_t name_length;
-    char* next, *member_typename;
-    while (current_path.path_length != 0) {
-        next = strnchr(current_path.variable_path, '.', current_path.path_length);
-        if (next == NULL) {
-            name_length = current_path.path_length;
-        } else {
-            name_length = (uintptr_t) next - (uintptr_t) current_path.variable_path;
-        }
-
-        /// TODO: Report errors here?
-        if (_Types_IsBuiltInTypename(current_path.variable_path, name_length)) {
-            return false;
-        }
-        if (! _Types_MemberExists(current, current_path.variable_path, name_length)) {
-            return false;
-        }
-
-        // We can assume this to succeed because we tested that the member exists
-        member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
-        current         = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
-
-        current_path.path_length   -= name_length;
-        current_path.variable_path += name_length;
-    }
-
-    return current_path.path_length == 0;
+   return _Parser_TypeMemberPathResultTypename(parser, type, member_path) != NULL;
 }
 
 // This function copies the specified type and does not keep a reference
@@ -839,55 +871,24 @@ bool _Scope_VariableExists(ubcscope_t* scope, ubclvalue_t* variable_path)
     return false;
 }
 
-bool _Parser_ScopeLValueExists(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
-{
-    size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
-    if (lvalue->path_length == variable_name_length) {
-        return _Scope_VariableExists(scope, lvalue);
-    }
-
-    ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
-    if (variable == NULL) {
-        return false;
-    }
-
-    if (_Types_IsBuiltInTypename(variable->typename, strlen(variable->typename))) return false;
-
-    ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
-    ubclvalue_t member_path;
-    member_path.variable_path      = lvalue->variable_path + variable_name_length;
-    member_path.path_length        = lvalue->path_length   - variable_name_length;
-    
-    return  _Parser_TypeMemberPathExists(parser, variable_type, &member_path);
-}
-
-bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
-{
-    size_t scope_count = _Parser_GetScopeCount(parser);
-
-    ubcscope_t* current_scope;
-    for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
-        current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
-        if (_Scope_VariableExists(current_scope, lvalue)) {
-            return _Parser_ScopeLValueExists(parser, current_scope, lvalue);
-        }
-    }
-
-    return false;
-}
-
 char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
 {
     size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
-    if (lvalue->path_length == variable_name_length) {
-        return _Scope_GetVariable(scope, lvalue)->typename;
-    }
 
     ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
     if (variable == NULL) {
+        char* format_format = "Reference to unknown variable \"%%.%ds\"";
+	char  format_buffer[strlen(format_format) + 10];
+	snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
+	int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
+	if (report_code) {
+	    // Reporting formatted failed for memory reasons
+            _Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
+	}
         return NULL;
     }
 
+    
     ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
     ubclvalue_t member_path;
     member_path.path_length        = lvalue->path_length   - variable_name_length;
@@ -909,6 +910,11 @@ char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
     }
 
     return NULL;
+}
+
+bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
+{
+    return _Parser_LValueTypename(parser, lvalue) != NULL;
 }
 
 
@@ -1355,7 +1361,6 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
     bool is_first_expression = next_target == &(division->former);
 
     // Is there a token to be processed?
-    // TODO: Fix that this allows */ at the start of a division
     token_t lookahead;
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
@@ -1546,6 +1551,24 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
     }
 }
 
+int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+	return EXIT_FAILURE;
+}
+
+int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+	switch (expression->type) {
+		case UBCEXPRESSIONTYPE_VALUE:
+			return _Parser_FinalizeParsedValueExpression(parser, expression);
+			break;
+
+		default:
+			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed value expression.");
+			return EXIT_FAILURE;
+	}
+}
+
 int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* supplied_root)
 {
     ubccompareexpression_t root;
@@ -1602,6 +1625,9 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     if (_Parser_ParseLValue(parser, &lvalue)) {
         return EXIT_FAILURE;
     }
+    ubcscope_t scope;
+    scope.variables.used = 0;
+    _Parser_ScopeLValueTypename(parser, &scope, &lvalue);
 
     // Decide whether it is going to be an assignment or an expression
 
