@@ -1611,7 +1611,7 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
     ubccompareexpression_t expression;
-    if (_Parser_ParseExpression(parser, NULL)) {
+    if (_Parser_ParseExpression(parser, &expression)) {
         return EXIT_FAILURE;
     }
 
