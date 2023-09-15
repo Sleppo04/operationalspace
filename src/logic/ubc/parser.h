@@ -119,7 +119,8 @@ typedef struct UbcParser {
 
 enum UbcExpressionType {
     UBCEXPRESSIONTYPE_NONE,
-	UBCEXPRESSIONTYPE_COMPARISON,
+    UBCEXPRESSIONTYPE_LOGICAL,
+    UBCEXPRESSIONTYPE_COMPARISON,
     UBCEXPRESSIONTYPE_ADDITION,
     UBCEXPRESSIONTYPE_DIVISION,
     UBCEXPRESSIONTYPE_NEGATE,
@@ -128,12 +129,13 @@ enum UbcExpressionType {
 };
 
 union UbcExpressionUnion {
-	struct UbcParenthesesExpression* parenthesized;
+    struct UbcParenthesesExpression* parenthesized;
     struct UbcDivisionExpression*    division;
     struct UbcAdditionExpression*    addition;
     struct UbcCompareExpression*     comparison;
     struct UbcNegateExpression*      negation;
     struct UbcValueExpression*       value;
+    struct UbcLogicExpression*       logic;
 };
 
 typedef struct UbcExpression {
@@ -294,6 +296,22 @@ typedef struct UbcCompareExpression {
 	enum   UbcComparatorType     comparator_type;
 	struct UbcAdditionExpression right_hand_side;
 } ubccompareexpression_t;
+
+enum UbcLogicOperator {
+	UBCLOGICOPERATOR_NONE,
+	UBCLOGICOPERATOR_NAND,
+	UBCLOGICOPERATOR_AND,
+	UBCLOGICOPERATOR_XOR,
+	UBCLOGICOPERATOR_OR,
+};
+
+typedef struct UbcLogicExpression {
+    struct UbcExpressionBase base;
+
+    struct UbcCompareExpression former;
+    struct UbcCompareExpression current;
+    enum   UbcLogicOperator     operator_type;
+} ubclogicexpression_t;
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
 
