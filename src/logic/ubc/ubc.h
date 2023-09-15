@@ -46,7 +46,7 @@
 #define UBC_OP_POP32   0x1A
 #define UBC_OP_POPBP   0x1B
 #define UBC_OP_POPSP   0x1C
-// Comparison functions
+// Comparison functions, they compare for equality?
 #define UBC_OP_CMPI    0x1D
 #define UBC_OP_CMPF    0x1E
 #define UBC_OP_CMPB    0x1F
