@@ -226,7 +226,7 @@ typedef struct UbcValueExpression {
 typedef struct UbcNegateExpression {
 	struct UbcExpressionBase base;
 	
-	bool negation;
+	bool   negation;
 
 	struct UbcValueExpression       value;
 } ubcnegateexpression_t;
@@ -235,20 +235,17 @@ typedef struct UbcNegateExpression {
 // Division Expression
 
 typedef enum UbcDivisionOperator {
+	UBCDIVISIONOPERATOR_NONE,
 	UBCDIVISIONOPERATOR_MULTIPLY,
 	UBCDIVISIONOPERATOR_DIVIDE
 } ubcdivisionoperator_t;
 
-typedef struct UbcDivisionOperand {
-	struct UbcNegateExpression  expression;
-	enum   UbcDivisionOperator  operator;
-} ubcdivisionoperand_t;
-
 typedef struct UbcDivisionExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcDivisionOperand former;
-	struct UbcDivisionOperand current;
+	       char*               former_operand_typename;
+	enum   UbcDivisionOperator operator;
+	struct UbcNegateExpression child_expression;
 } ubcdivisionexpression_t;
 
 
@@ -259,16 +256,12 @@ typedef enum UbcAdditionOperator {
 	UBCADDITIONOPERATOR_MINUS
 } ubcadditionoperator_t;
 
-typedef struct UbcAdditionOperand {
-	struct UbcDivisionExpression  expression;
-	enum UbcAdditionOperator      operator;
-} ubcadditionelement_t;
-
 typedef struct UbcAdditionExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcAdditionOperand current;
-	struct UbcAdditionOperand former;
+	       char*                 former_operand_typename;
+	enum   UbcAdditionOperator   operator;
+	struct UbcDivisionExpression child_expression;
 } ubcadditionexpression_t;
 
 
@@ -287,14 +280,9 @@ typedef enum UbcComparatorType {
 typedef struct UbcCompareExpression {
 	struct UbcExpressionBase base;
 
-	struct UbcAdditionExpression left_hand_side;
-	// Mandatory
-
-	// Optional Fields
-	// This expression can also have no comparison :d, it then evaluates to the type of the addition expression
-	// otherwise, result_type is bool
+	char*                        left_side_typename;
 	enum   UbcComparatorType     comparator_type;
-	struct UbcAdditionExpression right_hand_side;
+	struct UbcAdditionExpression child_expression;
 } ubccompareexpression_t;
 
 enum UbcLogicOperator {
@@ -308,8 +296,8 @@ enum UbcLogicOperator {
 typedef struct UbcLogicExpression {
     struct UbcExpressionBase base;
 
-    struct UbcCompareExpression former;
     struct UbcCompareExpression current;
+	char*                       former_operand_type;
     enum   UbcLogicOperator     operator;
 } ubclogicexpression_t;
 
