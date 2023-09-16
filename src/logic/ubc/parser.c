@@ -202,7 +202,7 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
 {
 	int report_code;
     lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
-    report_code = _Parser_ReportError(parser, top_lexer.file, top_lexer.line, "in file", UBCPARSERERROR_TRACEBACK);
+    report_code = _Parser_ReportError(parser, top_lexer.file, top_lexer.line, "in file", UBCPARSERERROR_PARSERTRACEBACK);
     if (report_code) {
     	return EXIT_FAILURE;
     }
@@ -210,7 +210,7 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
     // Skip first file
     for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index + 1 != 0 ; lexer_index--) {
         lexer_t* lexer = parser->lexer_stack.lexers + lexer_index;
-        report_code = _Parser_ReportError(parser, lexer->file, lexer->line, "included by", UBCPARSERERROR_TRACEBACK);
+        report_code = _Parser_ReportError(parser, lexer->file, lexer->line, "included by", UBCPARSERERROR_PARSERTRACEBACK);
         if (report_code) {
         	return EXIT_FAILURE;
         }
@@ -222,12 +222,12 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
 void _Parser_ReportTopTracebackError(ubcparser_t* parser, const char* message)
 {
     if (parser->lexer_stack.stack_size == 0) {
-        _Parser_ReportError(parser, "No file", -1, message, UBCPARSERERROR_ERRORMESSAGE);
+        _Parser_ReportError(parser, "No file", -1, message, UBCPARSERERROR_PARSERERROR);
         return;
     }
 
     lexer_t* top_lexer = &(parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1]);
-    _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_ERRORMESSAGE);
+    _Parser_ReportError(parser, top_lexer->file, top_lexer->line, message, UBCPARSERERROR_PARSERERROR);
     _Parser_ReportLexerTraceback(parser);
 
 }
@@ -263,7 +263,7 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 		snprintf(result_string, result_length, format, message, expected, unexpected.ptr, unexpected.value.length > 64 ? "..." : "");
 
     		lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
-		_Parser_ReportError(parser, top_lexer.file, unexpected.line, result_string, UBCPARSERERROR_ERRORMESSAGE);
+		_Parser_ReportError(parser, top_lexer.file, unexpected.line, result_string, UBCPARSERERROR_PARSERERROR);
 		_Parser_ReportLexerTraceback(parser);
 		_Parser_Free(parser, result_string, result_length);
 	} else {
@@ -804,16 +804,132 @@ void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
     expression->current.base.parent.as.logic = expression;
 }
 
-/// Bytecode functions
+/// Closure functions
 
-int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* explanation)
+uintptr_t _Parser_ClosureStoreExplanationString(ubcparser_t* parser, char* string)
 {
+	ubcclosure_t* closure     = &(parser->closure);
+	uintptr_t string_position = closure->explanation_strings.used;
+	size_t string_length      = strlen(string);
 
+	if (! parser->config.optimize_explanations) {
+
+		int write_code = _UbcParserBuffer_Write(parser, &(closure->explanation_strings), string, string_length);
+		if (write_code) return UINTPTR_MAX;
+
+		return string_position;
+	}
+
+	// Possibly a reverse search could speed it up, but I didn't want to implement that
+	char* search_position = closure->explanation_strings.memory;
+	while ((uintptr_t) search_position - (uintptr_t) closure->explanation_strings.memory < (uintptr_t) closure->explanation_strings.used) {
+		if (strncmp(search_position, string, string_length) == 0) {
+			return (uintptr_t) search_position - (uintptr_t) closure->explanation_strings.memory;
+		}
+
+		search_position += strlen(search_position);
+	}
+
+	int write_code = _UbcParserBuffer_Write(parser, &(closure->explanation_strings), string, string_length);
+	if (write_code) return UINTPTR_MAX;
+
+	return string_position;
 }
 
-int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
+int _Parser_ClosureAppendBytecode(ubcparser_t* parser, void* bytes, size_t count)
 {
-    return EXIT_FAILURE;
+	ubcclosure_t* closure = &(parser->closure);
+
+	int write_code;
+	write_code = _UbcParserBuffer_Write(parser, &(closure->bytecode), bytes, count);
+	if (write_code) return write_code;
+
+	return EXIT_SUCCESS;
+}
+
+/// Bytecode functions
+
+int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcbytecodeexplanationsymbol_t symbolic_explanation)
+{
+	ubcclosure_t* closure = &(parser->closure);
+
+	if (! parser->config.store_explanations) {
+		return EXIT_FAILURE;
+	}
+
+	int write_code;
+	ubcbytecodeexplanation_t explanation;
+
+	if (parser->config.store_strings) {
+		uintptr_t stored_string_position = _Parser_ClosureStoreExplanationString(parser, string_explanation);
+		explanation.string_position = stored_string_position;
+
+		if (explanation.string_position == UINTPTR_MAX) {
+			_Parser_ReportError(parser, "No file", -1, "Failed to store explanation string.", UBCPARSERERROR_INTERNAL);
+			return ENOMEM;
+		}
+
+	} else {
+		explanation.string_position = UINTPTR_MAX;
+	}
+
+	explanation.symbolic = symbolic_explanation;
+	explanation.byte     = index;
+	explanation.range    = range;
+
+	write_code = _UbcParserBuffer_Write(parser, &(closure->code_explanation), &explanation, sizeof(ubcbytecodeexplanation_t));
+	return write_code;
+}
+
+int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcbytecodeexplanationsymbol_t symbolic_explanation)
+{
+	if (parser->config.bytecode_callback(parser->config.userdata, bytes, count, string_explanation, symbolic_explanation)) {
+		_Parser_ReportError(parser, "No file", -1, "Bytecode callback returned nonzero error indicator", UBCPARSERERROR_INTERNAL);
+		return EXIT_FAILURE;
+	}
+
+	if (_Parser_ClosureStoreExplanation(parser, parser->closure.bytecode.used, count, string_explanation, symbolic_explanation)) {
+		_Parser_ReportError(parser, "No file", -1, "Failed to store bytecode in closure", UBCPARSERERROR_INTERNAL);
+		return ENOMEM;
+	}
+
+	if (_Parser_ClosureAppendBytecode(parser, bytes, count)) {
+		_Parser_ReportError(parser, "No file", -1, "Failed to append bytecode to closure.", UBCPARSERERROR_INTERNAL);
+		return ENOMEM;
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
+{
+	uint8_t bytecode[5];
+
+	bytecode[0] = UBC_OP_PUSHSP;
+
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Push stack top address.", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_STACK_TOP)) {
+		return EXIT_FAILURE;
+	}
+
+
+	bytecode[0] = UBC_OP_PUSH32i;
+	memcpy((void*) bytecode + 1, &bytes, 4);
+
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 5, "Push unused byte count integer literal", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT)) {
+		return EXIT_FAILURE;
+	}
+
+	bytecode[0] = UBC_OP_SUBU;
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Subtract unused byte count from stack top", UBCBYTECODEEXPLANATIONSYMBOL_UNSIGNED_SUBTRACT)) {
+		return EXIT_FAILURE;
+	}
+
+	bytecode[0] = UBC_OP_POPSP;
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Set changed stack top pointer, subtracted byte count will be 'forgotten'.", UBCBYTECODEEXPLANATIONSYMBOL_SET_STACK_TOP)) {
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
 }
 
 

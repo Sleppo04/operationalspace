@@ -19,15 +19,25 @@
 
 
 enum UbcParserErrorType {
-    UBCPARSERERROR_ERRORMESSAGE,
-    UBCPARSERERROR_TRACEBACK,
+	UBCPARSERERROR_INTERNAL,
+    UBCPARSERERROR_PARSERERROR,
+    UBCPARSERERROR_PARSERTRACEBACK,
 };
+
+typedef enum UbcBytecodeExplanationSymbol {
+	UBCBYTECODEEXPLANATIONSYMBOL_NONE,
+	UBCBYTECODEEXPLANATIONSYMBOL_UNSIGNED_SUBTRACT,
+	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT,
+	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_STACK_TOP,
+	UBCBYTECODEEXPLANATIONSYMBOL_SET_STACK_TOP,
+} ubcbytecodeexplanationsymbol_t;
+
 
 typedef int   (*UBCErrorReportCallback)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
 typedef void* (*UBCCustomReallocFunction) (void* userdata, void* address, size_t new_size, size_t old_size);
 typedef void  (*UBCCustomFreeFunction)    (void* userdata, void* address, size_t size);
 typedef void* (*UBCCustomMallocFunction)  (void* userdata, size_t size);
-typedef int   (*UBCEmitBytecodeCallback)  (void* userdata, const void* bytes, size_t count, char* explanation);
+typedef int   (*UBCEmitBytecodeCallback)  (void* userdata, const void* bytes, size_t count, const char* string, enum UbcBytecodeExplanationSymbol);
 
 typedef struct UbcFile {
     char* fileName;
@@ -48,6 +58,10 @@ typedef struct UbcParserConfig {
     int report_return;
     
     UBCEmitBytecodeCallback bytecode_callback;
+    bool                    store_explanations;    // should there be explanations to the bytecode?
+    bool                    store_strings;         // string explanations?
+    bool                    optimize_explanations; // dramatic time impact, search whether exact this explanation is somewhere else already
+    											   // if so, do not allocate it again
 
     ubcfile_t* files;
     uint16_t   file_count;
@@ -111,6 +125,19 @@ typedef struct UbcScope {
     uint32_t          temporary_bytes; // Bytes on the stack above variables for temporary use
 } ubcscope_t;
 
+typedef struct UbcBytecodeExplanation {
+	enum UbcBytecodeExplanationSymbol symbolic; // What does this bytecode do
+	     uintptr_t string_position; // What does this bytecode do, position of string description in string buffer
+	     uintptr_t byte;    // Where is it in the closure
+	     size_t    range;   // How many bytes does this explain
+} ubcbytecodeexplanation_t;
+
+typedef struct UbcClosure {
+	ubcparserbuffer_t bytecode;
+	ubcparserbuffer_t code_explanation;
+	ubcparserbuffer_t explanation_strings;
+} ubcclosure_t;
+
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
     ubcparserbuffer_t         bytecode_buffer;
@@ -118,7 +145,13 @@ typedef struct UbcParser {
     struct UbcParserLookahead lookahead;
     struct UbcParserTypeArray types;
     ubcparserbuffer_t         scopes;
+    struct UbcClosure         closure;
 } ubcparser_t;
+
+
+
+
+// Expressions
 
 enum UbcExpressionType {
     UBCEXPRESSIONTYPE_NONE,
