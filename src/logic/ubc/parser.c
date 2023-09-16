@@ -709,12 +709,6 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
     return EXIT_SUCCESS;
 }
 
-int _Parser_DestroyExpression(ubcparser_t* parser, ubclogicexpression_t* expression)
-{
-    // TODO: Implement
-    return EXIT_FAILURE;
-}
-
 /// Expressions
 
 void _Expressions_InitExpressionBase(ubcexpressionbase_t* base)
@@ -819,7 +813,7 @@ int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, ch
 
 int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
 {
-    return EXIT_FAILURE;    
+    return EXIT_FAILURE;
 }
 
 
@@ -1652,14 +1646,12 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubclogicexpression_t* supplied_
 
         // Check if the current expression can be parsed further
         if (_Parser_ExpressionNeedsParsing(parser, &current, &parsing_needed)) {
-            _Parser_DestroyExpression(parser, &root);
             return EXIT_FAILURE;
         }
 
         // Expand the expression if needed
         if (parsing_needed) {
             if (_Parser_ExpandExpression(parser, &current)) {
-                _Parser_DestroyExpression(parser, &root);
                 return EXIT_FAILURE;
             }
         } else {
@@ -1705,7 +1697,6 @@ int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
     }
 
     size_t typesize = _Parser_GetTypeSize(parser, expression.base.result_typename, strlen(expression.base.result_typename));
-    _Parser_DestroyExpression(parser, &expression);
 
     if (_Parser_BytecodePopUnusedBytes(parser, typesize)) {
         return EXIT_FAILURE;
