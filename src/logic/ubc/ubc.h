@@ -60,8 +60,6 @@
 
 #define UBC_OP_CMPU   0x24
 
-// TODO: Implement
-typedef void ubcContext_t;
 
 typedef struct ubcVM_s
 {
