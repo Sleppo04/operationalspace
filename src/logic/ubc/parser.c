@@ -1,6 +1,25 @@
 #include "parser.h"
 
 
+int ParserConfig_Init(ubcparserconfig_t* config)
+{
+	config->bytecode_callback = NULL;
+	config->foreign_functions = NULL;
+	config->realloc_function  = NULL;
+	config->malloc_function   = NULL;
+	config->function_count    = 0;
+	config->foreign_types     = NULL;
+	config->free_function     = NULL;
+	config->report_return     = 0;
+	config->error_report      = NULL;
+	config->type_count        = 0;
+	config->file_count        = 0;
+	config->userdata          = NULL;
+	config->files             = NULL;
+
+	return EXIT_SUCCESS;
+}
+
 // Function group dealing with memory allocations
 
 // This function does not report errors to the user
@@ -793,6 +812,11 @@ void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
 
 /// Bytecode functions
 
+int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* explanation)
+{
+
+}
+
 int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
 {
     return EXIT_FAILURE;    
@@ -1553,9 +1577,46 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
     }
 }
 
+int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcliteral_t literal)
+{
+
+	switch (literal.type) {
+		case UBCLITERALTYPE_FLOAT:
+			break;
+
+		case UBCLITERALTYPE_BOOL:
+			break;
+
+		case UBCLITERALTYPE_INT:
+			break;
+
+		case UBCLITERALTYPE_STRING:
+			_Parser_ReportTopTracebackError(parser, "Strings are not supported yet.");
+			return EXIT_FAILURE;
+
+		default:
+			_Parser_ReportTopTracebackError(parser, "Cannot finalize literal with literal type \"None\"");
+			return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+}
+
 int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-	return EXIT_FAILURE;
+	ubcvalueexpression_t* value = expression->as.value;
+
+	switch (value->type) {
+		case UBCVALUETYPE_LITERAL:
+			_Parser_FinalizeLiteralExpression(parser, value->as.literal);
+			break;
+
+		default:
+			_Parser_ReportTopTracebackError(parser, "Cannot finalize parsed value expression with value type \"None\"");
+			return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
 }
 
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)

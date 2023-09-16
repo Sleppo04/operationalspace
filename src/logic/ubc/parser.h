@@ -23,10 +23,11 @@ enum UbcParserErrorType {
     UBCPARSERERROR_TRACEBACK,
 };
 
-typedef int   (*UBCErrorReportFunction)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
+typedef int   (*UBCErrorReportCallback)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
 typedef void* (*UBCCustomReallocFunction) (void* userdata, void* address, size_t new_size, size_t old_size);
 typedef void  (*UBCCustomFreeFunction)    (void* userdata, void* address, size_t size);
 typedef void* (*UBCCustomMallocFunction)  (void* userdata, size_t size);
+typedef int   (*UBCEmitBytecodeCallback)  (void* userdata, const void* bytes, size_t count, char* explanation);
 
 typedef struct UbcFile {
     char* fileName;
@@ -43,9 +44,11 @@ typedef struct UbcForeignFunction {
 
 typedef struct UbcParserConfig {
     void* userdata;
-    UBCErrorReportFunction error_report;
+    UBCErrorReportCallback error_report;
     int report_return;
     
+    UBCEmitBytecodeCallback bytecode_callback;
+
     ubcfile_t* files;
     uint16_t   file_count;
     
@@ -300,6 +303,8 @@ typedef struct UbcLogicExpression {
 	char*                       former_operand_type;
     enum   UbcLogicOperator     operator;
 } ubclogicexpression_t;
+
+int ParserConfig_Init(ubcparserconfig_t* config);
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
 
