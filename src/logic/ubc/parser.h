@@ -155,7 +155,7 @@ typedef struct UbcExpressionBase {
 typedef struct UbcParenthesesExpression {
 	struct UbcExpressionBase base;
 	
-	struct UbcCompareExpression* parenthesized;
+	struct UbLogicExpression* parenthesized;
 } ubcparenthesesexpression_t;
 
 typedef struct UbcCallExpression {
@@ -310,7 +310,7 @@ typedef struct UbcLogicExpression {
 
     struct UbcCompareExpression former;
     struct UbcCompareExpression current;
-    enum   UbcLogicOperator     operator_type;
+    enum   UbcLogicOperator     operator;
 } ubclogicexpression_t;
 
 int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config);
