@@ -681,7 +681,7 @@ int _Parser_AddCustomTypeMember(ubcparser_t* parser, ubccustomtype_t* type, toke
     return EXIT_SUCCESS;
 }
 
-int _Parser_DestroyExpression(ubcparser_t* parser, ubccompareexpression_t* expression)
+int _Parser_DestroyExpression(ubcparser_t* parser, ubclogicexpression_t* expression)
 {
     // TODO: Implement
     return EXIT_FAILURE;
@@ -774,14 +774,19 @@ void _Expressions_InitializeCompareExpression(ubccompareexpression_t* comparison
     // Leave the comparator type empty for valgrind to detect if a jump depends on it
 }
 
-/// Bytecode functions
-
-int _Parser_GenerateExpressionBytecode(ubcparser_t* parser, ubccompareexpression_t* expression)
+void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
 {
-    if (parser == NULL || expression == NULL) return EXIT_FAILURE;
+    _Expressions_InitExpressionBase(&(expression->base));
+    _Expressions_InitializeCompareExpression(&(expression->former));
+    _Expressions_InitializeCompareExpression(&(expression->current));
 
-    return EXIT_FAILURE;
+    expression->current.base.parent.type     = UBCEXPRESSIONTYPE_LOGICAL;
+    expression->former.base.parent.type      = UBCEXPRESSIONTYPE_LOGICAL;
+    expression->current.base.parent.as.logic = expression;
+    expression->former.base.parent.as.logic  = expression;
 }
+
+/// Bytecode functions
 
 int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, size_t bytes)
 {
@@ -1569,19 +1574,19 @@ int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expre
 	}
 }
 
-int _Parser_ParseExpression(ubcparser_t* parser, ubccompareexpression_t* supplied_root)
+int _Parser_ParseExpression(ubcparser_t* parser, ubclogicexpression_t* supplied_root)
 {
-    ubccompareexpression_t root;
+    ubclogicexpression_t root;
 
     if (supplied_root == NULL) {
-        _Expressions_InitializeCompareExpression(&root);
+        _Expressions_InitializeLogicExpression(&root);
     } else {
         root = supplied_root[0];
     }
 
     ubcexpression_t current;
-    current.type = UBCEXPRESSIONTYPE_COMPARISON;
-    current.as.comparison = &root;
+    current.type = UBCEXPRESSIONTYPE_LOGICAL;
+    current.as.logic = &root;
 
     bool parsing_needed = false;
     while (current.type != UBCEXPRESSIONTYPE_NONE) {
@@ -1636,13 +1641,8 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
-    ubccompareexpression_t expression;
+    ubclogicexpression_t expression;
     if (_Parser_ParseExpression(parser, &expression)) {
-        return EXIT_FAILURE;
-    }
-
-    if (_Parser_GenerateExpressionBytecode(parser, &expression)) {
-        _Parser_DestroyExpression(parser, &expression);
         return EXIT_FAILURE;
     }
 
