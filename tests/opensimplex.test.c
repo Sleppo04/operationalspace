@@ -1,4 +1,4 @@
-#include "../src/logic/rand/opensimplex.c"
+#include "../src/logic/rand/opensimplex.h"
 #include <stdio.h>
 #include <float.h>
 

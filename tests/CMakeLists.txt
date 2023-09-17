@@ -20,7 +20,8 @@ add_executable(memorypool EXCLUDE_FROM_ALL memorypool.test.c
 					../src/logic/memorypool/memoryarena.c)
 set_target_properties(memorypool PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
-add_executable(opensimplex EXCLUDE_FROM_ALL opensimplex.test.c)
+add_executable(opensimplex EXCLUDE_FROM_ALL opensimplex.test.c
+					../src/logic/rand/opensimplex.c)
 set_target_properties(opensimplex PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 target_link_libraries(opensimplex m)
 
