@@ -1,5 +1,5 @@
-#include "../src/logic/memorypool/memorypool.c"
-#include "../src/logic/memorypool/memoryarena.c"
+#include "../src/logic/memorypool/memorypool.h"
+#include "../src/logic/memorypool/memoryarena.h"
 
 #include <assert.h>
 #include <string.h>

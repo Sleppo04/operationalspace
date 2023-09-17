@@ -15,7 +15,9 @@ add_executable(lexer EXCLUDE_FROM_ALL lexertest.c
 					../src/logic/lexer/lexer.c)
 set_target_properties(lexer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
-add_executable(memorypool EXCLUDE_FROM_ALL memorypool.test.c)
+add_executable(memorypool EXCLUDE_FROM_ALL memorypool.test.c
+					../src/logic/memorypool/memorypool.c
+					../src/logic/memorypool/memoryarena.c)
 set_target_properties(memorypool PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
 add_executable(opensimplex EXCLUDE_FROM_ALL opensimplex.test.c)
