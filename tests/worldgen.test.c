@@ -1,6 +1,7 @@
-#include "../src/game/world.c"
-#include "../src/logic/arraylist/arraylist.c"
-#include "../src/logic/coordinate/coordinate.c"
+#include "../src/game/world.h"
+#include "../src/logic/arraylist/arraylist.h"
+#include "../src/logic/coordinate/coordinate.h"
+#include "../src/game/worldgen.h"
 
 #include <stdio.h>
 
@@ -16,18 +17,18 @@ int feature_provider(gameobject_t** destination, void* user_data __attribute__((
 int main()
 {
 	world_t world;
-	unsigned int seed = 15;
+	xoshiro256_state_t seed;
+	seed.state[0] = 15;
+	seed.state[1] = 15;
+	seed.state[2] = 15;
+	seed.state[3] = 15;
+
 	feature_t features[2];
 	features[0].provider = feature_provider;
-	features[0].base_probability    = 0.1;
-	features[0].foreign_distance    = 5;
-	features[0].minimum_distance    = 5;
-	features[0].min_probability     = 0.001;
-	features[0].max_probability     = 0.25;
-	features[0].probability_mod     = 0.005;
-	features[0].probability_growth  = 1;
-	features[1].provider            = NULL;
-	int world_code = generate_world(2, 2, features, &world, seed);
+	memset(features[0].minimum_noise_levels, 0x00, NOISE_COUNT * sizeof(uint16_t));
+	memset(features[0].maximum_noise_levels, 0xFF, NOISE_COUNT * sizeof(uint16_t)); 
+	features[1].provider             = NULL;
+	int world_code = WorldGen_GenerateWorld(&world, features, seed);
 
 	printf("generate_world exited with %i\n",world_code);
 

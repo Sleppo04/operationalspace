@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "../src/logic/threading/threading.h"
 
+#ifdef _WIN32
 void foo(void* a)
 {
     for (int i = 0; i < 10; i++) {
@@ -8,6 +9,18 @@ void foo(void* a)
     }
     return;
 }
+#endif
+
+#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+void* foo(void* argument)
+{
+    for (int i = 0; i < 10; i++) {
+        printf("Func %i says %i\n", *((int*)argument), i);
+    }
+
+    return NULL;
+}
+#endif
 
 int main(int argc, char** argv)
 {
