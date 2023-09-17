@@ -806,6 +806,11 @@ void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
 
 /// Closure functions
 
+uint32_t _Parser_ClosureGetCurrentBytecodeIndex(ubcparser_t* parser)
+{
+    return (uint32_t) parser->closure.bytecode.used; // Is this cast safe?
+}
+
 uintptr_t _Parser_ClosureStoreExplanationString(ubcparser_t* parser, char* string)
 {
 	ubcclosure_t* closure     = &(parser->closure);
@@ -952,6 +957,12 @@ ubcscope_t* _Parser_GetScope(ubcparser_t* parser, size_t index)
 size_t _Scope_GetVariableCount(ubcscope_t* scope)
 {
     return scope->variables.used / sizeof(ubcvariable_t);
+}
+
+void _Scopes_IncreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
+{
+    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
+    scope->temporary_bytes += count;
 }
 
 // Returns the length of the variable, not any members accessed
@@ -1390,7 +1401,8 @@ int _Parser_ExpandCompareExpression(ubcparser_t* parser, ubcexpression_t* expres
 {
     ubccompareexpression_t* comparison = expression->as.comparison;
 
-    if (comparison->base.needs_parsing) {
+    if (comparison->left_side_typename == NULL) {
+        // this is the left hand side expression
     	ubcadditionexpression_t* child = &comparison->child_expression;
     	expression->as.addition        = child;
     	expression->type               = UBCEXPRESSIONTYPE_ADDITION;
@@ -1687,18 +1699,36 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
     }
 }
 
-int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcliteral_t literal)
+int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t* value)
 {
-
-	switch (literal.type) {
+    ubcliteral_t* literal = &(value->as.literal);
+    uint8_t bytecode[5];
+    int emit_code = EXIT_SUCCESS;
+	
+    switch (literal->type) {
 		case UBCLITERALTYPE_FLOAT:
+            bytecode[0]  = UBC_OP_PUSH32i;
+            memcpy(bytecode + 1, &(literal->as.floating), sizeof(float));
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push float literal from value expression", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_FLOAT);
+            _Scopes_IncreaseTemporaryBytes(parser, 4);
+            value->base.result_typename = TT_UBC_FLOAT_TYPENAME;
 			break;
 
 		case UBCLITERALTYPE_BOOL:
-			break;
+            bytecode[0] = UBC_OP_PUSH8i;
+            memcpy(bytecode + 1, &literal->as.boolean, sizeof(bool));
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push bool literal from value expression", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+			_Scopes_IncreaseTemporaryBytes(parser, 1);
+            value->base.result_typename = TT_UBC_BOOL_TYPENAME;
+            break;
 
 		case UBCLITERALTYPE_INT:
-			break;
+            bytecode[0] = UBC_OP_PUSH32i;
+            memcpy(bytecode + 1, &literal->as.integer, sizeof(int32_t));
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expresion", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT);
+			_Scopes_IncreaseTemporaryBytes(parser, 4);
+            value->base.result_typename = TT_UBC_INT_TYPENAME;
+            break;
 
 		case UBCLITERALTYPE_STRING:
 			_Parser_ReportTopTracebackError(parser, "Strings are not supported yet.");
@@ -1709,7 +1739,7 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcliteral_t literal)
 			return EXIT_FAILURE;
 	}
 
-	return EXIT_SUCCESS;
+	return emit_code;
 }
 
 int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* expression)
@@ -1718,7 +1748,7 @@ int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* 
 
 	switch (value->type) {
 		case UBCVALUETYPE_LITERAL:
-			_Parser_FinalizeLiteralExpression(parser, value->as.literal);
+			return _Parser_FinalizeLiteralExpression(parser, value);
 			break;
 
 		default:
@@ -1729,12 +1759,81 @@ int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* 
 	return EXIT_SUCCESS;
 }
 
+int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcnegateexpression_t* negate = expression->as.negation;
+    size_t result_length = strlen(negate->value.base.result_typename);
+    uint8_t bytecode[5];
+    int emit_code;
+    uint32_t bytecode_position;
+
+    if (negate->negation) {
+        // Generate bytecode for negating something
+        if (strncmp(TT_UBC_BOOL_TYPENAME, negate->value.base.result_typename, result_length) == 0) {
+            
+            // Push comparison value
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = 0x01;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push comparison boolean", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+
+            // Compare boolean with comparison value
+            bytecode[0] = UBC_OP_CMPB;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Compare test value and true", UBCBYTECODEEXPLANATIONSYMBOL_COMPARE_BOOLEANS);
+            if (emit_code) return emit_code;
+
+            // Skip conditional instructions
+            bytecode_position  = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+            bytecode[0]        = UBC_OP_PUSH32i;
+            bytecode_position += 5 + 1 + 2 + 5 + 1; // Advance bytecode target to skip true instructions
+            memcpy(bytecode + 1, &bytecode_position, sizeof(uint32_t));
+            _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push address of conditional jump target", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_JUMP_TARGET);
+            if (emit_code) return emit_code;
+
+            bytecode[0] = UBC_OP_JZ;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if test value was true", UBCBYTECODEEXPLANATIONSYMBOL_SKIP_IF_JUMP);
+            if (emit_code) return emit_code;
+
+            // Push true if value was false
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = 0x01;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push true if test value was false (negation, jump guard)", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+
+            // Skip else instructions
+            bytecode_position  = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+            bytecode[0]        = UBC_OP_JMPi;
+            bytecode_position += 5 + 2 + 1; // Advance bytecode to skip following false instructions
+            memcpy(bytecode + 1, &bytecode_position, sizeof(uint32_t));
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Jump to skip following false instructions", UBCBYTECODEEXPLANATIONSYMBOL_SKIP_ELSE_JUMP);
+            if (emit_code) return emit_code;
+
+            // Push false if value was true
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = 0x00; // Push false if value was true
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push false if test value was true (negation, jump guarded)", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+
+        } else {
+            _Parser_ReportFormattedTracebackError(parser, "Invalid operand type \"%s\" to negation.", negate->value.base.result_typename);
+            // No need to specify the string length here because result_typenames are guaranteed to have \0 at the end
+            return EXIT_FAILURE;
+        }
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
 	switch (expression->type) {
 		case UBCEXPRESSIONTYPE_VALUE:
 			return _Parser_FinalizeParsedValueExpression(parser, expression);
 			break;
+        
+        case UBCEXPRESSIONTYPE_NEGATE:
+            return _Parser_FinalizeParsedNegateExpression(parser, expression);
+            break;
 
 		default:
 			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed value expression.");
@@ -1771,7 +1870,8 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubclogicexpression_t* supplied_
                 return EXIT_FAILURE;
             }
         } else {
-            current = current.as.addition->base.parent;
+            _Parser_FinalizeParsedExpression(parser, &current);
+            current = current.as.addition->base.parent; // just cast to any type to access the parent
         }
     }
 
