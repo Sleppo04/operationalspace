@@ -11,4 +11,5 @@ target_sources(operational-space PRIVATE
 			rand/xoshiro256.c
 			threading/threading.c
 			ubc/parser.c
-			ubc/tokenreader.c)
+			ubc/tokenreader.c
+			util.c)

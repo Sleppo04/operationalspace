@@ -39,8 +39,9 @@ set_target_properties(worldgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOUR
 target_link_libraries(worldgen m)
 
 add_executable(xoshiro EXCLUDE_FROM_ALL xoshiro.test.c
-					../src/logic/rand/opensimplex.c)
+					../src/logic/rand/xoshiro256.c)
 set_target_properties(xoshiro PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
+target_link_libraries(xoshiro m)
 
 add_subdirectory(ubc/)
 

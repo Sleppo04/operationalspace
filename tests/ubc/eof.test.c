@@ -1,7 +1,4 @@
-#include "../../src/logic/ubc/parser.c"
-#include "../../src/logic/lexer/lexer.c"
-#include "../../src/logic/ubc/tokenreader.c"
-#include "../../src/logic/dynamicbuffer/dynamicbuffer.c"
+#include "../../src/logic/ubc/parser.h"
 
 #include <assert.h>
 
