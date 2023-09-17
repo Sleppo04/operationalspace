@@ -1,5 +1,5 @@
-#include "../src/logic/coordinate/coordinate.c"
-#include "../src/logic/arraylist/arraylist.c"
+#include "../src/logic/coordinate/coordinate.h"
+#include "../src/logic/arraylist/arraylist.h"
 
 #include <stdio.h>
 

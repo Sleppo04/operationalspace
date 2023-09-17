@@ -5,7 +5,9 @@ add_executable(os-termtest
 			../src/ui/window.c)
 set_target_properties(os-termtest PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
 
-add_executable(coordinates EXCLUDE_FROM_ALL coordinate.test.c)
+add_executable(coordinates EXCLUDE_FROM_ALL coordinate.test.c
+					../src/logic/coordinate/coordinate.c
+					../src/logic/arraylist/arraylist.c)
 set_target_properties(coordinates PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
 
