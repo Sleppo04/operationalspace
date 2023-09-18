@@ -937,9 +937,8 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
 	return EXIT_SUCCESS;
 }
 
-int _Parser_GenerateDivsionBytecode(ubcparser_t* parser, ubcexpression_t* expression)
+int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_t* division)
 {
-    ubcdivisionexpression_t* division = expression->as.division;
 
     if (strcmp(division->former_operand_typename, division->child_expression.base.result_typename) != 0) {
         _Parser_ReportFormattedTracebackError(parser, "Invalid operand types to division: Left-Hand-Side: %s, Right-Hand-Side: %s", division->former_operand_typename, division->child_expression.base.result_typename);
