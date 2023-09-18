@@ -2015,6 +2015,8 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
 
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
+	/// TODO: Logic expression finalizing
+
 	switch (expression->type) {
         case UBCEXPRESSIONTYPE_VALUE:
             return _Parser_FinalizeParsedValueExpression(parser, expression);
@@ -2035,7 +2037,7 @@ int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expre
             return _Parser_FinalizeParsedComparisonExpression(parser, expression);
 
 		default:
-			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed value expression.");
+			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed expression.");
 			return EXIT_FAILURE;
 	}
 }
