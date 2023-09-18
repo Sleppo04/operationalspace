@@ -937,6 +937,22 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
 	return EXIT_SUCCESS;
 }
 
+int _Parser_GenerateDivsionBytecode(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcdivisionexpression_t* division = expression->as.division;
+
+    if (strcmp(division->former_operand_typename, division->child_expression.base.result_typename) != 0) {
+        _Parser_ReportFormattedTracebackError(parser, "Invalid operand types to division: Left-Hand-Side: %s, Right-Hand-Side: %s", division->former_operand_typename, division->child_expression.base.result_typename);
+        return EXIT_FAILURE;
+    }
+
+    if (strcmp(division->former_operand_typename, TT_UBC_FLOAT_TYPENAME) == 0) {
+        
+    }
+
+    return EXIT_SUCCESS;
+}
+
 
 /// Scope and LValue functions
 
@@ -1824,15 +1840,30 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
     return EXIT_SUCCESS;
 }
 
+int _Parser_FinalizeParsedDivisionExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcdivisionexpression_t* division = expression->as.division;
+
+    if (division->former_operand_typename != NULL) {
+        return _Parser_GenerateDivisionBytecode(parser, division);
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
 	switch (expression->type) {
-		case UBCEXPRESSIONTYPE_VALUE:
-			return _Parser_FinalizeParsedValueExpression(parser, expression);
-			break;
+        case UBCEXPRESSIONTYPE_VALUE:
+            return _Parser_FinalizeParsedValueExpression(parser, expression);
+            break;
         
         case UBCEXPRESSIONTYPE_NEGATE:
             return _Parser_FinalizeParsedNegateExpression(parser, expression);
+            break;
+
+        case UBCEXPRESSIONTYPE_DIVISION:
+	        return _Parser_FinalizeParsedDivisionExpression(parser, expression);
             break;
 
 		default:
