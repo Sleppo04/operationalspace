@@ -24,26 +24,34 @@ enum UbcParserErrorType {
     UBCPARSERERROR_PARSERTRACEBACK,
 };
 
-typedef enum UbcBytecodeExplanationSymbol {
-	UBCBYTECODEEXPLANATIONSYMBOL_NONE,
-	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_FLOAT,
-	UBCBYTECODEEXPLANATIONSYMBOL_UNSIGNED_SUBTRACT,
-	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL,
-	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_JUMP_TARGET,
-	UBCBYTECODEEXPLANATIONSYMBOL_COMPARE_BOOLEANS,
-	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT,
-	UBCBYTECODEEXPLANATIONSYMBOL_PUSH_STACK_TOP,
-	UBCBYTECODEEXPLANATIONSYMBOL_SET_STACK_TOP,
-	UBCBYTECODEEXPLANATIONSYMBOL_SKIP_IF_JUMP,
-	UBCBYTECODEEXPLANATIONSYMBOL_SKIP_ELSE_JUMP,
-} ubcbytecodeexplanationsymbol_t;
+typedef enum UbcDebugSymbol {
+	UBCDEBUGSYMBOL_NONE,
+	UBCDEBUGSYMBOL_PUSH_LITERAL_FLOAT,
+	UBCDEBUGSYMBOL_UNSIGNED_SUBTRACT,
+	UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL,
+	UBCDEBUGSYMBOL_PUSH_JUMP_TARGET,
+	UBCDEBUGSYMBOL_COMPARE_BOOLEANS,
+	UBCDEBUGSYMBOL_PUSH_LITERAL_INT,
+	UBCDEBUGSYMBOL_PUSH_STACK_TOP,
+	UBCDEBUGSYMBOL_FLOAT_MULTIPLY,
+	UBCDEBUGSYMBOL_SKIP_ELSE_JUMP,
+	UBCDEBUGSYMBOL_FLOAT_SUBTRACT,
+	UBCDEBUGSYMBOL_SET_STACK_TOP,
+	UBCDEBUGSYMBOL_SKIP_IF_JUMP,
+	UBCDEBUGSYMBOL_INT_MULTIPLY,
+	UBCDEBUGSYMBOL_FLOAT_DIVIDE,
+	UBCDEBUGSYMBOL_INT_SUBTRACT,
+	UBCDEBUGSYMBOL_INT_DIVIDE,
+	UBCDEBUGSYMBOL_FLOAT_ADD,
+	UBCDEBUGSYMBOL_INT_ADD,
+} ubcdebugsymbol;
 
 
 typedef int   (*UBCErrorReportCallback)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
 typedef void* (*UBCCustomReallocFunction) (void* userdata, void* address, size_t new_size, size_t old_size);
 typedef void  (*UBCCustomFreeFunction)    (void* userdata, void* address, size_t size);
 typedef void* (*UBCCustomMallocFunction)  (void* userdata, size_t size);
-typedef int   (*UBCEmitBytecodeCallback)  (void* userdata, const void* bytes, size_t count, const char* string, enum UbcBytecodeExplanationSymbol);
+typedef int   (*UBCEmitBytecodeCallback)  (void* userdata, const void* bytes, size_t count, const char* string, enum UbcDebugSymbol);
 
 typedef struct UbcFile {
     char* fileName;
@@ -132,7 +140,7 @@ typedef struct UbcScope {
 } ubcscope_t;
 
 typedef struct UbcBytecodeExplanation {
-	enum UbcBytecodeExplanationSymbol symbolic; // What does this bytecode do
+	enum UbcDebugSymbol symbolic; // What does this bytecode do
 	     uintptr_t string_position; // What does this bytecode do, position of string description in string buffer
 	     uintptr_t byte;    // Where is it in the closure
 	     size_t    range;   // How many bytes does this explain
@@ -294,8 +302,9 @@ typedef struct UbcDivisionExpression {
 // Addition Expression
 
 typedef enum UbcAdditionOperator {
+	UBCADDITIONOPERATOR_NONE,
+	UBCADDITIONOPERATOR_MINUS,
 	UBCADDITIONOPERATOR_PLUS,
-	UBCADDITIONOPERATOR_MINUS
 } ubcadditionoperator_t;
 
 typedef struct UbcAdditionExpression {

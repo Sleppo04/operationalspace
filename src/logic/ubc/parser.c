@@ -250,6 +250,23 @@ int _Parser_ReportFormattedTracebackError(ubcparser_t* parser, const char* forma
     return EXIT_SUCCESS;
 }
 
+int _Parser_ReportFormattedTracebackErrorFallback(ubcparser_t* parser, const char* fallback, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    char* formatted = _Parser_vsnprintf(parser, format, args);
+    va_end(args);
+
+    if (formatted == NULL) {
+        _Parser_ReportTopTracebackError(parser, fallback);
+    } else {
+        _Parser_ReportTopTracebackError(parser, formatted);
+        _Parser_Free(parser, formatted, strlen(formatted) + 1);
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, const char* expected, token_t unexpected)
 {
 	size_t unexpected_length = unexpected.value.length > 64 ? 64 : unexpected.value.length;
@@ -854,7 +871,7 @@ int _Parser_ClosureAppendBytecode(ubcparser_t* parser, void* bytes, size_t count
 
 /// Bytecode functions
 
-int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcbytecodeexplanationsymbol_t symbolic_explanation)
+int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcdebugsymbol symbolic_explanation)
 {
 	ubcclosure_t* closure = &(parser->closure);
 
@@ -886,7 +903,7 @@ int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintpt
 	return write_code;
 }
 
-int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcbytecodeexplanationsymbol_t symbolic_explanation)
+int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcdebugsymbol symbolic_explanation)
 {
 	if (parser->config.bytecode_callback(parser->config.userdata, bytes, count, string_explanation, symbolic_explanation)) {
 		_Parser_ReportError(parser, "No file", -1, "Bytecode callback returned nonzero error indicator", UBCPARSERERROR_INTERNAL);
@@ -912,7 +929,7 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
 
 	bytecode[0] = UBC_OP_PUSHSP;
 
-	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Push stack top address.", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_STACK_TOP)) {
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Push stack top address.", UBCDEBUGSYMBOL_PUSH_STACK_TOP)) {
 		return EXIT_FAILURE;
 	}
 
@@ -920,33 +937,149 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
 	bytecode[0] = UBC_OP_PUSH32i;
 	memcpy((void*) bytecode + 1, &bytes, 4);
 
-	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 5, "Push unused byte count integer literal", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT)) {
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 5, "Push unused byte count integer literal", UBCDEBUGSYMBOL_PUSH_LITERAL_INT)) {
 		return EXIT_FAILURE;
 	}
 
 	bytecode[0] = UBC_OP_SUBU;
-	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Subtract unused byte count from stack top", UBCBYTECODEEXPLANATIONSYMBOL_UNSIGNED_SUBTRACT)) {
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Subtract unused byte count from stack top", UBCDEBUGSYMBOL_UNSIGNED_SUBTRACT)) {
 		return EXIT_FAILURE;
 	}
 
 	bytecode[0] = UBC_OP_POPSP;
-	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Set changed stack top pointer, subtracted byte count will be 'forgotten'.", UBCBYTECODEEXPLANATIONSYMBOL_SET_STACK_TOP)) {
+	if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Set changed stack top pointer, subtracted byte count will be 'forgotten'.", UBCDEBUGSYMBOL_SET_STACK_TOP)) {
 		return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;
 }
 
+int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_t* addition)
+{
+    if (strcmp(addition->former_operand_typename, addition->child_expression.base.result_typename) != 0) {
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Operand types of addition do not match", "Operand types \"%s\" and \"%s\" of addition do not match.", addition->former_operand_typename, addition->child_expression.base.result_typename);
+        return EXIT_FAILURE;
+    }
+
+    if (addition->operator == UBCADDITIONOPERATOR_NONE) {
+        _Parser_ReportTopTracebackError(parser, "Cannot apply operator \"None\" to addition operands");
+        return EXIT_FAILURE;
+    }
+
+    uint8_t bytecode;
+    int emit_code;
+    ubcdebugsymbol symbol;
+    char* explanation;
+
+    if (strcmp(addition->former_operand_typename, TT_UBC_FLOAT_TYPENAME) == 0) {
+        switch (addition->operator)
+        {
+        case UBCADDITIONOPERATOR_PLUS:
+            bytecode    = UBC_OP_ADDF;
+            symbol      = UBCDEBUGSYMBOL_FLOAT_ADD;
+            explanation = "Add the two most recently pushed floats";
+            break;
+
+        case UBCADDITIONOPERATOR_MINUS:
+            bytecode    = UBC_OP_SUBF;
+            symbol      = UBCDEBUGSYMBOL_FLOAT_SUBTRACT;
+            explanation = "Subtract the two most recently pushed floats";
+            break;
+        }
+
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
+        if (emit_code) return emit_code;
+    } else if (strcmp(addition->former_operand_typename, TT_UBC_INT_TYPENAME) == 0) {
+        switch (addition->operator)
+        {
+        case UBCADDITIONOPERATOR_PLUS:
+            bytecode    = UBC_OP_ADDI;
+            symbol      = UBCDEBUGSYMBOL_INT_ADD;
+            explanation = "Add the two most recently pushed ints";
+            break;
+
+        case UBCADDITIONOPERATOR_MINUS:
+            bytecode    = UBC_OP_SUBI;
+            symbol      = UBCDEBUGSYMBOL_INT_SUBTRACT;
+            explanation = "Subtract the two most recently pushed ints";
+            break;
+        }
+
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
+        if (emit_code) return emit_code;
+    } else {
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type to addition", "Cannot add type \"%s\"", addition->former_operand_typename);
+    }
+
+    return EXIT_SUCCESS;
+}
+
 int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_t* division)
 {
 
     if (strcmp(division->former_operand_typename, division->child_expression.base.result_typename) != 0) {
-        _Parser_ReportFormattedTracebackError(parser, "Invalid operand types to division: Left-Hand-Side: %s, Right-Hand-Side: %s", division->former_operand_typename, division->child_expression.base.result_typename);
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Operand types of division do not match", "Operand types of division do not match: Left-Hand-Side: %s, Right-Hand-Side: %s", division->former_operand_typename, division->child_expression.base.result_typename);
         return EXIT_FAILURE;
     }
 
+
+    uint8_t bytecode;
+    int emit_code;
+    ubcdebugsymbol symbol;
+    char* explanation;
+
     if (strcmp(division->former_operand_typename, TT_UBC_FLOAT_TYPENAME) == 0) {
+        switch (division->operator)
+        {
+        case UBCDIVISIONOPERATOR_DIVIDE:
+            bytecode    = UBC_OP_DIVF;
+            symbol      = UBCDEBUGSYMBOL_FLOAT_DIVIDE;
+            explanation = "Divide the two most recently pushed floats";
+            break;
         
+        case UBCDIVISIONOPERATOR_MULTIPLY:
+            bytecode = UBC_OP_MULF;
+            symbol   = UBCDEBUGSYMBOL_FLOAT_MULTIPLY;
+            explanation = "Multiply the two most recently pushed floats";
+            break;
+        
+        default:
+            // this catches the NONE operator
+            _Parser_ReportTopTracebackError(parser, "Cannot apply Division Operator \"None\" on float division operands");
+            return EXIT_FAILURE;
+        }
+
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
+        if (emit_code) return emit_code;
+
+    } else if (strcmp(division->former_operand_typename, TT_UBC_INT_TYPENAME) == 0) {
+
+        switch (division->operator)
+        {
+        case UBCDIVISIONOPERATOR_DIVIDE:
+            bytecode    = UBC_OP_DIVI;
+            symbol      = UBCDEBUGSYMBOL_INT_DIVIDE;
+            explanation = "Divide the two most recently pushed ints";
+            break;
+        
+        case UBCDIVISIONOPERATOR_MULTIPLY:
+            bytecode    = UBC_OP_MULI;
+            symbol      = UBCDEBUGSYMBOL_INT_MULTIPLY;
+            explanation = "Multiply the two most recently pushed ints";
+            break;
+
+        default:
+            // None
+            _Parser_ReportTopTracebackError(parser, "Cannot apply Division Operator \"None\" on integer division operands");
+            break;
+        }
+
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
+        if (emit_code) return emit_code;
+
+    } else {
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type to division", "Invalid operand type to division: %s", division->former_operand_typename);
+        return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -1514,8 +1647,13 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 
     if (!is_first_expression && !division->child_expression.base.needs_parsing) {
         // There are two parsed expressions for which this needs to generate bytecode now
-        // TODO: Generate Bytecode
+        
+        int generate_code = _Parser_GenerateDivisionBytecode(parser, division);
+        if (generate_code) return generate_code;
+
         division->former_operand_typename = division->child_expression.base.result_typename;
+
+        _Expressions_InitializeNegationExpression(&(division->child_expression));
     }
 
     // Is there a token to be processed?
@@ -1724,7 +1862,7 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
 		case UBCLITERALTYPE_FLOAT:
             bytecode[0]  = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &(literal->as.floating), sizeof(float));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push float literal from value expression", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_FLOAT);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push float literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_FLOAT);
             _Scopes_IncreaseTemporaryBytes(parser, 4);
             value->base.result_typename = TT_UBC_FLOAT_TYPENAME;
 			break;
@@ -1732,7 +1870,7 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
 		case UBCLITERALTYPE_BOOL:
             bytecode[0] = UBC_OP_PUSH8i;
             memcpy(bytecode + 1, &literal->as.boolean, sizeof(bool));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push bool literal from value expression", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push bool literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
 			_Scopes_IncreaseTemporaryBytes(parser, 1);
             value->base.result_typename = TT_UBC_BOOL_TYPENAME;
             break;
@@ -1740,7 +1878,7 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
 		case UBCLITERALTYPE_INT:
             bytecode[0] = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &literal->as.integer, sizeof(int32_t));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expresion", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_INT);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expresion", UBCDEBUGSYMBOL_PUSH_LITERAL_INT);
 			_Scopes_IncreaseTemporaryBytes(parser, 4);
             value->base.result_typename = TT_UBC_INT_TYPENAME;
             break;
@@ -1789,12 +1927,12 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
             // Push comparison value
             bytecode[0] = UBC_OP_PUSH8i;
             bytecode[1] = 0x01;
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push comparison boolean", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push comparison boolean", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
             if (emit_code) return emit_code;
 
             // Compare boolean with comparison value
             bytecode[0] = UBC_OP_CMPB;
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Compare test value and true", UBCBYTECODEEXPLANATIONSYMBOL_COMPARE_BOOLEANS);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Compare test value and true", UBCDEBUGSYMBOL_COMPARE_BOOLEANS);
             if (emit_code) return emit_code;
 
             // Skip conditional instructions
@@ -1802,17 +1940,17 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
             bytecode[0]        = UBC_OP_PUSH32i;
             bytecode_position += 5 + 1 + 2 + 5 + 1; // Advance bytecode target to skip true instructions
             memcpy(bytecode + 1, &bytecode_position, sizeof(uint32_t));
-            _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push address of conditional jump target", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_JUMP_TARGET);
+            _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push address of conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
             if (emit_code) return emit_code;
 
             bytecode[0] = UBC_OP_JZ;
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if test value was true", UBCBYTECODEEXPLANATIONSYMBOL_SKIP_IF_JUMP);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if test value was true", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
             if (emit_code) return emit_code;
 
             // Push true if value was false
             bytecode[0] = UBC_OP_PUSH8i;
             bytecode[1] = 0x01;
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push true if test value was false (negation, jump guard)", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push true if test value was false (negation, jump guard)", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
             if (emit_code) return emit_code;
 
             // Skip else instructions
@@ -1820,13 +1958,13 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
             bytecode[0]        = UBC_OP_JMPi;
             bytecode_position += 5 + 2 + 1; // Advance bytecode to skip following false instructions
             memcpy(bytecode + 1, &bytecode_position, sizeof(uint32_t));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Jump to skip following false instructions", UBCBYTECODEEXPLANATIONSYMBOL_SKIP_ELSE_JUMP);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Jump to skip following false instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
             if (emit_code) return emit_code;
 
             // Push false if value was true
             bytecode[0] = UBC_OP_PUSH8i;
             bytecode[1] = 0x00; // Push false if value was true
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push false if test value was true (negation, jump guarded)", UBCBYTECODEEXPLANATIONSYMBOL_PUSH_LITERAL_BOOL);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push false if test value was true (negation, jump guarded)", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
             if (emit_code) return emit_code;
 
         } else {
@@ -1850,6 +1988,31 @@ int _Parser_FinalizeParsedDivisionExpression(ubcparser_t* parser, ubcexpression_
     return EXIT_SUCCESS;
 }
 
+int _Parser_FinalizeParsedAdditionExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubcadditionexpression_t* addition = expression->as.addition;
+
+    if (addition->former_operand_typename != NULL) {
+        return _Parser_GenerateAdditionBytecode(parser, addition);
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+    ubccompareexpression_t* comparison = expression->as.comparison;
+
+    if (comparison->comparator_type == UBCCOMPARATORTYPE_NONE) {
+        return EXIT_SUCCESS;
+    }
+
+    /// TODO: Implement the rest of this function
+
+    return EXIT_FAILURE;
+}
+
+
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
 	switch (expression->type) {
@@ -1864,6 +2027,12 @@ int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expre
         case UBCEXPRESSIONTYPE_DIVISION:
 	        return _Parser_FinalizeParsedDivisionExpression(parser, expression);
             break;
+        
+        case UBCEXPRESSIONTYPE_ADDITION:
+            return _Parser_FinalizeParsedAdditionExpression(parser, expression);
+        
+        case UBCEXPRESSIONTYPE_COMPARISON:
+            return _Parser_FinalizeParsedComparisonExpression(parser, expression);
 
 		default:
 			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed value expression.");
