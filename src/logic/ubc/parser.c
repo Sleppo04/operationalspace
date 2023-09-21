@@ -1010,8 +1010,6 @@ int _Parser_ClosureAppendBytecode(ubcparser_t* parser, void* bytes, size_t count
 	return EXIT_SUCCESS;
 }
 
-/// Bytecode functions
-
 int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcdebugsymbol symbolic_explanation)
 {
 	ubcclosure_t* closure = &(parser->closure);
@@ -1042,6 +1040,20 @@ int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintpt
 
 	write_code = _UbcParserBuffer_Write(parser, &(closure->code_explanation), &explanation, sizeof(ubcbytecodeexplanation_t));
 	return write_code;
+}
+
+int _Parser_ClosureFixBytecodeIndex(ubcparser_t* parser, uint32_t offset, void* bytes, size_t count)
+{
+    if (offset + count >= parser->closure.bytecode.used) {
+        _Parser_ReportError(parser, "No file", -1, "Failed to fix old bytecode jump target because it is out of range.", UBCPARSERERROR_INTERNAL);
+        return ERANGE;
+    }
+
+
+    void* start = (char*) (parser->closure.bytecode.memory) + offset;
+    memcpy(start, bytes, count);
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcdebugsymbol symbolic_explanation)
@@ -1970,7 +1982,7 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
             bytecode[0]        = UBC_OP_JMPi;
             bytecode_position += 5 + 2 + 1; // Advance bytecode to skip following false instructions
             memcpy(bytecode + 1, &bytecode_position, sizeof(uint32_t));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Jump to skip following false instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Jump to skip following branch instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
             if (emit_code) return emit_code;
 
             // Push false if value was true
@@ -2019,7 +2031,94 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
         return EXIT_SUCCESS;
     }
 
-    /// TODO: Implement the rest of this function
+    if (strcmp(comparison->left_side_typename, comparison->child_expression.base.result_typename) != 0) {
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Operand types for comparison operation do not match", "Cannot compare type \"%s\" to type \"%s\"", comparison->left_side_typename, comparison->child_expression.base.result_typename);
+        
+        return EXIT_FAILURE;
+    }
+
+    size_t float_typesize = _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_FLOAT_TYPENAME));
+    size_t int_typesize   = _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME));
+    size_t bool_typesize  = _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME));
+
+    int emit_code, fixup_code;
+
+    // Compare the arguments
+    if (strcmp(comparison->left_side_typename, UBC_FLOAT_TYPENAME) == 0) {
+        uint8_t bytecode;
+
+        bytecode = UBC_OP_CMPF;
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Compare the two most recently pushed floats", UBCDEBUGSYMBOL_COMPARE_FLOATS);
+        if (emit_code) return emit_code;
+        _Scopes_DecreaseTemporaryBytes(parser, float_typesize * 2); // Compare consumes the floats
+
+    } else if (strcmp(comparison->left_side_typename, UBC_INT_TYPENAME) == 0) {
+        uint8_t bytecode;
+
+        bytecode = UBC_OP_CMPI;
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Compare the two most recently pushed ints", UBCDEBUGSYMBOL_COMPARE_INTS);
+        if (emit_code) return emit_code;
+        _Scopes_DecreaseTemporaryBytes(parser, float_typesize * 2); // Compare consumes the ints
+
+    } else {
+        _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type for comparison", "Cannot compare operands of type \"%s\"", comparison->left_side_typename);
+
+        return EXIT_FAILURE;
+    }
+
+    uint8_t bytecode[5];
+    uint32_t current_position;
+    uint32_t fixup_position;
+
+    // Push boolean depending on operator type and comparison result
+    switch (comparison->comparator_type)
+    {
+    case UBCCOMPARATORTYPE_EQUALITY:
+
+        bytecode[0]        = UBC_OP_PUSH32i;
+        fixup_position     = 1 + _Parser_ClosureGetCurrentBytecodeIndex(parser); // Address of immediate value
+        memset(bytecode + 1, 0xFF, 4); // Clear the target for now
+        _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Push address of conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
+        if (emit_code) return emit_code;
+
+        bytecode[0] = UBC_OP_JZ;
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Jump on equality, continue for inequality", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
+        if (emit_code) return emit_code;
+
+        emit_code = _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+        if (emit_code) return emit_code;
+
+        bytecode[0] = UBC_OP_PUSH8i;
+        bytecode[1] = false;
+        _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Push comparison result \"false\"", UBCDEBUG_PUSH_COMPARISON_RESULT);
+        if (emit_code) return emit_code;
+
+        bytecode[0]       = UBC_OP_JMPi;
+        current_position  = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+        current_position += 5 + 2; // Skip this instruction and the next one
+        memcpy(bytecode + 1, &current_position, 4);
+        _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Jump to skip following branch instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
+        if (emit_code) return emit_code;
+
+        // Fix the old jump to jump here, we don't know how many bytes of bytecode were generated by PopUnusedBytes in-between
+        current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+        fixup_code = _Parser_ClosureFixBytecodeIndex(parser, current_position, &current_position, 4); // Write jump target
+        if (fixup_code) return fixup_code;
+
+        bytecode[0] = UBC_OP_PUSH8i;
+        bytecode[1] = true;
+        _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Push comparison result \"true\"", UBCDEBUG_PUSH_COMPARISON_RESULT);
+        if (emit_code) return emit_code;
+
+        /// TODO: Finish this
+
+        break;
+
+    /// TODO: Add more cases
+    
+    default:
+        break;
+    }
 
     return EXIT_FAILURE;
 }

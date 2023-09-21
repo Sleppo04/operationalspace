@@ -30,4 +30,9 @@
 #define ENOTFOUND 129
 #endif
 
+#ifndef ERANGE
+// Value was out of range, mathematical result out of range
+#define ERANGE 34
+#endif
+
 #endif
