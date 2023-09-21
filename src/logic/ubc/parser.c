@@ -821,6 +821,147 @@ void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
     expression->current.base.parent.as.logic = expression;
 }
 
+
+/// Scope and LValue functions
+
+size_t _Parser_GetScopeCount(ubcparser_t* parser)
+{
+    return parser->scopes.used / sizeof(ubcscope_t);
+}
+
+// Index zero is the global scope
+ubcscope_t* _Parser_GetScope(ubcparser_t* parser, size_t index)
+{
+    if (index >= _Parser_GetScopeCount(parser)) return NULL;
+    ubcscope_t* scopes = parser->scopes.memory;
+
+    return scopes + index;
+}
+
+size_t _Scope_GetVariableCount(ubcscope_t* scope)
+{
+    return scope->variables.used / sizeof(ubcvariable_t);
+}
+
+void _Scopes_DecreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
+{
+    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
+    scope->temporary_bytes -= count;
+}
+
+void _Scopes_IncreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
+{
+    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
+    scope->temporary_bytes += count;
+}
+
+// Returns the length of the variable, not any members accessed
+size_t _LValue_GetVariableNameLength(ubclvalue_t* path)
+{
+    uintptr_t name_length = (uintptr_t) strnchr(path->variable_path, '.', path->path_length);
+    if (name_length == 0) {
+        name_length = path->path_length;
+    } else {
+        name_length = name_length - (uintptr_t) (path->variable_path);
+    }
+
+    return name_length;
+}
+
+// Returns NULL if the variable could not be found
+ubcvariable_t* _Scope_GetVariable(ubcscope_t* scope, ubclvalue_t* variable)
+{
+    uintptr_t name_length = _LValue_GetVariableNameLength(variable);
+    size_t variable_count = _Scope_GetVariableCount(scope);
+    
+    ubcvariable_t* current;
+    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
+        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
+
+        // name lengths are not equal? Names can't be equal, skip it
+        if (current->name_length != name_length) {
+            continue;
+        }
+
+        // Names are equal? return true
+        if (strncmp(current->name, variable->variable_path, name_length) == 0) {
+            return current;
+        }
+    }
+
+    return NULL;
+}
+
+// Only the first name in the lvalue will be looked up
+bool _Scope_VariableExists(ubcscope_t* scope, ubclvalue_t* variable_path)
+{
+    uintptr_t name_length = _LValue_GetVariableNameLength(variable_path);
+
+    size_t variable_count = _Scope_GetVariableCount(scope);
+    ubcvariable_t* current;
+    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
+        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
+
+        // name lengths are not equal? Names can't be equal, skip it
+        if (current->name_length != name_length) {
+            continue;
+        }
+
+        // Names are equal? return true
+        if (strncmp(current->name, variable_path->variable_path, name_length) == 0) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
+{
+    size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
+
+    ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
+    if (variable == NULL) {
+        char* format_format = "Reference to unknown variable \"%%.%ds\"";
+	char  format_buffer[strlen(format_format) + 10];
+	snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
+	int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
+	if (report_code) {
+	    // Reporting formatted failed for memory reasons
+            _Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
+	}
+        return NULL;
+    }
+
+    
+    ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
+    ubclvalue_t member_path;
+    member_path.path_length        = lvalue->path_length   - variable_name_length;
+    member_path.variable_path      = lvalue->variable_path + variable_name_length;
+
+    return _Parser_TypeMemberPathResultTypename(parser, variable_type, &member_path);
+}
+
+char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
+{
+    size_t scope_count = _Parser_GetScopeCount(parser);
+
+    ubcscope_t* current_scope;
+    for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
+        current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
+        if (_Scope_VariableExists(current_scope, lvalue)) {
+            return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
+        }
+    }
+
+    return NULL;
+}
+
+bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
+{
+    return _Parser_LValueTypename(parser, lvalue) != NULL;
+}
+
 /// Closure functions
 
 uint32_t _Parser_ClosureGetCurrentBytecodeIndex(ubcparser_t* parser)
@@ -989,7 +1130,7 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
-        _Scopes_DecreaseTemporaryBytes(parser, );
+        _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_FLOAT_TYPENAME)));
 
     } else if (strcmp(addition->former_operand_typename, UBC_INT_TYPENAME) == 0) {
         switch (addition->operator)
@@ -1009,6 +1150,9 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
+        _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
+
+
     } else {
         _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type to addition", "Cannot add type \"%s\"", addition->former_operand_typename);
     }
@@ -1053,6 +1197,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
+        _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_FLOAT_TYPENAME)));
 
     } else if (strcmp(division->former_operand_typename, UBC_INT_TYPENAME) == 0) {
 
@@ -1078,6 +1223,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
+        _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
 
     } else {
         _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type to division", "Invalid operand type to division: %s", division->former_operand_typename);
@@ -1088,149 +1234,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
 }
 
 
-/// Scope and LValue functions
-
-size_t _Parser_GetScopeCount(ubcparser_t* parser)
-{
-    return parser->scopes.used / sizeof(ubcscope_t);
-}
-
-// Index zero is the global scope
-ubcscope_t* _Parser_GetScope(ubcparser_t* parser, size_t index)
-{
-    if (index >= _Parser_GetScopeCount(parser)) return NULL;
-    ubcscope_t* scopes = parser->scopes.memory;
-
-    return scopes + index;
-}
-
-size_t _Scope_GetVariableCount(ubcscope_t* scope)
-{
-    return scope->variables.used / sizeof(ubcvariable_t);
-}
-
-void _Scopes_DecreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
-{
-    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
-    scope->temporary_bytes -= count;
-}
-
-void _Scopes_IncreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
-{
-    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
-    scope->temporary_bytes += count;
-}
-
-// Returns the length of the variable, not any members accessed
-size_t _LValue_GetVariableNameLength(ubclvalue_t* path)
-{
-    uintptr_t name_length = (uintptr_t) strnchr(path->variable_path, '.', path->path_length);
-    if (name_length == 0) {
-        name_length = path->path_length;
-    } else {
-        name_length = name_length - (uintptr_t) (path->variable_path);
-    }
-
-    return name_length;
-}
-
-// Returns NULL if the variable could not be found
-ubcvariable_t* _Scope_GetVariable(ubcscope_t* scope, ubclvalue_t* variable)
-{
-    uintptr_t name_length = _LValue_GetVariableNameLength(variable);
-    size_t variable_count = _Scope_GetVariableCount(scope);
-    
-    ubcvariable_t* current;
-    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
-        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
-
-        // name lengths are not equal? Names can't be equal, skip it
-        if (current->name_length != name_length) {
-            continue;
-        }
-
-        // Names are equal? return true
-        if (strncmp(current->name, variable->variable_path, name_length) == 0) {
-            return current;
-        }
-    }
-
-    return NULL;
-}
-
-// Only the first name in the lvalue will be looked up
-bool _Scope_VariableExists(ubcscope_t* scope, ubclvalue_t* variable_path)
-{
-    uintptr_t name_length = _LValue_GetVariableNameLength(variable_path);
-
-    size_t variable_count = _Scope_GetVariableCount(scope);
-    ubcvariable_t* current;
-    for (size_t variable_index = 0; variable_index < variable_count; variable_index++) {
-        current = (ubcvariable_t*) (scope->variables.memory) + variable_index;
-
-        // name lengths are not equal? Names can't be equal, skip it
-        if (current->name_length != name_length) {
-            continue;
-        }
-
-        // Names are equal? return true
-        if (strncmp(current->name, variable_path->variable_path, name_length) == 0) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclvalue_t* lvalue)
-{
-    size_t variable_name_length = _LValue_GetVariableNameLength(lvalue);
-
-    ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
-    if (variable == NULL) {
-        char* format_format = "Reference to unknown variable \"%%.%ds\"";
-	char  format_buffer[strlen(format_format) + 10];
-	snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
-	int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
-	if (report_code) {
-	    // Reporting formatted failed for memory reasons
-            _Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
-	}
-        return NULL;
-    }
-
-    
-    ubccustomtype_t* variable_type = _Parser_GetTypeByName(parser, variable->typename, strlen(variable->typename));
-    ubclvalue_t member_path;
-    member_path.path_length        = lvalue->path_length   - variable_name_length;
-    member_path.variable_path      = lvalue->variable_path + variable_name_length;
-
-    return _Parser_TypeMemberPathResultTypename(parser, variable_type, &member_path);
-}
-
-char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
-{
-    size_t scope_count = _Parser_GetScopeCount(parser);
-
-    ubcscope_t* current_scope;
-    for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
-        current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
-        if (_Scope_VariableExists(current_scope, lvalue)) {
-            return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
-        }
-    }
-
-    return NULL;
-}
-
-bool _Parser_LValueExists(ubcparser_t* parser, ubclvalue_t* lvalue)
-{
-    return _Parser_LValueTypename(parser, lvalue) != NULL;
-}
-
-
 /// Parsing Functions
-
 
 int _Parser_ParseLValue(ubcparser_t* parser, ubclvalue_t* lvlalue)
 {
