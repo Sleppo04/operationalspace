@@ -296,11 +296,11 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 // Type registering and request functions
 bool _Types_IsBuiltInTypename(char* typename, size_t name_length)
 {
-    if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_BOOL_TYPENAME, name_length) == 0) 
         return true;
-    if (strncmp(typename, TT_UBC_INT_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_INT_TYPENAME, name_length) == 0) 
         return true;
-    if (strncmp(typename, TT_UBC_FLOAT_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_FLOAT_TYPENAME, name_length) == 0) 
         return true;
     if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
         return true;
@@ -373,11 +373,11 @@ bool _IsTypenameIdentifierToken(token_t* token)
 
 size_t _Parser_BuiltInTypeSize(char* typename, size_t name_length)
 {
-    if (strncmp(typename, TT_UBC_BOOL_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_BOOL_TYPENAME, name_length) == 0) 
         return 8;
-    if (strncmp(typename, TT_UBC_INT_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_INT_TYPENAME, name_length) == 0) 
         return 32;
-    if (strncmp(typename, TT_UBC_FLOAT_TYPENAME, name_length) == 0) 
+    if (strncmp(typename, UBC_FLOAT_TYPENAME, name_length) == 0) 
         return 32;
     if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
         return 32;
@@ -971,7 +971,7 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
     ubcdebugsymbol symbol;
     char* explanation;
 
-    if (strcmp(addition->former_operand_typename, TT_UBC_FLOAT_TYPENAME) == 0) {
+    if (strcmp(addition->former_operand_typename, UBC_FLOAT_TYPENAME) == 0) {
         switch (addition->operator)
         {
         case UBCADDITIONOPERATOR_PLUS:
@@ -989,7 +989,9 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
-    } else if (strcmp(addition->former_operand_typename, TT_UBC_INT_TYPENAME) == 0) {
+        _Scopes_DecreaseTemporaryBytes(parser, );
+
+    } else if (strcmp(addition->former_operand_typename, UBC_INT_TYPENAME) == 0) {
         switch (addition->operator)
         {
         case UBCADDITIONOPERATOR_PLUS:
@@ -1028,7 +1030,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
     ubcdebugsymbol symbol;
     char* explanation;
 
-    if (strcmp(division->former_operand_typename, TT_UBC_FLOAT_TYPENAME) == 0) {
+    if (strcmp(division->former_operand_typename, UBC_FLOAT_TYPENAME) == 0) {
         switch (division->operator)
         {
         case UBCDIVISIONOPERATOR_DIVIDE:
@@ -1052,7 +1054,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
 
-    } else if (strcmp(division->former_operand_typename, TT_UBC_INT_TYPENAME) == 0) {
+    } else if (strcmp(division->former_operand_typename, UBC_INT_TYPENAME) == 0) {
 
         switch (division->operator)
         {
@@ -1105,6 +1107,12 @@ ubcscope_t* _Parser_GetScope(ubcparser_t* parser, size_t index)
 size_t _Scope_GetVariableCount(ubcscope_t* scope)
 {
     return scope->variables.used / sizeof(ubcvariable_t);
+}
+
+void _Scopes_DecreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
+{
+    ubcscope_t* scope = _Parser_GetScope(parser, _Parser_GetScopeCount(parser) - 1);
+    scope->temporary_bytes -= count;
 }
 
 void _Scopes_IncreaseTemporaryBytes(ubcparser_t* parser, uint32_t count)
@@ -1788,13 +1796,13 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
         switch (value->as.literal.type)
         {
         case UBCLITERALTYPE_BOOL:
-            value->base.result_typename = TT_UBC_BOOL_TYPENAME;
+            value->base.result_typename = UBC_BOOL_TYPENAME;
             break;
         case UBCLITERALTYPE_INT:
-            value->base.result_typename = TT_UBC_INT_TYPENAME;
+            value->base.result_typename = UBC_INT_TYPENAME;
             break;
         case UBCLITERALTYPE_FLOAT:
-            value->base.result_typename = TT_UBC_FLOAT_TYPENAME;
+            value->base.result_typename = UBC_FLOAT_TYPENAME;
             break;
         case UBCLITERALTYPE_STRING:
             value->base.result_typename = TT_UBC_STRING_TYPENAME;
@@ -1863,24 +1871,24 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
             bytecode[0]  = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &(literal->as.floating), sizeof(float));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push float literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_FLOAT);
-            _Scopes_IncreaseTemporaryBytes(parser, 4);
-            value->base.result_typename = TT_UBC_FLOAT_TYPENAME;
+            _Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_BOOL_TYPENAME)));
+            value->base.result_typename = UBC_FLOAT_TYPENAME;
 			break;
 
 		case UBCLITERALTYPE_BOOL:
             bytecode[0] = UBC_OP_PUSH8i;
             memcpy(bytecode + 1, &literal->as.boolean, sizeof(bool));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push bool literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
-			_Scopes_IncreaseTemporaryBytes(parser, 1);
-            value->base.result_typename = TT_UBC_BOOL_TYPENAME;
+			_Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME)));
+            value->base.result_typename = UBC_BOOL_TYPENAME;
             break;
 
 		case UBCLITERALTYPE_INT:
             bytecode[0] = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &literal->as.integer, sizeof(int32_t));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expresion", UBCDEBUGSYMBOL_PUSH_LITERAL_INT);
-			_Scopes_IncreaseTemporaryBytes(parser, 4);
-            value->base.result_typename = TT_UBC_INT_TYPENAME;
+			_Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
+            value->base.result_typename = UBC_INT_TYPENAME;
             break;
 
 		case UBCLITERALTYPE_STRING:
@@ -1922,7 +1930,7 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
 
     if (negate->negation) {
         // Generate bytecode for negating something
-        if (strncmp(TT_UBC_BOOL_TYPENAME, negate->value.base.result_typename, result_length) == 0) {
+        if (strncmp(UBC_BOOL_TYPENAME, negate->value.base.result_typename, result_length) == 0) {
             
             // Push comparison value
             bytecode[0] = UBC_OP_PUSH8i;

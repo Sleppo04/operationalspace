@@ -22,9 +22,9 @@
 #define TT_UBC_STRING   1015
 #define TT_UBC_BOOL     1016
 
-#define TT_UBC_INT_TYPENAME    "int"
-#define TT_UBC_BOOL_TYPENAME   "bool"
-#define TT_UBC_FLOAT_TYPENAME  "float"
+#define UBC_INT_TYPENAME    "int"
+#define UBC_BOOL_TYPENAME   "bool"
+#define UBC_FLOAT_TYPENAME  "float"
 #define TT_UBC_STRING_TYPENAME "string"
 
 void Ubc_ReadNextToken(lexer_t* lexer, token_t* token);
