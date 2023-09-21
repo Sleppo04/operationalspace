@@ -21,8 +21,8 @@
 #define UBC_OP_JMPi    0x03
 #define UBC_OP_JZ      0x04
 #define UBC_OP_JOV     0x05
-#define UBC_OP_RES1    0x06
-#define UBC_OP_RES2    0x07
+#define UBC_OP_JLT     0x06
+#define UBC_OP_JGT     0x07
 // Math functions
 #define UBC_OP_ADDI    0x08
 #define UBC_OP_ADDF    0x09
