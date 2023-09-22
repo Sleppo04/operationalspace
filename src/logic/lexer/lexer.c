@@ -87,6 +87,9 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
     else if (*lexer->pos == '/') *token = (token_t) { TT_SLASH, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == '.') *token = (token_t) { TT_DOT, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == '!') *token = (token_t) { TT_BANG, 0, lexer->pos, lexer->line};
+    else if (*lexer->pos == '&') *token = (token_t) { TT_AMPERSAND, 0, lexer->pos, lexer->line};
+    else if (*lexer->pos == '|') *token = (token_t) { TT_PIPE, 0, lexer->pos, lexer->line};
+    else if (*lexer->pos == '^') *token = (token_t) { TT_HAT, 0, lexer->pos, lexer->line};
 
     // Multi-character-tokens
     else if (isdigit(*lexer->pos)) _TokenizeNumberLiteral(lexer, token);

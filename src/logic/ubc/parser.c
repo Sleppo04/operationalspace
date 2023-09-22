@@ -1505,6 +1505,21 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     token_t lookahead_1, lookahead_2;
     switch (expression->type)
     {
+    case UBCEXPRESSIONTYPE_LOGICAL:
+    	if (expression->as.logic->former_operand_type == NULL) {
+    		destination[0] = true;
+    		return EXIT_SUCCESS;
+    	}
+
+    	_Parser_AssumeLookaheadFill(parser);
+    	if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
+    	if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
+    	destination[0] = (lookahead_1.type == TT_AMPERSAND && lookahead_2.type == TT_AMPERSAND)
+                        || (lookahead_1.type == TT_PIPE && lookahead_2.type == TT_PIPE)
+						|| (lookahead_1.type == TT_HAT);
+    	return EXIT_SUCCESS;
+    	break;
+
     case UBCEXPRESSIONTYPE_COMPARISON:
         if (expression->as.comparison->left_side_typename == NULL) {
             destination[0] = true;
@@ -1561,7 +1576,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
 		destination[0] = value->base.needs_parsing;
 		return EXIT_SUCCESS;
         break;
-    
+
     default:
         destination[0] = false;
         break;
@@ -1872,6 +1887,7 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
     // TODO: More functions for more types
     
     default:
+    	_Parser_ReportTopTracebackError(parser, "Cannot expand expression with unknown type");
         return ENOMEDIUM;
         break;
     }
@@ -2124,10 +2140,33 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
     return EXIT_FAILURE;
 }
 
+int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+	ubclogicexpression_t* logic = expression->as.logic;
+	/// TODO: Logic expression finalizing
+	if (logic->former_operand_type == NULL) {
+		_Parser_ReportTopTracebackError(parser, "Cannot finalize logic expression without operand");
+		logic->base.result_typename = NULL;
+		return EXIT_FAILURE;
+	}
+
+	if (logic->former_operand_type != NULL && logic->operator == UBCLOGICOPERATOR_NONE) {
+		logic->base.result_typename = logic->former_operand_type;
+		return EXIT_SUCCESS;
+	}
+
+	if (logic->operator != UBCLOGICOPERATOR_NONE) {
+		_Parser_ReportTopTracebackError(parser, "Generating bytecode for logic operations is not implemented yet.");
+		logic->base.result_typename = NULL;
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+}
+
 
 int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
-	/// TODO: Logic expression finalizing
 
 	switch (expression->type) {
         case UBCEXPRESSIONTYPE_VALUE:
@@ -2147,6 +2186,9 @@ int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expre
         
         case UBCEXPRESSIONTYPE_COMPARISON:
             return _Parser_FinalizeParsedComparisonExpression(parser, expression);
+
+        case UBCEXPRESSIONTYPE_LOGICAL:
+        	return _Parser_FinalizeParsedLogicExpression(parser, expression);
 
 		default:
 			_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed expression.");
@@ -2221,6 +2263,8 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
 {
     ubclogicexpression_t expression;
+    _Expressions_InitializeLogicExpression(&expression);
+
     if (_Parser_ParseExpression(parser, &expression)) {
         return EXIT_FAILURE;
     }

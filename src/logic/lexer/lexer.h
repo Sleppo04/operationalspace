@@ -32,10 +32,13 @@ typedef struct lexer_s
 #define TT_SLASH            16  // "/"
 #define TT_DOT              17  // "."
 #define TT_BANG             18  // "!"
-#define TT_INT_LITERAL      19
-#define TT_FLOAT_LITERAL    10
-#define TT_STRING_LITERAL   21
+#define TT_AMPERSAND        19  // "&"
+#define TT_PIPE             20  // "|"
+#define TT_HAT              21  // "^"
 #define TT_IDENTIFIER       22
+#define TT_INT_LITERAL      23
+#define TT_FLOAT_LITERAL    24
+#define TT_STRING_LITERAL   25
 
 
 typedef union tokenValue_u
