@@ -104,6 +104,7 @@ char* _Parser_snprintf(ubcparser_t* parser, const char* format, ...)
 	return string;
 }
 
+// This function will allocate an extra byte for \0
 char* _Parser_strndup(ubcparser_t* parser, char* source, size_t length)
 {
     size_t strnlen = 0;
@@ -1344,7 +1345,7 @@ int _Parser_ParseInclude(ubcparser_t* parser)
     if (add_code == EXIT_FAILURE) {
         _Parser_ReportTopTracebackError(parser, "Unable to find file referenced in include statement");
         return ECANCELED;
-    } else {
+    } else if (add_code != EXIT_SUCCESS) {
         // ENOMEM
         _Parser_ReportTopTracebackError(parser, "Unable to add included file to lexer queue because of insufficient memory");
     }
@@ -1397,7 +1398,7 @@ int _Parser_ParseTypeDefinition(ubcparser_t* parser)
     if (lookahead_code) return EXIT_FAILURE;
 
     ubccustomtype_t new_type;
-    new_type.name = _Parser_strndup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length + 1));
+    new_type.name = _Parser_strndup(parser, typename_token.ptr, sizeof(char) * (typename_token.value.length));
     if (new_type.name == NULL) {
         return EXIT_FAILURE;
     }
