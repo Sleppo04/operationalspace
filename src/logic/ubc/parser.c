@@ -3,19 +3,20 @@
 
 int ParserConfig_Init(ubcparserconfig_t* config)
 {
-	config->bytecode_callback = NULL;
-	config->foreign_functions = NULL;
-	config->realloc_function  = NULL;
-	config->malloc_function   = NULL;
-	config->function_count    = 0;
-	config->foreign_types     = NULL;
-	config->free_function     = NULL;
-	config->report_return     = 0;
-	config->error_report      = NULL;
-	config->type_count        = 0;
-	config->file_count        = 0;
-	config->userdata          = NULL;
-	config->files             = NULL;
+	config->store_explanations = false;
+	config->bytecode_callback  = NULL;
+	config->foreign_functions  = NULL;
+	config->realloc_function   = NULL;
+	config->malloc_function    = NULL;
+	config->function_count     = 0;
+	config->foreign_types      = NULL;
+	config->free_function      = NULL;
+	config->report_return      = 0;
+	config->error_report       = NULL;
+	config->type_count         = 0;
+	config->file_count         = 0;
+	config->userdata           = NULL;
+	config->files              = NULL;
 
 	return EXIT_SUCCESS;
 }
@@ -77,8 +78,12 @@ void* _Parser_Memdup(ubcparser_t* parser, void* memory, size_t size)
 
 char* _Parser_vsnprintf(ubcparser_t* parser, const char* format, va_list args)
 {
-    // C99 Standard allows this
-    size_t needed_length = 1 + vsnprintf(NULL, 0, format, args);
+	va_list copy;
+	va_copy(copy, args);
+
+    // C99 Standard allows this to calculate the needed string capacity
+    size_t needed_length = 1 + vsnprintf(NULL, 0, format, copy);
+    va_end(copy);
 
     char* string = _Parser_Malloc(parser, needed_length);
     if (string == NULL) {
@@ -137,15 +142,15 @@ int _UbcParserBuffer_Create(ubcparser_t* parser, ubcparserbuffer_t* buffer)
 	return EXIT_SUCCESS;
 }
 
-bool _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* buffer, size_t needed)
+int _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* buffer, size_t needed)
 {
-	if (parser == NULL) return false;
-	if (buffer == NULL) return false;
+	if (parser == NULL) return EINVAL;
+	if (buffer == NULL) return EINVAL;
 
 	if (buffer->memory == NULL) {
 		buffer->memory = _Parser_Malloc(parser, needed);
 		if (buffer->memory == NULL) {
-			return false;
+			return ENOMEM;
 		}
 	} else if (needed > (buffer->capacity - buffer->used)) {
 		size_t new_capacity = buffer->capacity * 2;
@@ -154,11 +159,11 @@ bool _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t*
 		}
 
 		void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
-		if (new_memory == NULL) return false;
+		if (new_memory == NULL) return ENOMEM;
 		buffer->memory = new_memory;
 	}
 
-	return true;
+	return EXIT_SUCCESS;
 }
 
 int _UbcParserBuffer_Write(ubcparser_t* parser, ubcparserbuffer_t* buffer, void* memory, size_t length)
@@ -169,8 +174,9 @@ int _UbcParserBuffer_Write(ubcparser_t* parser, ubcparserbuffer_t* buffer, void*
 
 	if (_UbcParserBuffer_EnsureFreeCapacity(parser, buffer, length)) return ENOMEM;
 
-	void* destination = (void*) ((char*) (buffer->memory) + length);
+	void* destination = (void*) ((char*) (buffer->memory) + buffer->used);
 	memcpy(destination, memory, length);
+	buffer->used += length; // Don't forget to increment the counter if you write to the buffer, stupid
 
 	return EXIT_SUCCESS;
 }
@@ -763,6 +769,8 @@ void _Expressions_InitializeNegationExpression(ubcnegateexpression_t* negation)
     _Expressions_InitExpressionBase(&(negation->base));
     _Expressions_InitializeValueExpression(&(negation->value));
 
+    // leave negation->negation, there is no NONE value for it
+
     negation->value.base.parent.type = UBCEXPRESSIONTYPE_NEGATE;
     negation->value.base.parent.as.negation = negation;
 
@@ -778,7 +786,7 @@ void _Expressions_InitializeDivisionExpression(ubcdivisionexpression_t* division
     division->operator                = UBCDIVISIONOPERATOR_NONE;
 
     // Set parent information
-    division->child_expression.base.parent.type = UBCEXPRESSIONTYPE_DIVISION;
+    division->child_expression.base.parent.type        = UBCEXPRESSIONTYPE_DIVISION;
     division->child_expression.base.parent.as.division = division;
 
     // Leave the former->operator and current->operator unspecified for valgrind to detect
@@ -790,6 +798,7 @@ void _Expressions_InitializeAdditionExpression(ubcadditionexpression_t* addition
     _Expressions_InitializeDivisionExpression(&(addition->child_expression));
 
     addition->former_operand_typename = NULL;
+    addition->operator                = UBCADDITIONOPERATOR_NONE;
 
     // Set parents
     addition->child_expression.base.parent.type        = UBCEXPRESSIONTYPE_ADDITION;
@@ -803,6 +812,9 @@ void _Expressions_InitializeCompareExpression(ubccompareexpression_t* comparison
     _Expressions_InitExpressionBase(&(comparison->base));
     _Expressions_InitializeAdditionExpression(&(comparison->child_expression));
 
+    comparison->comparator_type    = UBCCOMPARATORTYPE_NONE;
+    comparison->left_side_typename = NULL;
+
     // Set parents
     comparison->child_expression.base.parent.type           = UBCEXPRESSIONTYPE_COMPARISON;
     comparison->child_expression.base.parent.as.comparison  = comparison;
@@ -813,17 +825,31 @@ void _Expressions_InitializeCompareExpression(ubccompareexpression_t* comparison
 void _Expressions_InitializeLogicExpression(ubclogicexpression_t* expression)
 {
     _Expressions_InitExpressionBase(&(expression->base));
-    _Expressions_InitializeCompareExpression(&(expression->current));
+    _Expressions_InitializeCompareExpression(&(expression->child_expression));
 
     expression->former_operand_type = NULL;
     expression->operator = UBCLOGICOPERATOR_NONE;
 
-    expression->current.base.parent.type     = UBCEXPRESSIONTYPE_LOGICAL;
-    expression->current.base.parent.as.logic = expression;
+    expression->child_expression.base.parent.type     = UBCEXPRESSIONTYPE_LOGICAL;
+    expression->child_expression.base.parent.as.logic = expression;
 }
 
 
 /// Scope and LValue functions
+
+int _Scopes_AddScope(ubcparser_t* parser, enum UbcScopeType type)
+{
+	ubcscope_t new_scope;
+	new_scope.temporary_bytes = 0;
+	new_scope.type            = type;
+	_UbcParserBuffer_Create(parser, &(new_scope.variables));
+
+	if (_UbcParserBuffer_Write(parser, &(parser->scopes), &new_scope, sizeof(ubcscope_t))) {
+		return ENOMEM;
+	}
+
+	return EXIT_SUCCESS;
+}
 
 size_t _Parser_GetScopeCount(ubcparser_t* parser)
 {
@@ -1016,7 +1042,7 @@ int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintpt
 	ubcclosure_t* closure = &(parser->closure);
 
 	if (! parser->config.store_explanations) {
-		return EXIT_FAILURE;
+		return EXIT_SUCCESS;
 	}
 
 	int write_code;
@@ -1059,13 +1085,14 @@ int _Parser_ClosureFixBytecodeIndex(ubcparser_t* parser, uint32_t offset, void* 
 
 int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcdebugsymbol symbolic_explanation)
 {
+	if (parser->config.bytecode_callback != NULL)
 	if (parser->config.bytecode_callback(parser->config.userdata, bytes, count, string_explanation, symbolic_explanation)) {
 		_Parser_ReportError(parser, "No file", -1, "Bytecode callback returned nonzero error indicator", UBCPARSERERROR_INTERNAL);
 		return EXIT_FAILURE;
 	}
 
 	if (_Parser_ClosureStoreExplanation(parser, parser->closure.bytecode.used, count, string_explanation, symbolic_explanation)) {
-		_Parser_ReportError(parser, "No file", -1, "Failed to store bytecode in closure", UBCPARSERERROR_INTERNAL);
+		_Parser_ReportError(parser, "No file", -1, "Failed to store bytecode explanation in closure", UBCPARSERERROR_INTERNAL);
 		return ENOMEM;
 	}
 
@@ -1682,10 +1709,12 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
     ubcdivisionexpression_t* division = expression->as.division;
 
 
-    bool is_first_expression = division->former_operand_typename == NULL;
+    bool first_expression_parsed = division->former_operand_typename == NULL;
+
+    /// TODO: Rewrite this function entirely, please
 
 
-    if (!is_first_expression && !division->child_expression.base.needs_parsing) {
+    if (!first_expression_parsed && !division->child_expression.base.needs_parsing) {
         // There are two parsed expressions for which this needs to generate bytecode now
         
         int generate_code = _Parser_GenerateDivisionBytecode(parser, division);
@@ -1694,6 +1723,12 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
         division->former_operand_typename = division->child_expression.base.result_typename;
 
         _Expressions_InitializeNegationExpression(&(division->child_expression));
+        division->child_expression.base.parent.as.division = division;
+        division->child_expression.base.parent.type        = UBCEXPRESSIONTYPE_DIVISION;
+
+        division->base.needs_parsing = false;
+
+        return EXIT_SUCCESS;
     }
 
     // Is there a token to be processed?
@@ -1701,7 +1736,7 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
 
-    if (is_first_expression) {
+    if (first_expression_parsed) {
     	// Set it to none to avoid confusion, except for bugs it should be ignored anyways
     	division->operator = UBCDIVISIONOPERATOR_NONE;
     } else {
@@ -1725,6 +1760,8 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 
     // Initialize the negation expression to a start state
     _Expressions_InitializeNegationExpression(expression->as.negation);
+    division->child_expression.base.parent.as.division = division;
+    division->child_expression.base.parent.type        = UBCEXPRESSIONTYPE_DIVISION;
 
     return EXIT_SUCCESS;
 }
@@ -1744,6 +1781,8 @@ int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* express
     if (lookahead.type == TT_BANG) {
         negation->negation = true;
         _Parser_ConsumeToken(parser);
+    } else {
+    	negation->negation = false;
     }
 
 
@@ -1751,6 +1790,8 @@ int _Parser_ExpandNegateExpression(ubcparser_t* parser, ubcexpression_t* express
     negation->value.base.needs_parsing = true;
     expression->type = UBCEXPRESSIONTYPE_VALUE;
     expression->as.value = &(negation->value);
+
+    negation->base.needs_parsing = false;
 
     return EXIT_SUCCESS;
 }
@@ -1856,6 +1897,22 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
     return EXIT_SUCCESS;
 }
 
+int _Parser_ExpandLogicExpression(ubcparser_t* parser, ubcexpression_t* expression)
+{
+	ubclogicexpression_t* logic = expression->as.logic;
+
+	if (logic->former_operand_type == NULL) {
+		expression->as.comparison = &(logic->child_expression);
+		expression->type = UBCEXPRESSIONTYPE_COMPARISON;
+
+		return EXIT_SUCCESS;
+	}
+
+	return EXIT_FAILURE;
+
+	return EXIT_SUCCESS;
+}
+
 int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
 {
     switch (expression->type)
@@ -1884,6 +1941,11 @@ int _Parser_ExpandExpression(ubcparser_t* parser, ubcexpression_t* expression)
         return _Parser_ExpandParenExpression(parser, expression);
         break;
     
+
+    case UBCEXPRESSIONTYPE_LOGICAL:
+    	return _Parser_ExpandLogicExpression(parser, expression);
+    	break;
+
     // TODO: More functions for more types
     
     default:
@@ -1919,7 +1981,7 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
 		case UBCLITERALTYPE_INT:
             bytecode[0] = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &literal->as.integer, sizeof(int32_t));
-            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expresion", UBCDEBUGSYMBOL_PUSH_LITERAL_INT);
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_INT);
 			_Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
             value->base.result_typename = UBC_INT_TYPENAME;
             break;
@@ -1961,7 +2023,7 @@ int _Parser_FinalizeParsedNegateExpression(ubcparser_t* parser, ubcexpression_t*
     int emit_code;
     uint32_t bytecode_position;
 
-    if (negate->negation) {
+    if (negate->negation == true) {
         // Generate bytecode for negating something
         if (strncmp(UBC_BOOL_TYPENAME, negate->value.base.result_typename, result_length) == 0) {
             
@@ -2230,7 +2292,7 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubclogicexpression_t* supplied_
         }
     }
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 int _Parser_ParseFunctionDefinition(ubcparser_t* parser)
@@ -2438,14 +2500,17 @@ int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config)
         return EINVAL;
     }
 
-    destination->config                    = config[0];
+    destination->config = config[0];
+
+    destination->lexer_stack.lexers     = NULL;
+    destination->lexer_stack.stack_size = 0;
     
-    destination->lexer_stack.lexers        = NULL;
-    destination->lexer_stack.stack_size    = 0;
-    
-    destination->bytecode_buffer.capacity = 0;
-    destination->bytecode_buffer.memory   = NULL;
-    destination->bytecode_buffer.used     = 0;
+    _UbcParserBuffer_Create(destination, &destination->scopes);
+    _Scopes_AddScope(destination, UBCSCOPE_GLOBAL);
+
+    _UbcParserBuffer_Create(destination, &destination->closure.bytecode);
+    _UbcParserBuffer_Create(destination, &destination->closure.code_explanation);
+    _UbcParserBuffer_Create(destination, &destination->closure.explanation_strings);
     
     destination->lookahead.available = 0;
 
@@ -2462,8 +2527,11 @@ int Parser_Destroy(ubcparser_t* parser)
         return EINVAL;
     }
 
-    if (parser->bytecode_buffer.memory != NULL)
-    _UbcParserBuffer_Destroy(parser, &(parser->bytecode_buffer));
+    _UbcParserBuffer_Destroy(parser, &parser->scopes);
+
+    _UbcParserBuffer_Destroy(parser, &parser->closure.bytecode);
+    _UbcParserBuffer_Destroy(parser, &parser->closure.code_explanation);
+    _UbcParserBuffer_Destroy(parser, &parser->closure.explanation_strings);
 
     if (parser->lexer_stack.lexers != NULL)
     _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));

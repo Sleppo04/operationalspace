@@ -121,7 +121,8 @@ enum UbcScopeType {
     UBCSCOPE_FILE,
     UBCSCOPE_FUNCTION,
     UBCSCOPE_WHILE,
-    UBCSCOPE_LOCAL
+    UBCSCOPE_LOCAL,
+	UBCSCOPE_GLOBAL
 };
 
 enum UbcVariableType {
@@ -159,7 +160,6 @@ typedef struct UbcClosure {
 
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
-    ubcparserbuffer_t         bytecode_buffer;
     ubcparserconfig_t         config;
     struct UbcParserLookahead lookahead;
     struct UbcParserTypeArray types;
@@ -352,7 +352,7 @@ enum UbcLogicOperator {
 typedef struct UbcLogicExpression {
     struct UbcExpressionBase base;
 
-    struct UbcCompareExpression current;
+    struct UbcCompareExpression child_expression;
 	char*                       former_operand_type;
     enum   UbcLogicOperator     operator;
 } ubclogicexpression_t;

@@ -7,7 +7,6 @@ int error_report(void* data, const char* filename, int line, const char* message
 {
     // There should be no errors reported
     printf("%s\nReported in file %s, line %d\n", message, filename, line);
-    assert(true);
     exit(0);
 }
 
