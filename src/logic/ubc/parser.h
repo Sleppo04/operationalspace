@@ -49,7 +49,7 @@ typedef enum UbcDebugSymbol {
 	UBCDEBUGSYMBOL_INT_DIVIDE,
 	UBCDEBUGSYMBOL_FLOAT_ADD,
 	UBCDEBUGSYMBOL_INT_ADD,
-} ubcdebugsymbol;
+} ubcdebugsymbol_t;
 
 
 typedef int   (*UBCErrorReportCallback)   (void* userdata, const char* filename, int line, const char* message, enum UbcParserErrorType type);
@@ -88,6 +88,7 @@ typedef struct UbcParserConfig {
     ubccustomtype_t* foreign_types;
     uint16_t         type_count;
 
+	uint32_t api_version;
     ubcforeignfunction_t* foreign_functions;
     uint16_t              function_count;
 
@@ -152,11 +153,40 @@ typedef struct UbcBytecodeExplanation {
 	     size_t    range;   // How many bytes does this explain
 } ubcbytecodeexplanation_t;
 
-typedef struct UbcClosure {
+typedef struct UbcNativeFunction {
+	/// @brief Name of the native ubc function
+	char* name;
+	/// @brief Where the function is located in the bytecode buffer
+	uint32_t bytecode_start;
+	/// @brief End of the function code in the bytecode buffer
+	uint32_t bytecode_end;
+	/// @brief Argument names separated by spaces
+	char* arguments;
+	/// @brief Argument types separated by spaces
+	char* argument_types;
+} ubcnativefunction_t;
+
+typedef struct UbcParserClosure {
+	/// @brief Raw byte buffer
 	ubcparserbuffer_t bytecode;
-	ubcparserbuffer_t code_explanation;
-	ubcparserbuffer_t explanation_strings;
-} ubcclosure_t;
+	/// @brief Stores UbcByteCodeExplanation
+	ubcparserbuffer_t code_explanations;
+	/// @brief Stores strings separated by \0
+	ubcparserbuffer_t string_storage;
+	/// @brief Stores the native function descriptor
+	ubcparserbuffer_t native_functions;
+
+	/// @brief effectively a 24-bit-integer on the virtual memory-space
+	/// All memory from start to end will be saved at exit and restored at execution start
+	uint32_t persistent_area_start;
+	uint32_t persistent_area_end;
+
+	/// @brief Address the vm will use as stack base
+	uint32_t stack_base_address;
+
+	/// @brief Version set by the parser config, this can be used to ensure script and API compatability
+	uint32_t version;
+} ubcparserclosure_t;
 
 typedef struct UbcParser {
     struct UbcLexerStack      lexer_stack;
@@ -164,7 +194,7 @@ typedef struct UbcParser {
     struct UbcParserLookahead lookahead;
     struct UbcParserTypeArray types;
     ubcparserbuffer_t         scopes;
-    struct UbcClosure         closure;
+    struct UbcParserClosure         closure;
 } ubcparser_t;
 
 

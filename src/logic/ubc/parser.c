@@ -13,6 +13,7 @@ int ParserConfig_Init(ubcparserconfig_t* config)
     config->free_function      = NULL;
     config->report_return      = 0;
     config->error_report       = NULL;
+    config->api_version        = 0;
     config->type_count         = 0;
     config->file_count         = 0;
     config->userdata           = NULL;
@@ -1002,29 +1003,29 @@ uint32_t _Parser_ClosureGetCurrentBytecodeIndex(ubcparser_t* parser)
 
 uintptr_t _Parser_ClosureStoreExplanationString(ubcparser_t* parser, char* string)
 {
-    ubcclosure_t* closure     = &(parser->closure);
-    uintptr_t string_position = closure->explanation_strings.used;
+    ubcparserclosure_t* closure     = &(parser->closure);
+    uintptr_t string_position = closure->string_storage.used;
     size_t string_length      = strlen(string);
 
     if (! parser->config.optimize_explanations) {
 
-    	int write_code = _UbcParserBuffer_Write(parser, &(closure->explanation_strings), string, string_length);
+    	int write_code = _UbcParserBuffer_Write(parser, &(closure->string_storage), string, string_length);
     	if (write_code) return UINTPTR_MAX;
 
     	return string_position;
     }
 
     // Possibly a reverse search could speed it up, but I didn't want to implement that
-    char* search_position = closure->explanation_strings.memory;
-    while ((uintptr_t) search_position - (uintptr_t) closure->explanation_strings.memory < (uintptr_t) closure->explanation_strings.used) {
+    char* search_position = closure->string_storage.memory;
+    while ((uintptr_t) search_position - (uintptr_t) closure->string_storage.memory < (uintptr_t) closure->string_storage.used) {
     	if (strncmp(search_position, string, string_length) == 0) {
-    		return (uintptr_t) search_position - (uintptr_t) closure->explanation_strings.memory;
+    		return (uintptr_t) search_position - (uintptr_t) closure->string_storage.memory;
     	}
 
     	search_position += strlen(search_position);
     }
 
-    int write_code = _UbcParserBuffer_Write(parser, &(closure->explanation_strings), string, string_length);
+    int write_code = _UbcParserBuffer_Write(parser, &(closure->string_storage), string, string_length);
     if (write_code) return UINTPTR_MAX;
 
     return string_position;
@@ -1032,7 +1033,7 @@ uintptr_t _Parser_ClosureStoreExplanationString(ubcparser_t* parser, char* strin
 
 int _Parser_ClosureAppendBytecode(ubcparser_t* parser, void* bytes, size_t count)
 {
-    ubcclosure_t* closure = &(parser->closure);
+    ubcparserclosure_t* closure = &(parser->closure);
 
     int write_code;
     write_code = _UbcParserBuffer_Write(parser, &(closure->bytecode), bytes, count);
@@ -1041,9 +1042,9 @@ int _Parser_ClosureAppendBytecode(ubcparser_t* parser, void* bytes, size_t count
     return EXIT_SUCCESS;
 }
 
-int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcdebugsymbol symbolic_explanation)
+int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintptr_t range, char* string_explanation, ubcdebugsymbol_t symbolic_explanation)
 {
-    ubcclosure_t* closure = &(parser->closure);
+    ubcparserclosure_t* closure = &(parser->closure);
 
     if (! parser->config.store_explanations) {
     	return EXIT_SUCCESS;
@@ -1069,7 +1070,7 @@ int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintpt
     explanation.byte     = index;
     explanation.range    = range;
 
-    write_code = _UbcParserBuffer_Write(parser, &(closure->code_explanation), &explanation, sizeof(ubcbytecodeexplanation_t));
+    write_code = _UbcParserBuffer_Write(parser, &(closure->code_explanations), &explanation, sizeof(ubcbytecodeexplanation_t));
     return write_code;
 }
 
@@ -1087,7 +1088,7 @@ int _Parser_ClosureFixBytecodeIndex(ubcparser_t* parser, uint32_t offset, void* 
     return EXIT_SUCCESS;
 }
 
-int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcdebugsymbol symbolic_explanation)
+int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, char* string_explanation, ubcdebugsymbol_t symbolic_explanation)
 {
     if (parser->config.bytecode_callback != NULL)
     if (parser->config.bytecode_callback(parser->config.userdata, bytes, count, string_explanation, symbolic_explanation)) {
@@ -1155,7 +1156,7 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
 
     uint8_t bytecode;
     int emit_code;
-    ubcdebugsymbol symbol;
+    ubcdebugsymbol_t symbol;
     char* explanation;
 
     if (strcmp(addition->former_operand_typename, UBC_FLOAT_TYPENAME) == 0) {
@@ -1222,7 +1223,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
 
     uint8_t bytecode;
     int emit_code;
-    ubcdebugsymbol symbol;
+    ubcdebugsymbol_t symbol;
     char* explanation;
 
     if (strcmp(division->former_operand_typename, UBC_FLOAT_TYPENAME) == 0) {
@@ -2553,8 +2554,8 @@ int Parser_Create(ubcparser_t* destination, ubcparserconfig_t* config)
     _Scopes_AddScope(destination, UBCSCOPE_GLOBAL);
 
     _UbcParserBuffer_Create(destination, &destination->closure.bytecode);
-    _UbcParserBuffer_Create(destination, &destination->closure.code_explanation);
-    _UbcParserBuffer_Create(destination, &destination->closure.explanation_strings);
+    _UbcParserBuffer_Create(destination, &destination->closure.code_explanations);
+    _UbcParserBuffer_Create(destination, &destination->closure.string_storage);
     
     destination->lookahead.available = 0;
 
@@ -2574,8 +2575,8 @@ int Parser_Destroy(ubcparser_t* parser)
     _UbcParserBuffer_Destroy(parser, &parser->scopes);
 
     _UbcParserBuffer_Destroy(parser, &parser->closure.bytecode);
-    _UbcParserBuffer_Destroy(parser, &parser->closure.code_explanation);
-    _UbcParserBuffer_Destroy(parser, &parser->closure.explanation_strings);
+    _UbcParserBuffer_Destroy(parser, &parser->closure.code_explanations);
+    _UbcParserBuffer_Destroy(parser, &parser->closure.string_storage);
 
     if (parser->lexer_stack.lexers != NULL)
     _Parser_Free(parser, parser->lexer_stack.lexers, parser->lexer_stack.stack_size * sizeof(lexer_t));
