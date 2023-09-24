@@ -152,6 +152,8 @@ int _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* 
 		if (buffer->memory == NULL) {
 			return ENOMEM;
 		}
+		buffer->capacity = needed;
+
 	} else if (needed > (buffer->capacity - buffer->used)) {
 		size_t new_capacity = buffer->capacity * 2;
 		if (needed > (new_capacity - buffer->used)) {
@@ -160,7 +162,8 @@ int _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* 
 
 		void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
 		if (new_memory == NULL) return ENOMEM;
-		buffer->memory = new_memory;
+		buffer->memory   = new_memory;
+		buffer->capacity = new_capacity;
 	}
 
 	return EXIT_SUCCESS;
@@ -378,16 +381,17 @@ bool _IsTypenameIdentifierToken(token_t* token)
     return false;
 }
 
+// Returns the size of a built-in type in bytes
 size_t _Parser_BuiltInTypeSize(char* typename, size_t name_length)
 {
     if (strncmp(typename, UBC_BOOL_TYPENAME, name_length) == 0) 
-        return 8;
+        return 1;
     if (strncmp(typename, UBC_INT_TYPENAME, name_length) == 0) 
-        return 32;
+        return 4;
     if (strncmp(typename, UBC_FLOAT_TYPENAME, name_length) == 0) 
-        return 32;
+        return 4;
     if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
-        return 32;
+        return SIZE_MAX; /// TODO: Change this when strings are implemented
     
     return 0;
 }
@@ -1132,6 +1136,8 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
 		return EXIT_FAILURE;
 	}
 
+	_Scopes_DecreaseTemporaryBytes(parser, bytes);
+
 	return EXIT_SUCCESS;
 }
 
@@ -1243,6 +1249,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
         _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_FLOAT_TYPENAME)));
+        division->base.result_typename = UBC_FLOAT_TYPENAME;
 
     } else if (strcmp(division->former_operand_typename, UBC_INT_TYPENAME) == 0) {
 
@@ -1269,6 +1276,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
         if (emit_code) return emit_code;
         _Scopes_DecreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
+        division->base.result_typename = UBC_INT_TYPENAME;
 
     } else {
         _Parser_ReportFormattedTracebackErrorFallback(parser, "Invalid operand type to division", "Invalid operand type to division: %s", division->former_operand_typename);
@@ -1752,7 +1760,7 @@ int _Parser_ExpandDivisionExpression(ubcparser_t* parser, ubcexpression_t* expre
 
     if (!division->base.needs_parsing && division->former_operand_typename != NULL) {
         // There are two recent divisions ready to be processed
-	int generate_code = _Parser_GenerateDivisionBytecode(parser, division);
+        int generate_code = _Parser_GenerateDivisionBytecode(parser, division);
         if (generate_code) return generate_code;
 
 	division->former_operand_typename = division->child_expression.base.result_typename;

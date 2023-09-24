@@ -31,5 +31,8 @@ int main()
     int parse_code = Parser_Parse(&parser, "main.ubc");
     assert(parse_code == EXIT_SUCCESS);
 
+    assert(((ubcscope_t*) (parser.scopes.memory))->temporary_bytes == 0);
+    // Nothing may be left on the stack
+
     Parser_Destroy(&parser);
 }
