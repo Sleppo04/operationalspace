@@ -353,7 +353,7 @@ typedef struct UbcLogicExpression {
     struct UbcExpressionBase base;
 
     struct UbcCompareExpression child_expression;
-	char*                       former_operand_type;
+    char*                       former_operand_type;
     enum   UbcLogicOperator     operator;
 } ubclogicexpression_t;
 
