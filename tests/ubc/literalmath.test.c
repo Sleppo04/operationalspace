@@ -17,7 +17,7 @@ int main()
     ubcparser_t parser;
     ubcparserconfig_t config;
 
-    ubcfile_t files[] = {"main.ubc", "3 + 3 - 3 / 3 * 3"};
+    ubcfile_t files[] = {"main.ubc", "3 + 3 - 3 / 3 * 3 > 3"};
 
     ParserConfig_Init(&config);
     config.file_count = 1;

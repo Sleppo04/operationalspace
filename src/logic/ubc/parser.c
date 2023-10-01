@@ -1630,26 +1630,34 @@ int _Parser_ExpandCompareExpression(ubcparser_t* parser, ubcexpression_t* expres
 {
     ubccompareexpression_t* comparison = expression->as.comparison;
 
+    if (! comparison->base.needs_parsing && comparison->left_side_typename != NULL) {
+    	_Parser_ReportUnexpectedToken(parser, "Unexpected second comparison operator token at the end of comparison expression.", "None", parser->lookahead.tokens[0]);
+
+    	return EXIT_FAILURE;
+    }
+
     if (comparison->base.needs_parsing) {
         // this is the left hand side expression
         ubcadditionexpression_t* child = &comparison->child_expression;
         _Expressions_InitializeAdditionExpression(child);
-    child->base.parent.type = UBCEXPRESSIONTYPE_COMPARISON;
-    child->base.parent.as.comparison = comparison;
+        child->base.parent.type = UBCEXPRESSIONTYPE_COMPARISON;
+        child->base.parent.as.comparison = comparison;
     
-    expression->as.addition        = child;
+        expression->as.addition        = child;
         expression->type               = UBCEXPRESSIONTYPE_ADDITION;
         
-    // No explicit parsing needed, only if there are appropriate tokens
-    comparison->base.needs_parsing = false;
+        // No explicit parsing needed, only if there are appropriate tokens
+        comparison->base.needs_parsing = false;
         return EXIT_SUCCESS;
+    } else {
+    	comparison->left_side_typename = comparison->child_expression.base.result_typename;
     }
 
     // Left hand side is present, parse operator and right hand side
     token_t lookahead1, lookahead2;
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 0, &lookahead1)) return EXIT_FAILURE;
-    if (_Parser_LookAhead(parser, 1, &lookahead2)) return EXIT_FAILURE;
+    if (_Parser_LookAhead(parser, 1, &lookahead2)) return EXIT_FAILURE; // This relies on the fact that there will be repeated reporting of EOF tokens
 
     if (lookahead1.type == TT_EQUALS && lookahead2.type == TT_EQUALS) {
         comparison->comparator_type = UBCCOMPARATORTYPE_EQUALITY;
@@ -1686,6 +1694,8 @@ int _Parser_ExpandCompareExpression(ubcparser_t* parser, ubcexpression_t* expres
     expression->as.addition = child;
 
     _Expressions_InitializeAdditionExpression(expression->as.addition);
+    expression->as.addition->base.parent.as.comparison = comparison;
+    expression->as.addition->base.parent.type          = UBCEXPRESSIONTYPE_COMPARISON;
 
     return EXIT_SUCCESS;
 }
@@ -2142,14 +2152,12 @@ int _Parser_FinalizeParsedAdditionExpression(ubcparser_t* parser, ubcexpression_
 {
     ubcadditionexpression_t* addition = expression->as.addition;
 
-    if (addition->operator == UBCADDITIONOPERATOR_NONE) {
+    if (addition->former_operand_typename == NULL) {
         // No real addition, just a single operand
         addition->base.result_typename = addition->child_expression.base.result_typename;
 
         return EXIT_SUCCESS;
-    }
-
-    if (addition->former_operand_typename != NULL) {
+    } else {
         return _Parser_GenerateAdditionBytecode(parser, addition);
     }
 
@@ -2200,61 +2208,104 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
         return EXIT_FAILURE;
     }
 
-    uint8_t bytecode[5];
-    uint32_t current_position;
-    uint32_t fixup_position;
+    uint8_t jump_opcode; // Jump to perform
+    bool    false_push;  // Value to be pushed if the jump succeeds
+    bool    true_push;   // Value to push if the jump fails
 
     // Push boolean depending on operator type and comparison result
     switch (comparison->comparator_type)
     {
     case UBCCOMPARATORTYPE_EQUALITY:
+    	jump_opcode = UBC_OP_JZ;
+    	false_push  = false;
+    	true_push   = true;
+        break;
+    
+    case UBCCOMPARATORTYPE_GREATEREQUALS:
+    	jump_opcode = UBC_OP_JLT;  // inverse condition
+    	false_push  = true;        // push true if it is not less than
+    	true_push   = false;
+    	break;
+
+    case UBCCOMPARATORTYPE_GREATERTHAN:
+    	jump_opcode = UBC_OP_JGT;
+    	false_push  = false;
+    	true_push   = true;
+    	break;
+
+    case UBCCOMPARATORTYPE_INEQUALITY:
+    	jump_opcode = UBC_OP_JZ;
+    	false_push  = true;
+    	true_push   = false;
+    	break;
+
+    case UBCCOMPARATORTYPE_LESSEQUALS:
+    	jump_opcode = UBC_OP_JGT; // invert the condition
+    	false_push  = true;      // push true if it is not greater than
+    	true_push   = false;
+    	break;
+
+    case UBCCOMPARATORTYPE_LESSTHAN:
+    	jump_opcode = UBC_OP_JLT;
+    	false_push  = true;
+    	true_push   = false;
+    	break;
+
+    default:
+    	_Parser_ReportTopTracebackError(parser, "Cannot generate bytecode for comparison of type \"None\"");
+    	return EXIT_FAILURE;
+        break;
+    }
+
+    {
+        uint8_t bytecode[5];
+        uint32_t current_position;
+        uint32_t fixup_position;
 
         bytecode[0]        = UBC_OP_PUSH32i;
         fixup_position     = 1 + _Parser_ClosureGetCurrentBytecodeIndex(parser); // Address of immediate value
         memset(bytecode + 1, 0xFF, 4); // Clear the target for now
-        _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Push address of conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Push address of conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
         if (emit_code) return emit_code;
+        _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
 
-        bytecode[0] = UBC_OP_JZ;
-        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Jump on equality, continue for inequality", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
+        bytecode[0] = jump_opcode;
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Conditional Jump", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
         if (emit_code) return emit_code;
 
         emit_code = _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
         if (emit_code) return emit_code;
 
         bytecode[0] = UBC_OP_PUSH8i;
-        bytecode[1] = false;
-        _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Push comparison result \"false\"", UBCDEBUG_PUSH_COMPARISON_RESULT);
+        bytecode[1] = false_push;
+        _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Jump failure push", UBCDEBUG_PUSH_COMPARISON_RESULT);
         if (emit_code) return emit_code;
 
         bytecode[0]       = UBC_OP_JMPi;
         current_position  = _Parser_ClosureGetCurrentBytecodeIndex(parser);
         current_position += 5 + 2; // Skip this instruction and the next one
         memcpy(bytecode + 1, &current_position, 4);
-        _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Jump to skip following branch instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Jump to skip following branch instructions", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
         if (emit_code) return emit_code;
 
         // Fix the old jump to jump here, we don't know how many bytes of bytecode were generated by PopUnusedBytes in-between
         current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
-        fixup_code = _Parser_ClosureFixBytecodeIndex(parser, current_position, &current_position, 4); // Write jump target
+        fixup_code = _Parser_ClosureFixBytecodeIndex(parser, fixup_position, &current_position, 4); // Write jump target
         if (fixup_code) return fixup_code;
 
+        // The ip will jump here if the equality flag was set
         bytecode[0] = UBC_OP_PUSH8i;
-        bytecode[1] = true;
-        _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Push comparison result \"true\"", UBCDEBUG_PUSH_COMPARISON_RESULT);
+        bytecode[1] = true_push;
+        emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 2, "Jump success push", UBCDEBUG_PUSH_COMPARISON_RESULT);
         if (emit_code) return emit_code;
 
-        /// TODO: Finish this
 
-        break;
-
-    /// TODO: Add more cases
-    
-    default:
-        break;
+        _Scopes_IncreaseTemporaryBytes(parser, bool_typesize);
     }
 
-    return EXIT_FAILURE;
+    comparison->base.result_typename = UBC_BOOL_TYPENAME;
+
+    return EXIT_SUCCESS;
 }
 
 int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* expression)
