@@ -1887,11 +1887,11 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
 
     _Parser_AssumeLookaheadFill(parser);
     if (_Parser_LookAhead(parser, 1, &lookahead2)) return EXIT_FAILURE;
-
-    // TODO: Actions to do when a value type is detected
+    // This relies on the fact that TT_EOF will be produced forever when a file has run out of tokens
 
     if (lookahead1.type == TT_IDENTIFIER && lookahead2.type == TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_CALL;
+        // TODO: Implement Calling functions
 
     } else if (lookahead1.type == TT_IDENTIFIER && lookahead2.type != TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_LVALUE;
@@ -1904,6 +1904,7 @@ int _Parser_ExpandValueExpression(ubcparser_t* parser, ubcexpression_t* expressi
 
     } else if (lookahead1.type == TT_LEFT_PARENTHESIS) {
         value->type = UBCVALUETYPE_PAREN;
+        // TODO: Implement parenthesis-expressions
 
     } else if (lookahead1.type == TT_INT_LITERAL || lookahead1.type == TT_STRING_LITERAL || lookahead1.type == TT_FLOAT_LITERAL || lookahead1.type == TT_UBC_FALSE || lookahead1.type == TT_UBC_TRUE) {
         value->type = UBCVALUETYPE_LITERAL;
@@ -2323,6 +2324,38 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
     	_Parser_ReportTopTracebackError(parser, "Generating bytecode for logic operations is not implemented yet.");
     	logic->base.result_typename = NULL;
     	return EXIT_FAILURE;
+    }
+
+    switch (logic->operator) {
+    	case UBCLOGICOPERATOR_AND:
+    		/*PUSH8i true
+    		 *CMPB
+    		 *JZ
+    		 *PUSH8i false
+    		 *JMP
+    		 *PUSH8i true
+    		 *CMPB
+    		 *JZ
+    		 *PUSH8i false
+    		 *JMP
+    		 *PUSH8i true
+    		 */
+    		break;
+
+    	case UBCLOGICOPERATOR_NAND:
+    		/*PUSH8i false
+    		 *CMPB
+    		 *JZ
+    		 *PUSH8i false
+    		 *PUSH8i
+    		 */
+    		break;
+
+    	case UBCLOGICOPERATOR_OR:
+    		break;
+
+    	case UBCLOGICOPERATOR_XOR:
+    		break;
     }
 
     return EXIT_SUCCESS;
