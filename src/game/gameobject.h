@@ -12,7 +12,7 @@ typedef struct GameObject {
     module_t* modules[NUM_MODULETYPES];
     int       numModules[NUM_MODULETYPES];
     
-    // Precalculated stats (update on module change using Obj_RecalculateStats)
+    // Combined module stats (update on module change using Obj_RecalculateStats)
     stats_t stats;
     
     // Current state of the ship

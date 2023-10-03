@@ -6,7 +6,6 @@
 #include "stats.h"
 
 // Probably the ugliest macro in the code
-// Not anymore since we included wren
 #define MODULESTRSIZE(x) (((x)==MODULETYPE_CUSTOM)?sizeof(custom_module_t):((x)==MODULETYPE_STATS)?sizeof(stat_module_t):((x)==MODULETYPE_UTILITY)?sizeof(utility_module_t):((x)==MODULETYPE_WEAPON)?sizeof(weapon_module_t):0)
 
 #define NUM_MODULETYPES 4 // Number of existing module types, need to update manually :(
