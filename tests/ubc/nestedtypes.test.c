@@ -15,19 +15,13 @@ int main()
     ubcparser_t parser;
     ubcparserconfig_t config;
 
-    ubcfile_t files[] = {"main.ubc", "type inner {int count;int length;} type outer {inner stuff;}"};
+    ubcfile_t files[] = {{"main.ubc", "type inner {int count;int length;} type outer {inner stuff;}"}};
+    // Double braces: One time for the array, one time for the struct inside
 
-    config.foreign_functions = NULL;
-    config.function_count = 0;
+    ParserConfig_Init(&config);
     config.file_count = 1;
     config.files = files;
-    config.type_count = 0;
-    config.foreign_types = NULL;
-    config.userdata = NULL;
     config.error_report = error_report;
-    config.free_function    = NULL;
-    config.malloc_function  = NULL;
-    config.realloc_function = NULL;
 
     int create_code = Parser_Create(&parser, &config);
     assert(create_code == EXIT_SUCCESS);
