@@ -1173,6 +1173,10 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
             symbol      = UBCDEBUGSYMBOL_FLOAT_SUBTRACT;
             explanation = "Subtract the two most recently pushed floats";
             break;
+        
+        case UBCADDITIONOPERATOR_NONE:
+            _Parser_ReportError(parser, "No file", -1, "Addition operator NONE for two float operands.", UBCPARSERERROR_INTERNAL);
+            return EXIT_FAILURE;
         }
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
@@ -1196,6 +1200,10 @@ int _Parser_GenerateAdditionBytecode(ubcparser_t* parser, ubcadditionexpression_
             symbol      = UBCDEBUGSYMBOL_INT_SUBTRACT;
             explanation = "Subtract the two most recently pushed ints";
             break;
+        
+        case UBCADDITIONOPERATOR_NONE:
+            _Parser_ReportError(parser, "No file", -1, "Addition operator NONE for two int operands.", UBCPARSERERROR_INTERNAL);
+            return EXIT_FAILURE;
         }
 
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, explanation, symbol);
@@ -2181,7 +2189,6 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
     }
 
     size_t float_typesize = _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_FLOAT_TYPENAME));
-    size_t int_typesize   = _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME));
     size_t bool_typesize  = _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME));
 
     int emit_code, fixup_code;
@@ -2441,6 +2448,10 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
 
         case UBCLOGICOPERATOR_XOR:
             break;
+        
+        case UBCLOGICOPERATOR_NONE:
+            // TODO: Add error messsage
+            return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
