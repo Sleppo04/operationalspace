@@ -386,11 +386,11 @@ bool _IsTypenameIdentifierToken(token_t* token)
 size_t _Parser_BuiltInTypeSize(char* typename, size_t name_length)
 {
     if (strncmp(typename, UBC_BOOL_TYPENAME, name_length) == 0) 
-        return 1;
+        return UBC_BOOL_BYTE_SIZE;
     if (strncmp(typename, UBC_INT_TYPENAME, name_length) == 0) 
-        return 4;
+        return UBC_INT_BYTE_SIZE;
     if (strncmp(typename, UBC_FLOAT_TYPENAME, name_length) == 0) 
-        return 4;
+        return UBC_FLOAT_BYTE_SIZE;
     if (strncmp(typename, TT_UBC_STRING_TYPENAME, name_length) == 0) 
         return SIZE_MAX; /// TODO: Change this when strings are implemented
     
@@ -2275,13 +2275,13 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
         memset(bytecode + 1, 0xFF, 4); // Clear the target for now
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 5, "Push address of conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
         if (emit_code) return emit_code;
-        _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
+        _Scopes_IncreaseTemporaryBytes(parser, UBC_ADDRESS_BYTE_SIZE);
 
         bytecode[0] = jump_opcode;
         emit_code = _Parser_EmitBytecodeBytes(parser, &bytecode, 1, "Conditional Jump", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
         if (emit_code) return emit_code;
 
-        emit_code = _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+        emit_code = _Parser_BytecodePopUnusedBytes(parser, UBC_ADDRESS_BYTE_SIZE);
         if (emit_code) return emit_code;
 
         bytecode[0] = UBC_OP_PUSH8i;
@@ -2355,11 +2355,11 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
             _Scopes_DecreaseTemporaryBytes(parser, bool_typesize * 2);
 
             bytecode[0] = UBC_OP_PUSH32i;
-            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            memset(bytecode + 1, 0, UBC_ADDRESS_BYTE_SIZE);
             first_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
             emit_code   = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
             if (emit_code) return emit_code;
-            _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
+            _Scopes_IncreaseTemporaryBytes(parser, UBC_ADDRESS_BYTE_SIZE);
 
             // Jump if the topmost value was false
             bytecode[0] = UBC_OP_JZ;
@@ -2367,7 +2367,7 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
             if (emit_code) return emit_code;
 
             // Pop Address if no jump happened
-            emit_code = _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+            emit_code = _Parser_BytecodePopUnusedBytes(parser, UBC_ADDRESS_BYTE_SIZE);
             if (emit_code) return emit_code;
 
             bytecode[0] = UBC_OP_PUSH8i;
@@ -2382,18 +2382,18 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
             _Scopes_DecreaseTemporaryBytes(parser, bool_typesize * 2);
 
             bytecode[0] = UBC_OP_PUSH32i;
-            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            memset(bytecode + 1, 0, UBC_ADDRESS_BYTE_SIZE);
             second_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
             if (emit_code) return emit_code;
-            _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
+            _Scopes_IncreaseTemporaryBytes(parser, UBC_ADDRESS_BYTE_SIZE);
             
             bytecode[0] = UBC_OP_JZ;
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if second operand of \"and\" was false.", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
             if (emit_code) return emit_code;
 
             // Pop address if jump was skipped
-            _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+            _Parser_BytecodePopUnusedBytes(parser, UBC_ADDRESS_BYTE_SIZE);
 
             // Nothing skipped all tests for false failed
             bytecode[0] = UBC_OP_PUSH8i;
@@ -2403,14 +2403,14 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
 
             // Skip branch of failure
             bytecode[0] = UBC_OP_JMPi;
-            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            memset(bytecode + 1, 0, UBC_ADDRESS_BYTE_SIZE);
             skip_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Skip branch of failure in and operator", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
             if (emit_code) return emit_code;
 
             // Failure on first compare
             current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
-            emit_code = _Parser_ClosureFixBytecodeIndex(parser, first_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, first_failure_fixup, &current_position, UBC_ADDRESS_BYTE_SIZE);
             if (emit_code) return emit_code;
 
             // The second operand is still pushed
@@ -2419,7 +2419,7 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
 
             // second jump now jumps here
             current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
-            emit_code = _Parser_ClosureFixBytecodeIndex(parser, second_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, second_failure_fixup, &current_position, UBC_ADDRESS_BYTE_SIZE);
             if (emit_code) return emit_code;
 
             bytecode[0] = UBC_OP_PUSH8i;
@@ -2429,7 +2429,7 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
 
             // Make the skip jump skip this part
             current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
-            emit_code = _Parser_ClosureFixBytecodeIndex(parser, skip_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, skip_failure_fixup, &current_position, UBC_ADDRESS_BYTE_SIZE);
             if (emit_code) return emit_code;
 
             break;

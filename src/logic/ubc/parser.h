@@ -16,7 +16,11 @@
 #include "../dynamicbuffer/dynamicbuffer.h"
 #include "../util.h"
 
-#define ADDRESS_BYTE_SIZE 4
+#define UBC_BOOL_BYTE_SIZE    1
+#define UBC_INT_BYTE_SIZE     4
+#define UBC_FLOAT_BYTE_SIZE   4
+#define UBC_ADDRESS_BYTE_SIZE 4
+
 #define UBC_TRUE_VALUE    0x01
 #define UBC_FALSE_VALUE   0x00
 
