@@ -1966,6 +1966,8 @@ int _Parser_ExpandLogicExpression(ubcparser_t* parser, ubcexpression_t* expressi
         return EXIT_SUCCESS;
     }
 
+    // TODO: Complete logic expression expanding
+    _Parser_ReportTopTracebackError(parser, "Logic expression expanding is not implemented yet");
     return EXIT_FAILURE;
 
     return EXIT_SUCCESS;
