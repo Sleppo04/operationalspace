@@ -219,7 +219,7 @@ int _Parser_ReportLexerTraceback(ubcparser_t* parser)
     }
 
     // Skip first file
-    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index + 1 != 0 ; lexer_index--) {
+    for (uint16_t lexer_index = parser->lexer_stack.stack_size - 2; lexer_index < parser->lexer_stack.stack_size ; lexer_index--) {
         lexer_t* lexer = parser->lexer_stack.lexers + lexer_index;
         report_code = _Parser_ReportError(parser, lexer->file, lexer->line, "included by", UBCPARSERERROR_PARSERTRACEBACK);
         if (report_code) {
@@ -955,13 +955,13 @@ char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclva
     ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
     if (variable == NULL) {
         char* format_format = "Reference to unknown variable \"%%.%ds\"";
-    char  format_buffer[strlen(format_format) + 10];
-    snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
-    int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
-    if (report_code) {
-        // Reporting formatted failed for memory reasons
-            _Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
-    }
+		char  format_buffer[strlen(format_format) + 10];
+		snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
+		int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
+		if (report_code) {
+			// Reporting formatted failed for memory reasons
+			_Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
+		}
         return NULL;
     }
 
@@ -2543,7 +2543,8 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
 
     // Decide whether it is going to be an assignment or an expression
 
-    return EXIT_SUCCESS;
+    // TODO: Implement this function
+    return EXIT_FAILURE;
 }
 
 int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
