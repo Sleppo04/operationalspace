@@ -5,8 +5,11 @@
 
 int error_report(void* data, const char* filename, int line, const char* message, enum UbcParserErrorType type)
 {
-    // There should be no errors reported
-    printf("%s\nReported in file %s, line %d\n", message, filename, line);
+    // This is expected to be called with an error about unkown variables
+    assert(strcmp(filename, "main.ubc") == 0);
+    assert(line == 1);
+    assert(type == UBCPARSERERROR_PARSERERROR);
+    assert(strcmp(message, "Reference to unknown variable \"name\"") == 0);
     exit(0);
 }
 
