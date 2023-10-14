@@ -17,6 +17,8 @@
 #include "../util.h"
 
 #define ADDRESS_BYTE_SIZE 4
+#define UBC_TRUE_VALUE    0x01
+#define UBC_FALSE_VALUE   0x00
 
 
 

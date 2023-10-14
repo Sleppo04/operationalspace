@@ -149,22 +149,22 @@ int _UbcParserBuffer_EnsureFreeCapacity(ubcparser_t* parser, ubcparserbuffer_t* 
     if (buffer == NULL) return EINVAL;
 
     if (buffer->memory == NULL) {
-    	buffer->memory = _Parser_Malloc(parser, needed);
-    	if (buffer->memory == NULL) {
-    		return ENOMEM;
-    	}
-    	buffer->capacity = needed;
+        buffer->memory = _Parser_Malloc(parser, needed);
+        if (buffer->memory == NULL) {
+            return ENOMEM;
+        }
+        buffer->capacity = needed;
 
     } else if (needed > (buffer->capacity - buffer->used)) {
-    	size_t new_capacity = buffer->capacity * 2;
-    	if (needed > (new_capacity - buffer->used)) {
-    		new_capacity = buffer->capacity + needed;
-    	}
+        size_t new_capacity = buffer->capacity * 2;
+        if (needed > (new_capacity - buffer->used)) {
+            new_capacity = buffer->capacity + needed;
+        }
 
-    	void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
-    	if (new_memory == NULL) return ENOMEM;
-    	buffer->memory   = new_memory;
-    	buffer->capacity = new_capacity;
+        void* new_memory = _Parser_Realloc(parser, buffer->memory, new_capacity, buffer->capacity);
+        if (new_memory == NULL) return ENOMEM;
+        buffer->memory   = new_memory;
+        buffer->capacity = new_capacity;
     }
 
     return EXIT_SUCCESS;
@@ -190,7 +190,7 @@ void _UbcParserBuffer_Destroy(ubcparser_t* parser, ubcparserbuffer_t* buffer)
     if (parser == NULL) return;
     if (buffer == NULL) return;
     if (buffer->memory != NULL) {
-    	_Parser_Free(parser, buffer->memory, buffer->capacity);
+        _Parser_Free(parser, buffer->memory, buffer->capacity);
     }
     buffer->memory   = NULL;
     buffer->used     = 0;
@@ -288,14 +288,14 @@ int _Parser_ReportUnexpectedToken(ubcparser_t* parser, const char* message, cons
 
     char* result_string = _Parser_Malloc(parser, result_length);
     if (result_string != NULL) {
-    	snprintf(result_string, result_length, format, message, expected, unexpected.ptr, unexpected.value.length > 64 ? "..." : "");
+        snprintf(result_string, result_length, format, message, expected, unexpected.ptr, unexpected.value.length > 64 ? "..." : "");
 
-        	lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
-    	_Parser_ReportError(parser, top_lexer.file, unexpected.line, result_string, UBCPARSERERROR_PARSERERROR);
-    	_Parser_ReportLexerTraceback(parser);
-    	_Parser_Free(parser, result_string, result_length);
+            lexer_t top_lexer = parser->lexer_stack.lexers[parser->lexer_stack.stack_size - 1];
+        _Parser_ReportError(parser, top_lexer.file, unexpected.line, result_string, UBCPARSERERROR_PARSERERROR);
+        _Parser_ReportLexerTraceback(parser);
+        _Parser_Free(parser, result_string, result_length);
     } else {
-    	_Parser_ReportTopTracebackError(parser, "Unable to allocate memory for a detailed error message: parser encountered an unexpected token.");
+        _Parser_ReportTopTracebackError(parser, "Unable to allocate memory for a detailed error message: parser encountered an unexpected token.");
     }
 
     return EXIT_SUCCESS;
@@ -470,14 +470,14 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
             char* format_format = "Cannot access member path %%.%ds of built-in type %%.%ds";
         char* format = _Parser_snprintf(parser, format_format, current_path.path_length, name_length);
         if (format == NULL) {
-    	    // printing failed for memory reasons
-    	    _Parser_ReportTopTracebackError(parser, "Could not allocate detailed error message. Cannot access member of built-in type.");
-    	    return NULL;
+            // printing failed for memory reasons
+            _Parser_ReportTopTracebackError(parser, "Could not allocate detailed error message. Cannot access member of built-in type.");
+            return NULL;
         }
 
         if (_Parser_ReportFormattedTracebackError(parser, format, current_path.variable_path, member_typename)) {
-    	    // Need not free here, it is done below
-    	    _Parser_ReportTopTracebackError(parser, "Could not allocated detailed error message. Cannot access member of built-in type.");
+            // Need not free here, it is done below
+            _Parser_ReportTopTracebackError(parser, "Could not allocated detailed error message. Cannot access member of built-in type.");
         }
 
         // If you remove this free, add one to the if above
@@ -850,7 +850,7 @@ int _Scopes_AddScope(ubcparser_t* parser, enum UbcScopeType type)
     _UbcParserBuffer_Create(parser, &(new_scope.variables));
 
     if (_UbcParserBuffer_Write(parser, &(parser->scopes), &new_scope, sizeof(ubcscope_t))) {
-    	return ENOMEM;
+        return ENOMEM;
     }
 
     return EXIT_SUCCESS;
@@ -1009,20 +1009,20 @@ uintptr_t _Parser_ClosureStoreExplanationString(ubcparser_t* parser, char* strin
 
     if (! parser->config.optimize_explanations) {
 
-    	int write_code = _UbcParserBuffer_Write(parser, &(closure->string_storage), string, string_length);
-    	if (write_code) return UINTPTR_MAX;
+        int write_code = _UbcParserBuffer_Write(parser, &(closure->string_storage), string, string_length);
+        if (write_code) return UINTPTR_MAX;
 
-    	return string_position;
+        return string_position;
     }
 
     // Possibly a reverse search could speed it up, but I didn't want to implement that
     char* search_position = closure->string_storage.memory;
     while ((uintptr_t) search_position - (uintptr_t) closure->string_storage.memory < (uintptr_t) closure->string_storage.used) {
-    	if (strncmp(search_position, string, string_length) == 0) {
-    		return (uintptr_t) search_position - (uintptr_t) closure->string_storage.memory;
-    	}
+        if (strncmp(search_position, string, string_length) == 0) {
+            return (uintptr_t) search_position - (uintptr_t) closure->string_storage.memory;
+        }
 
-    	search_position += strlen(search_position);
+        search_position += strlen(search_position);
     }
 
     int write_code = _UbcParserBuffer_Write(parser, &(closure->string_storage), string, string_length);
@@ -1047,23 +1047,23 @@ int _Parser_ClosureStoreExplanation(ubcparser_t* parser, uintptr_t index, uintpt
     ubcparserclosure_t* closure = &(parser->closure);
 
     if (! parser->config.store_explanations) {
-    	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
     }
 
     int write_code;
     ubcbytecodeexplanation_t explanation;
 
     if (parser->config.store_strings) {
-    	uintptr_t stored_string_position = _Parser_ClosureStoreExplanationString(parser, string_explanation);
-    	explanation.string_position = stored_string_position;
+        uintptr_t stored_string_position = _Parser_ClosureStoreExplanationString(parser, string_explanation);
+        explanation.string_position = stored_string_position;
 
-    	if (explanation.string_position == UINTPTR_MAX) {
-    		_Parser_ReportError(parser, "No file", -1, "Failed to store explanation string.", UBCPARSERERROR_INTERNAL);
-    		return ENOMEM;
-    	}
+        if (explanation.string_position == UINTPTR_MAX) {
+            _Parser_ReportError(parser, "No file", -1, "Failed to store explanation string.", UBCPARSERERROR_INTERNAL);
+            return ENOMEM;
+        }
 
     } else {
-    	explanation.string_position = UINTPTR_MAX;
+        explanation.string_position = UINTPTR_MAX;
     }
 
     explanation.symbolic = symbolic_explanation;
@@ -1092,18 +1092,18 @@ int _Parser_EmitBytecodeBytes(ubcparser_t* parser, void* bytes, size_t count, ch
 {
     if (parser->config.bytecode_callback != NULL)
     if (parser->config.bytecode_callback(parser->config.userdata, bytes, count, string_explanation, symbolic_explanation)) {
-    	_Parser_ReportError(parser, "No file", -1, "Bytecode callback returned nonzero error indicator", UBCPARSERERROR_INTERNAL);
-    	return EXIT_FAILURE;
+        _Parser_ReportError(parser, "No file", -1, "Bytecode callback returned nonzero error indicator", UBCPARSERERROR_INTERNAL);
+        return EXIT_FAILURE;
     }
 
     if (_Parser_ClosureStoreExplanation(parser, parser->closure.bytecode.used, count, string_explanation, symbolic_explanation)) {
-    	_Parser_ReportError(parser, "No file", -1, "Failed to store bytecode explanation in closure", UBCPARSERERROR_INTERNAL);
-    	return ENOMEM;
+        _Parser_ReportError(parser, "No file", -1, "Failed to store bytecode explanation in closure", UBCPARSERERROR_INTERNAL);
+        return ENOMEM;
     }
 
     if (_Parser_ClosureAppendBytecode(parser, bytes, count)) {
-    	_Parser_ReportError(parser, "No file", -1, "Failed to append bytecode to closure.", UBCPARSERERROR_INTERNAL);
-    	return ENOMEM;
+        _Parser_ReportError(parser, "No file", -1, "Failed to append bytecode to closure.", UBCPARSERERROR_INTERNAL);
+        return ENOMEM;
     }
 
     return EXIT_SUCCESS;
@@ -1116,7 +1116,7 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
     bytecode[0] = UBC_OP_PUSHSP;
 
     if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Push stack top address.", UBCDEBUGSYMBOL_PUSH_STACK_TOP)) {
-    	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
 
@@ -1124,17 +1124,17 @@ int _Parser_BytecodePopUnusedBytes(ubcparser_t* parser, uint32_t bytes)
     memcpy((void*) bytecode + 1, &bytes, 4);
 
     if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 5, "Push unused byte count integer literal", UBCDEBUGSYMBOL_PUSH_LITERAL_INT)) {
-    	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     bytecode[0] = UBC_OP_SUBU;
     if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Subtract unused byte count from stack top", UBCDEBUGSYMBOL_UNSIGNED_SUBTRACT)) {
-    	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     bytecode[0] = UBC_OP_POPSP;
     if (_Parser_EmitBytecodeBytes(parser, (void*) bytecode, 1, "Set changed stack top pointer, subtracted byte count will be 'forgotten'.", UBCDEBUGSYMBOL_SET_STACK_TOP)) {
-    	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     _Scopes_DecreaseTemporaryBytes(parser, bytes);
@@ -1548,8 +1548,8 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     {
     case UBCEXPRESSIONTYPE_LOGICAL:
         if (expression->as.logic->base.needs_parsing) {
-        	destination[0] = true;
-        	return EXIT_SUCCESS;
+            destination[0] = true;
+            return EXIT_SUCCESS;
         }
 
         _Parser_AssumeLookaheadFill(parser);
@@ -1557,7 +1557,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
         destination[0] = (lookahead_1.type == TT_AMPERSAND && lookahead_2.type == TT_AMPERSAND)
                         || (lookahead_1.type == TT_PIPE && lookahead_2.type == TT_PIPE)
-    					|| (lookahead_1.type == TT_HAT);
+                        || (lookahead_1.type == TT_HAT);
         return EXIT_SUCCESS;
         break;
 
@@ -1601,8 +1601,8 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         break;
     
     case UBCEXPRESSIONTYPE_NEGATE:
-    	destination[0] = expression->as.negation->base.needs_parsing;
-    	return EXIT_SUCCESS;
+        destination[0] = expression->as.negation->base.needs_parsing;
+        return EXIT_SUCCESS;
         break;
     
     case UBCEXPRESSIONTYPE_PARENTHESES:
@@ -1614,8 +1614,8 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
     
     case UBCEXPRESSIONTYPE_VALUE:
         ubcvalueexpression_t* value = expression->as.value;
-    	destination[0] = value->base.needs_parsing;
-    	return EXIT_SUCCESS;
+        destination[0] = value->base.needs_parsing;
+        return EXIT_SUCCESS;
         break;
 
     default:
@@ -1631,9 +1631,9 @@ int _Parser_ExpandCompareExpression(ubcparser_t* parser, ubcexpression_t* expres
     ubccompareexpression_t* comparison = expression->as.comparison;
 
     if (! comparison->base.needs_parsing && comparison->left_side_typename != NULL) {
-    	_Parser_ReportUnexpectedToken(parser, "Unexpected second comparison operator token at the end of comparison expression.", "None", parser->lookahead.tokens[0]);
+        _Parser_ReportUnexpectedToken(parser, "Unexpected second comparison operator token at the end of comparison expression.", "None", parser->lookahead.tokens[0]);
 
-    	return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 
     if (comparison->base.needs_parsing) {
@@ -1650,7 +1650,7 @@ int _Parser_ExpandCompareExpression(ubcparser_t* parser, ubcexpression_t* expres
         comparison->base.needs_parsing = false;
         return EXIT_SUCCESS;
     } else {
-    	comparison->left_side_typename = comparison->child_expression.base.result_typename;
+        comparison->left_side_typename = comparison->child_expression.base.result_typename;
     }
 
     // Left hand side is present, parse operator and right hand side
@@ -1708,7 +1708,7 @@ int _Parser_ExpandAdditionExpression(ubcparser_t* parser, ubcexpression_t* expre
         int generate_code = _Parser_GenerateAdditionBytecode(parser, addition);
 
         if (generate_code) {
-    	    return generate_code;
+            return generate_code;
         }
     }
     if (!addition->base.needs_parsing) {
@@ -1947,15 +1947,15 @@ int _Parser_ExpandLogicExpression(ubcparser_t* parser, ubcexpression_t* expressi
     ubclogicexpression_t* logic = expression->as.logic;
 
     if (logic->base.needs_parsing) {
-    	_Expressions_InitializeCompareExpression(&(logic->child_expression));
-    	logic->child_expression.base.parent.type = UBCEXPRESSIONTYPE_LOGICAL;
-    	logic->child_expression.base.parent.as.logic = logic;
+        _Expressions_InitializeCompareExpression(&(logic->child_expression));
+        logic->child_expression.base.parent.type = UBCEXPRESSIONTYPE_LOGICAL;
+        logic->child_expression.base.parent.as.logic = logic;
 
-    	expression->as.comparison = &(logic->child_expression);
-    	expression->type = UBCEXPRESSIONTYPE_COMPARISON;
+        expression->as.comparison = &(logic->child_expression);
+        expression->type = UBCEXPRESSIONTYPE_COMPARISON;
 
-    	logic->base.needs_parsing = false;
-    	return EXIT_SUCCESS;
+        logic->base.needs_parsing = false;
+        return EXIT_SUCCESS;
     }
 
     return EXIT_FAILURE;
@@ -2009,37 +2009,37 @@ int _Parser_FinalizeLiteralExpression(ubcparser_t* parser, ubcvalueexpression_t*
     int emit_code = EXIT_SUCCESS;
     
     switch (literal->type) {
-    	case UBCLITERALTYPE_FLOAT:
+        case UBCLITERALTYPE_FLOAT:
             bytecode[0]  = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &(literal->as.floating), sizeof(float));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push float literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_FLOAT);
             _Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_FLOAT_TYPENAME, strlen(UBC_BOOL_TYPENAME)));
             value->base.result_typename = UBC_FLOAT_TYPENAME;
-    		break;
+            break;
 
-    	case UBCLITERALTYPE_BOOL:
+        case UBCLITERALTYPE_BOOL:
             bytecode[0] = UBC_OP_PUSH8i;
             memcpy(bytecode + 1, &literal->as.boolean, sizeof(bool));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push bool literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
-    		_Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME)));
+            _Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME)));
             value->base.result_typename = UBC_BOOL_TYPENAME;
             break;
 
-    	case UBCLITERALTYPE_INT:
+        case UBCLITERALTYPE_INT:
             bytecode[0] = UBC_OP_PUSH32i;
             memcpy(bytecode + 1, &literal->as.integer, sizeof(int32_t));
             emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push integer literal from value expression", UBCDEBUGSYMBOL_PUSH_LITERAL_INT);
-    		_Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
+            _Scopes_IncreaseTemporaryBytes(parser, _Parser_BuiltInTypeSize(UBC_INT_TYPENAME, strlen(UBC_INT_TYPENAME)));
             value->base.result_typename = UBC_INT_TYPENAME;
             break;
 
-    	case UBCLITERALTYPE_STRING:
-    		_Parser_ReportTopTracebackError(parser, "Strings are not supported yet.");
-    		return EXIT_FAILURE;
+        case UBCLITERALTYPE_STRING:
+            _Parser_ReportTopTracebackError(parser, "Strings are not supported yet.");
+            return EXIT_FAILURE;
 
-    	default:
-    		_Parser_ReportTopTracebackError(parser, "Cannot finalize literal with literal type \"None\"");
-    		return EXIT_FAILURE;
+        default:
+            _Parser_ReportTopTracebackError(parser, "Cannot finalize literal with literal type \"None\"");
+            return EXIT_FAILURE;
     }
 
     return emit_code;
@@ -2050,13 +2050,13 @@ int _Parser_FinalizeParsedValueExpression(ubcparser_t* parser, ubcexpression_t* 
     ubcvalueexpression_t* value = expression->as.value;
 
     switch (value->type) {
-    	case UBCVALUETYPE_LITERAL:
-    		return _Parser_FinalizeLiteralExpression(parser, value);
-    		break;
+        case UBCVALUETYPE_LITERAL:
+            return _Parser_FinalizeLiteralExpression(parser, value);
+            break;
 
-    	default:
-    		_Parser_ReportTopTracebackError(parser, "Cannot finalize parsed value expression with value type \"None\"");
-    		return EXIT_FAILURE;
+        default:
+            _Parser_ReportTopTracebackError(parser, "Cannot finalize parsed value expression with value type \"None\"");
+            return EXIT_FAILURE;
     }
 
     return EXIT_SUCCESS;
@@ -2217,44 +2217,44 @@ int _Parser_FinalizeParsedComparisonExpression(ubcparser_t* parser, ubcexpressio
     switch (comparison->comparator_type)
     {
     case UBCCOMPARATORTYPE_EQUALITY:
-    	jump_opcode = UBC_OP_JZ;
-    	false_push  = false;
-    	true_push   = true;
+        jump_opcode = UBC_OP_JZ;
+        false_push  = false;
+        true_push   = true;
         break;
     
     case UBCCOMPARATORTYPE_GREATEREQUALS:
-    	jump_opcode = UBC_OP_JLT;  // inverse condition
-    	false_push  = true;        // push true if it is not less than
-    	true_push   = false;
-    	break;
+        jump_opcode = UBC_OP_JLT;  // inverse condition
+        false_push  = true;        // push true if it is not less than
+        true_push   = false;
+        break;
 
     case UBCCOMPARATORTYPE_GREATERTHAN:
-    	jump_opcode = UBC_OP_JGT;
-    	false_push  = false;
-    	true_push   = true;
-    	break;
+        jump_opcode = UBC_OP_JGT;
+        false_push  = false;
+        true_push   = true;
+        break;
 
     case UBCCOMPARATORTYPE_INEQUALITY:
-    	jump_opcode = UBC_OP_JZ;
-    	false_push  = true;
-    	true_push   = false;
-    	break;
+        jump_opcode = UBC_OP_JZ;
+        false_push  = true;
+        true_push   = false;
+        break;
 
     case UBCCOMPARATORTYPE_LESSEQUALS:
-    	jump_opcode = UBC_OP_JGT; // invert the condition
-    	false_push  = true;      // push true if it is not greater than
-    	true_push   = false;
-    	break;
+        jump_opcode = UBC_OP_JGT; // invert the condition
+        false_push  = true;      // push true if it is not greater than
+        true_push   = false;
+        break;
 
     case UBCCOMPARATORTYPE_LESSTHAN:
-    	jump_opcode = UBC_OP_JLT;
-    	false_push  = true;
-    	true_push   = false;
-    	break;
+        jump_opcode = UBC_OP_JLT;
+        false_push  = true;
+        true_push   = false;
+        break;
 
     default:
-    	_Parser_ReportTopTracebackError(parser, "Cannot generate bytecode for comparison of type \"None\"");
-    	return EXIT_FAILURE;
+        _Parser_ReportTopTracebackError(parser, "Cannot generate bytecode for comparison of type \"None\"");
+        return EXIT_FAILURE;
         break;
     }
 
@@ -2313,49 +2313,134 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
 {
     ubclogicexpression_t* logic = expression->as.logic;
     if (logic->former_operand_type == NULL && logic->operator == UBCLOGICOPERATOR_NONE) {
-    	// There was no logic operation, just a single child expression
-    	logic->base.result_typename = logic->child_expression.base.result_typename;
-    	return EXIT_SUCCESS;
+        // There was no logic operation, just a single child expression
+        logic->base.result_typename = logic->child_expression.base.result_typename;
+        return EXIT_SUCCESS;
     }
 
     /// TODO: More operators
 
     if (logic->operator != UBCLOGICOPERATOR_NONE) {
-    	_Parser_ReportTopTracebackError(parser, "Generating bytecode for logic operations is not implemented yet.");
-    	logic->base.result_typename = NULL;
-    	return EXIT_FAILURE;
+        _Parser_ReportTopTracebackError(parser, "Generating bytecode for logic operations is not implemented yet.");
+        logic->base.result_typename = NULL;
+        return EXIT_FAILURE;
     }
 
+    size_t bool_typesize  = _Parser_BuiltInTypeSize(UBC_BOOL_TYPENAME, strlen(UBC_BOOL_TYPENAME));
+    int emit_code;
+    uint8_t bytecode[5];
+    uint32_t current_position;
     switch (logic->operator) {
-    	case UBCLOGICOPERATOR_AND:
-    		/*PUSH8i true
-    		 *CMPB
-    		 *JZ
-    		 *PUSH8i false
-    		 *JMP
-    		 *PUSH8i true
-    		 *CMPB
-    		 *JZ
-    		 *PUSH8i false
-    		 *JMP
-    		 *PUSH8i true
-    		 */
-    		break;
+        case UBCLOGICOPERATOR_AND:
+            uint32_t first_failure_fixup;
+            uint32_t second_failure_fixup;
+            uint32_t skip_failure_fixup;
 
-    	case UBCLOGICOPERATOR_NAND:
-    		/*PUSH8i false
-    		 *CMPB
-    		 *JZ
-    		 *PUSH8i false
-    		 *PUSH8i
-    		 */
-    		break;
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = UBC_FALSE_VALUE;
+            emit_code   = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push comparison value for operator \"and\".", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+            _Scopes_IncreaseTemporaryBytes(parser, bool_typesize);
 
-    	case UBCLOGICOPERATOR_OR:
-    		break;
+            bytecode[0] = UBC_OP_CMPB;
+            emit_code   = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Compare first operand with false", UBCDEBUGSYMBOL_COMPARE_BOOLEANS);
+            if (emit_code) return emit_code;
+            _Scopes_DecreaseTemporaryBytes(parser, bool_typesize * 2);
 
-    	case UBCLOGICOPERATOR_XOR:
-    		break;
+            bytecode[0] = UBC_OP_PUSH32i;
+            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            first_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
+            emit_code   = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
+            if (emit_code) return emit_code;
+            _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
+
+            // Jump if the topmost value was false
+            bytecode[0] = UBC_OP_JZ;
+            emit_code   = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if first operand of \"and\" was false.", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
+            if (emit_code) return emit_code;
+
+            // Pop Address if no jump happened
+            emit_code = _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+            if (emit_code) return emit_code;
+
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = UBC_FALSE_VALUE;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push comparison value for operator \"and\".", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+            _Scopes_IncreaseTemporaryBytes(parser, bool_typesize);
+
+            bytecode[0] = UBC_OP_CMPB;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Compare second operand with false", UBCDEBUGSYMBOL_COMPARE_BOOLEANS);
+            if (emit_code) return emit_code;
+            _Scopes_DecreaseTemporaryBytes(parser, bool_typesize * 2);
+
+            bytecode[0] = UBC_OP_PUSH32i;
+            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            second_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Push conditional jump target", UBCDEBUGSYMBOL_PUSH_JUMP_TARGET);
+            if (emit_code) return emit_code;
+            _Scopes_IncreaseTemporaryBytes(parser, ADDRESS_BYTE_SIZE);
+            
+            bytecode[0] = UBC_OP_JZ;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 1, "Jump if second operand of \"and\" was false.", UBCDEBUGSYMBOL_SKIP_IF_JUMP);
+            if (emit_code) return emit_code;
+
+            // Pop address if jump was skipped
+            _Parser_BytecodePopUnusedBytes(parser, ADDRESS_BYTE_SIZE);
+
+            // Nothing skipped all tests for false failed
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = UBC_TRUE_VALUE;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push \"and\" result: true", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+
+            // Skip branch of failure
+            bytecode[0] = UBC_OP_JMPi;
+            memset(bytecode + 1, 0, ADDRESS_BYTE_SIZE);
+            skip_failure_fixup = _Parser_ClosureGetCurrentBytecodeIndex(parser) + 1;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 5, "Skip branch of failure in and operator", UBCDEBUGSYMBOL_SKIP_ELSE_JUMP);
+            if (emit_code) return emit_code;
+
+            // Failure on first compare
+            current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, first_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            if (emit_code) return emit_code;
+
+            // The second operand is still pushed
+            _Scopes_IncreaseTemporaryBytes(parser, bool_typesize);
+            _Parser_BytecodePopUnusedBytes(parser, bool_typesize);
+
+            // second jump now jumps here
+            current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, second_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            if (emit_code) return emit_code;
+
+            bytecode[0] = UBC_OP_PUSH8i;
+            bytecode[1] = UBC_FALSE_VALUE;
+            emit_code = _Parser_EmitBytecodeBytes(parser, bytecode, 2, "Push \"and\" result: false", UBCDEBUGSYMBOL_PUSH_LITERAL_BOOL);
+            if (emit_code) return emit_code;
+
+            // Make the skip jump skip this part
+            current_position = _Parser_ClosureGetCurrentBytecodeIndex(parser);
+            emit_code = _Parser_ClosureFixBytecodeIndex(parser, skip_failure_fixup, &current_position, ADDRESS_BYTE_SIZE);
+            if (emit_code) return emit_code;
+
+            break;
+
+        case UBCLOGICOPERATOR_NAND:
+            /*PUSH8i false
+             *CMPB
+             *JZ
+             *PUSH8i false
+             *PUSH8i
+             */
+            break;
+
+        case UBCLOGICOPERATOR_OR:
+            break;
+
+        case UBCLOGICOPERATOR_XOR:
+            break;
     }
 
     return EXIT_SUCCESS;
@@ -2387,9 +2472,9 @@ int _Parser_FinalizeParsedExpression(ubcparser_t* parser, ubcexpression_t* expre
         case UBCEXPRESSIONTYPE_LOGICAL:
             return _Parser_FinalizeParsedLogicExpression(parser, expression);
 
-    	default:
-    		_Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed expression.");
-    		return EXIT_FAILURE;
+        default:
+            _Parser_ReportTopTracebackError(parser, "Encountered unexpected expression type \"none\" when finalizing parsed expression.");
+            return EXIT_FAILURE;
     }
 }
 
