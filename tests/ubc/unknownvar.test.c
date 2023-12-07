@@ -3,11 +3,21 @@
 #include <assert.h>
 #include <stdio.h>
 
+bool variable_unknown = false;
+
 int error_report(void* data, const char* filename, int line, const char* message, enum UbcParserErrorType type)
 {
-    // There should be no errors reported
-    printf("%s in file %s:%d\n", message, filename, line);
-    assert(false);
+	if (variable_unknown && type == UBCPARSERERROR_PARSERTRACEBACK) return EXIT_SUCCESS;
+
+    // This is expected to be called with an error about unkown variables
+    assert(strcmp(filename, "main.ubc") == 0);
+    assert(line == 1);
+    assert(type == UBCPARSERERROR_PARSERERROR);
+    assert(strcmp(message, "Reference to unknown variable \"name\"") == 0);
+
+    variable_unknown = true;
+
+    return EXIT_SUCCESS;
 }
 
 int main()
@@ -15,10 +25,10 @@ int main()
     ubcparser_t parser;
     ubcparserconfig_t config;
 
-    ubcfile_t files[] = {{"main.ubc", "include \"second.ubc\";"}, {"second.ubc", ""}};
+    ubcfile_t files[] = {{"main.ubc", "name"}};
 
     ParserConfig_Init(&config);
-    config.file_count = 2;
+    config.file_count = 1;
     config.files = files;
     config.error_report = error_report;
 
@@ -30,5 +40,7 @@ int main()
 
     Parser_Destroy(&parser);
 
-    return 0;
+    assert(variable_unknown == true);
+
+    return EXIT_SUCCESS;
 }

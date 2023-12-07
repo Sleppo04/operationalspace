@@ -15,17 +15,10 @@ int main()
 
     ubcfile_t files[] = {"main.ubc", ""};
 
-    config.foreign_functions = NULL;
-    config.function_count = 0;
+    ParserConfig_Init(&config);
     config.file_count = 1;
     config.files = files;
-    config.type_count = 0;
-    config.foreign_types = NULL;
-    config.userdata = NULL;
     config.error_report = error_report;
-    config.free_function    = NULL;
-    config.malloc_function  = NULL;
-    config.realloc_function = NULL;
 
     int create_code = Parser_Create(&parser, &config);
     assert(create_code == EXIT_SUCCESS);
