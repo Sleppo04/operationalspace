@@ -44,3 +44,22 @@ tile_t* World_GetTile(world_t* world, int x, int y)
 
     return &sector->tiles[x%SECTOR_SIZE][y%SECTOR_SIZE];
 }
+
+void World_DebugDump(world_t* world, char* filename)
+{
+    FILE* f;
+    tile_t* t;
+
+    f = fopen(filename, "wb");
+
+    for (int x = 0; x < world->sector_cols * SECTOR_SIZE; x++) {
+        for (int y = 0; y < world->sector_rows * SECTOR_SIZE; y++) {
+            t = World_GetTile(world, x, y);
+            fwrite(&t->glyph, 1, 1, f);
+        }
+    }
+
+    fclose(f);
+    printf("DEBUG: World (%ix%i) successfully dumped to %s!\n", world->sector_cols * SECTOR_SIZE, world->sector_rows * SECTOR_SIZE, filename);
+    return;
+}

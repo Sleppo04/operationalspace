@@ -28,7 +28,7 @@ int main()
 
     World_Create(&world, 8, 8);
     WorldGen_GenerateWorld(&world, features, state);
-
+	
     Window_CreateWindow(80, 24, &win);
     UI_Init(&world);
     Window_ClearScreen();
@@ -37,5 +37,8 @@ int main()
     getchar();
     Window_ResetColor();
 	Window_DestroyWindow(&win);
-    return 0;
+    
+	World_DebugDump(&world, "worldout");
+
+	return 0;
 }

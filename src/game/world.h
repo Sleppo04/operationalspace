@@ -39,4 +39,8 @@ int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destinati
 /// @return Pointer to the requested tile struct
 tile_t* World_GetTile(world_t* world, int x, int y);
 
+/// @brief Dump world in a raw binary format for debugging
+/// @param filename The name of the file to dump the world to
+void World_DebugDump(world_t* world, char* filename);
+
 #endif
