@@ -1,5 +1,5 @@
-#ifndef S_WORLD_H
-#define S_WORLD_H
+#ifndef WORLD_H
+#define WORLD_H
 
 #include <errno.h>
 #include <float.h>
@@ -37,4 +37,4 @@ tile_t* World_GetTile(world_t* world, int x, int y);
 /// @param filename The name of the file to dump the world to
 void World_DebugDump(world_t* world, char* filename);
 
-#endif // S_WORLD_H
+#endif // WORLD_H
