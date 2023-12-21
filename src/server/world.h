@@ -1,5 +1,5 @@
-#ifndef WORLD_H
-#define WORLD_H
+#ifndef WORLD_SERVER_H
+#define WORLD_SERVER_H
 
 #include <errno.h>
 #include <float.h>
@@ -12,10 +12,18 @@
 #include <sector.h>
 #include <feature.h>
 
-#include "../logic/arraylist/arraylist.h"
-#include "../logic/coordinate/coordinate.h"
-#include "../logic/rand/xoshiro256.h"
+#include <arraylist/arraylist.h>
+#include <coordinate/coordinate.h>
+#include <rand/xoshiro256.h>
 
+typedef struct World
+{
+    xoshiro256_state_t seed;
+    unsigned int       sectorsX;
+    unsigned int       sectorsY;
+    sector_t*          sectors;
+    arraylist_t        objects; // TODO: Better structure for accessing gameobjects faster! BSP?
+} world_t;
 
 void World_Create(world_t* world, unsigned int width, unsigned int height);
 
@@ -37,4 +45,4 @@ tile_t* World_GetTile(world_t* world, int x, int y);
 /// @param filename The name of the file to dump the world to
 void World_DebugDump(world_t* world, char* filename);
 
-#endif // WORLD_H
+#endif // WORLD_SERVER_H

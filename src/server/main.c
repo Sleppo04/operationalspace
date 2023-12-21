@@ -1,7 +1,8 @@
 #include <stdio.h>
 
-#include "game/sector.h"
-#include "game/worldgen.h"
+#include <world.h>
+#include <sector.h>
+#include <worldgen.h>
 
 int feature_provider(gameobject_t** destination, void* user_data __attribute__((unused)))
 {

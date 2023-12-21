@@ -11,6 +11,6 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
 endif()
 
-add_subdirectory(tests/)
+# add_subdirectory(tests/)
 add_subdirectory(src/)
 

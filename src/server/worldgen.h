@@ -10,9 +10,9 @@
 #include "feature.h"
 #include "world.h"
 
-#include "../logic/rand/opensimplex.h"
-#include "../logic/rand/xoshiro256.h"
-#include "../logic/dynamicbuffer/dynamicbuffer.h"
+#include <rand/opensimplex.h>
+#include <rand/xoshiro256.h>
+#include <dynamicbuffer/dynamicbuffer.h>
 
 
 typedef struct WorldGenData {

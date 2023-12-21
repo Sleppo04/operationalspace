@@ -4,8 +4,8 @@ void World_Create(world_t* world, unsigned int width, unsigned int height)
 {
     ArrayListNew(&world->objects);
     world->sectors = NULL;
-    world->sector_cols = width;
-    world->sector_rows = height;
+    world->sectorsX = width;
+    world->sectorsY = height;
 
     return;
 }
@@ -16,14 +16,14 @@ int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destinati
     
     if (world == NULL)
         return EINVAL;
-    if (row >= world->sector_rows)
+    if (row >= world->sectorsY)
         return EINVAL;
-    if (col >= world->sector_cols)
+    if (col >= world->sectorsX)
         return EINVAL;
     if (destination == NULL)
         return EDESTADDRREQ;
 
-    index = world->sector_rows * row + col;
+    index = world->sectorsY * row + col;
     destination[0] = world->sectors + index;
 
     return EXIT_SUCCESS;
@@ -38,7 +38,7 @@ tile_t* World_GetTile(world_t* world, int x, int y)
     sectorX = floor((float)x / SECTOR_SIZE);
     sectorY = floor((float)y / SECTOR_SIZE);
 
-    if(sectorX > (world->sector_cols - 1) || sectorY > (world->sector_rows - 1)) return NULL;
+    if(sectorX > (world->sectorsX - 1) || sectorY > (world->sectorsY - 1)) return NULL;
 
     World_GetSector(world, sectorX, sectorY, &sector);
 
@@ -52,14 +52,14 @@ void World_DebugDump(world_t* world, char* filename)
 
     f = fopen(filename, "wb");
 
-    for (int x = 0; x < world->sector_cols * SECTOR_SIZE; x++) {
-        for (int y = 0; y < world->sector_rows * SECTOR_SIZE; y++) {
+    for (int x = 0; x < world->sectorsX * SECTOR_SIZE; x++) {
+        for (int y = 0; y < world->sectorsY * SECTOR_SIZE; y++) {
             t = World_GetTile(world, x, y);
             fwrite(&t->glyph, 1, 1, f);
         }
     }
 
     fclose(f);
-    printf("DEBUG: World (%ix%i) successfully dumped to %s!\n", world->sector_cols * SECTOR_SIZE, world->sector_rows * SECTOR_SIZE, filename);
+    printf("DEBUG: World (%ix%i) successfully dumped to %s!\n", world->sectorsX * SECTOR_SIZE, world->sectorsY * SECTOR_SIZE, filename);
     return;
 }
