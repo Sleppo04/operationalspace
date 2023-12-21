@@ -1,19 +1,14 @@
 #include "ui.h"
 
-static worldview_t worldview;
-static sidebar_t sidebar;
-
-void UI_Init(world_t* world)
+void UI_Init()
 {
-    UI_WorldViewCreate(&worldview, world, 1, 1, 59, 16);
-    UI_SidebarCreate(&sidebar, 71, 1, 9, 24);
     return;
 }
 
 void UI_DrawStatusBar()
 {
     Window_SetPos(1, 24);
-    printf("Cursor: %-4i, %-4i                                                              ", worldview.cursorX, worldview.cursorY);
+    printf("Cursor: %-4i, %-4i                                                              ", 0, 0);
     return;
 }
 
@@ -35,5 +30,4 @@ void UI_DrawFrame()
     Window_SetColor(3, 0);
     Window_SetPos(1, 18);
     printf("Hiya~!\nI'm a script!\nYou can run me, if you reeeaaallyyy want to~! >_<\nUwU Rawr x3");
-    UI_WorldViewRender(&worldview);
 }

@@ -1,5 +1,3 @@
-target_sources(operational-space PRIVATE
-			sidebar.c
+target_sources(operationalspace PRIVATE
 			ui.c
-			window.c
-			worldview.c)
+			window.c)

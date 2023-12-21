@@ -8,7 +8,7 @@ int main()
     window_t win;
     
     Window_CreateWindow(80, 24, &win);
-    UI_Init(&world);
+    UI_Init();
     Window_ClearScreen();
     UI_DrawFrame();
 	
