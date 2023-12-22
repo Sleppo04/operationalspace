@@ -60,12 +60,4 @@
 
 #define UBC_OP_CMPU   0x24
 
-
-typedef struct ubcVM_s
-{
-    uint8_t  sr; // Status register
-    uint32_t ip; // Instruction pointer
-    void* memory;
-} ubcVM_t;
-
-#endif
+#endif // UBC_H
