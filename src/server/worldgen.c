@@ -2,7 +2,7 @@
 
 int Worldgen_NewEmptyWorld(world_t* destination)
 {
-    size_t sector_bytes = sizeof(sector_t) * destination->sector_cols * destination->sector_rows;
+    size_t sector_bytes = sizeof(sector_t) * destination->sectorsX * destination->sectorsY;
 
     destination->sectors = calloc(1, sector_bytes);
 
@@ -76,7 +76,7 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
     if (features == NULL) {
         return EINVAL;
     }
-    if (world->sector_rows == 0 || world->sector_cols == 0) {
+    if (world->sectorsY == 0 || world->sectorsX == 0) {
         return EINVAL;
     }
 
@@ -93,14 +93,13 @@ int WorldGen_GenerateWorld(world_t* world, feature_t* features, xoshiro256_state
         return ENOMEM;
     }
 
-    size_t world_cols = world->sector_cols * SECTOR_SIZE;
-    size_t world_rows = world->sector_rows * SECTOR_SIZE;
+    size_t world_cols = world->sectorsX * SECTOR_SIZE;
+    size_t world_rows = world->sectorsY * SECTOR_SIZE;
     int check_code;
     for (size_t row = 0; row < world_rows; row++) {
         for (size_t col = 0; col < world_cols; col++) {
             tile_t* tile = World_GetTile(world, row, col);
             tile->glyph = ' ';
-            tile->color = 15;
             check_code = WorldGen_CheckFeaturePlacement(tile, &data, col, row);
             if (check_code) {
                 //TODO: Destroy world

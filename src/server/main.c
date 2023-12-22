@@ -1,9 +1,8 @@
 #include <stdio.h>
 
-#include "ui/window.h"
-#include "ui/ui.h"
-#include "game/sector.h"
-#include "game/worldgen.h"
+#include <world.h>
+#include <sector.h>
+#include <worldgen.h>
 
 int feature_provider(gameobject_t** destination, void* user_data __attribute__((unused)))
 {
@@ -16,7 +15,6 @@ int feature_provider(gameobject_t** destination, void* user_data __attribute__((
 
 int main()
 {
-    window_t win;
     world_t world;
     feature_t features[2];
     xoshiro256_state_t state = {.state = {1, 2, 3, 4}};
@@ -29,15 +27,6 @@ int main()
     World_Create(&world, 8, 8);
     WorldGen_GenerateWorld(&world, features, state);
 	
-    Window_CreateWindow(80, 24, &win);
-    UI_Init(&world);
-    Window_ClearScreen();
-    UI_DrawFrame();
-	
-    getchar();
-    Window_ResetColor();
-	Window_DestroyWindow(&win);
-    
 	World_DebugDump(&world, "worldout");
 
 	return 0;

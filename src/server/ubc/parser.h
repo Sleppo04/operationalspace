@@ -7,14 +7,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <errorcodes.h>
+#include <lexer/lexer.h>
+#include <dynamicbuffer/dynamicbuffer.h>
+#include <util.h>
+
 #include "ubc.h"
 #include "types.h"
 #include "tokenreader.h"
-
-#include "../errorcodes.h"
-#include "../lexer/lexer.h"
-#include "../dynamicbuffer/dynamicbuffer.h"
-#include "../util.h"
 
 #define UBC_BOOL_BYTE_SIZE    1
 #define UBC_INT_BYTE_SIZE     4

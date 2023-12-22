@@ -2,7 +2,7 @@
 #define TOKENREADER_H
 
 #include <string.h>
-#include "../lexer/lexer.h"
+#include <lexer/lexer.h>
 
 #define TT_UBC_WHILE    1000
 #define TT_UBC_IF       1001
