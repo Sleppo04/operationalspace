@@ -1,4 +1,4 @@
-project(termtest)
+project(termtest C)
 
 add_executable(os-termtest
 			ansitest.c
@@ -11,7 +11,7 @@ add_executable(coordinates EXCLUDE_FROM_ALL coordinate.test.c
 set_target_properties(coordinates PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
 
-add_executable(lexer EXCLUDE_FROM_ALL lexertest.c 
+add_executable(lexer EXCLUDE_FROM_ALL lexertest.c
 					../src/logic/lexer/lexer.c)
 set_target_properties(lexer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 
