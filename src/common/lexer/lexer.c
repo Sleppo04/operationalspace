@@ -111,7 +111,7 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
         } else if (*lexer->pos == '\n') {
             lexer->line++;
         }
-        // Unknown unprintable symbol or \n, skipping...
+        // Unknown unprintable symbol, skipping...
         lexer->pos++;
         return Lexer_NextToken(lexer, token);
     } else {
