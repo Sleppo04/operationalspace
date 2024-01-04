@@ -108,16 +108,13 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
             token->ptr = lexer->pos;
             token->line = lexer->line;
             return; // return so that we don't increment position
-        }
-        if (*lexer->pos == '\n') {
+        } else if (*lexer->pos == '\n') {
             lexer->line++;
         }
         // Unknown unprintable symbol or \n, skipping...
         lexer->pos++;
         return Lexer_NextToken(lexer, token);
-    }
-
-    else {
+    } else {
         // TODO: Error Handling
         // Unknown printable symbol
         token->type = TT_EOF;
