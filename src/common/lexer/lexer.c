@@ -68,6 +68,11 @@ void _TokenizeIdentifier(lexer_t* lexer, token_t* token)
 
 void Lexer_NextToken(lexer_t* lexer, token_t* token)
 {
+    // Skip whitespaces
+    while (isspace(*lexer->pos)) {
+        lexer->pos++;
+    }
+
     // Single-character-tokens
          if (*lexer->pos == '[') *token = (token_t) { TT_LEFT_BRACKET, 0, lexer->pos, lexer->line };
     else if (*lexer->pos == ']') *token = (token_t) { TT_RIGHT_BRACKET, 0, lexer->pos, lexer->line };
@@ -102,20 +107,14 @@ void Lexer_NextToken(lexer_t* lexer, token_t* token)
             token->type = TT_EOF;
             token->ptr = lexer->pos;
             token->line = lexer->line;
-            return; // return so that we don't imcrement position
+            return; // return so that we don't increment position
         }
         if (*lexer->pos == '\n') {
             lexer->line++;
         }
         // Unknown unprintable symbol or \n, skipping...
         lexer->pos++;
-        Lexer_NextToken(lexer, token);
-    }
-
-    else if (isspace(*lexer->pos)) {
-        lexer->pos++;
-        Lexer_NextToken(lexer, token);
-        return;
+        return Lexer_NextToken(lexer, token);
     }
 
     else {
