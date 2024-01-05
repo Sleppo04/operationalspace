@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../src/ui/window.h"
+#include "../src/client/ui/window.h"
 
 void RegisTest()
 {
@@ -30,7 +30,7 @@ int main()
 {
     window_t win;
 	char choice;
-    
+
     Window_CreateWindow(80, 24, &win);
 	Window_SetCursorVisible(false);
     Window_ClearScreen();
@@ -40,7 +40,7 @@ int main()
 	printf("OperationalSpace Terminal Capability Test\n\n");
 	Window_ResetFormatting();
 
-	
+
 	// Text Formatting Test
 	printf("Test Normal\n");
 	Window_SetBold(true);
@@ -115,7 +115,7 @@ int main()
 		Window_SetColor(7, 0);
 		Window_SetBlinking(false);
 		printf(" for ReGIS test.");
-		
+
 		choice = getchar();
 		switch (choice) {
 			case 's':

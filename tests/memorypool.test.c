@@ -1,5 +1,5 @@
-#include "../src/logic/memorypool/memorypool.h"
-#include "../src/logic/memorypool/memoryarena.h"
+#include "../src/common/memorypool/memorypool.h"
+#include "../src/common/memorypool/memoryarena.h"
 
 #include <assert.h>
 #include <string.h>
@@ -60,7 +60,7 @@ void check_both(void)
     assert(!MemoryPool_AllocateArray(&pool, 274, (void**) &array));
     assert(MemoryPool_Allocate(&pool, (void**) &_) == ENOMEM);
     assert(MemoryPool_AllocateArray(&pool, 1, (void**) &_) == ENOMEM);
-    
+
     for (int i = 0; i < 50; i++) {
         assert(!MemoryPool_Free(&pool, first[i]));
         assert(!MemoryPool_Free(&pool, second[i]));
@@ -87,7 +87,7 @@ void check_both(void)
         assert(MemoryPool_Free(&pool, (void**) second[i]) == EXIT_SUCCESS);
         assert(MemoryPool_Free(&pool, (void**) first[i]) == EXIT_SUCCESS);
     }
-    
+
     MemoryPool_Destroy(&pool);
 }
 

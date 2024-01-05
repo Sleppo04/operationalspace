@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../src/logic/threading/threading.h"
+#include "../src/common/threading/threading.h"
 
 #ifdef _WIN32
 void foo(void* a)

@@ -1,4 +1,4 @@
-#include "../src/logic/rand/xoshiro256.h"
+#include "../src/common/rand/xoshiro256.h"
 
 #include <stdio.h>
 

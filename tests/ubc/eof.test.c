@@ -1,4 +1,4 @@
-#include "../../src/logic/ubc/parser.h"
+#include <parser.h>
 
 #include <assert.h>
 
