@@ -36,7 +36,7 @@ int main()
     assert(create_code == EXIT_SUCCESS);
 
     int parse_code = Parser_Parse(&parser, "main.ubc");
-    assert(parse_code == EXIT_SUCCESS);
+    assert(parse_code == EXIT_FAILURE); // Parsing fails, of course
 
     Parser_Destroy(&parser);
 
