@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <world.h>
 #include <sector.h>
 #include <feature.h>
 
@@ -35,7 +34,7 @@ void World_Create(world_t* world, unsigned int width, unsigned int height);
 /// @return int, errorcodes (EINVAL, EDESTADDRREQ)
 int World_GetSector(world_t* world, size_t row, size_t col, sector_t** destination);
 
-/// @brief Get a tile from its absolute address 
+/// @brief Get a tile from its absolute address
 /// @param x The tiles absolute x-position
 /// @param y The tiles absolute y-position
 /// @return Pointer to the requested tile struct

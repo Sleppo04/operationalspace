@@ -35,6 +35,7 @@ add_executable(worldgen EXCLUDE_FROM_ALL worldgen.test.c
 					../src/server/worldgen.c
 					../src/common/rand/xoshiro256.c
 					../src/common/rand/opensimplex.c)
+target_include_directories(worldgen BEFORE PRIVATE "${SERVER_DIR}" "${COMMON_DIR}")
 set_target_properties(worldgen PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/test")
 target_link_libraries(worldgen m)
 

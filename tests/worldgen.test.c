@@ -1,7 +1,7 @@
-#include "../src/game/world.h"
-#include "../src/logic/arraylist/arraylist.h"
-#include "../src/logic/coordinate/coordinate.h"
-#include "../src/game/worldgen.h"
+#include "world.h"
+#include "worldgen.h"
+#include "arraylist/arraylist.h"
+#include "coordinate/coordinate.h"
 
 #include <stdio.h>
 
@@ -26,14 +26,15 @@ int main()
 	feature_t features[2];
 	features[0].provider = feature_provider;
 	memset(features[0].minimum_noise_levels, 0x00, NOISE_COUNT * sizeof(uint16_t));
-	memset(features[0].maximum_noise_levels, 0xFF, NOISE_COUNT * sizeof(uint16_t)); 
+	memset(features[0].maximum_noise_levels, 0xFF, NOISE_COUNT * sizeof(uint16_t));
 	features[1].provider             = NULL;
 	int world_code = WorldGen_GenerateWorld(&world, features, seed);
 
 	printf("generate_world exited with %i\n",world_code);
 
-	for (size_t row = 0; row < world.sector_rows * SECTOR_SIZE; row++) {
-		for (size_t col = 0; col < world.sector_cols * SECTOR_SIZE; col++) {
+
+	for (size_t row = 0; row < world.sectorsY * SECTOR_SIZE; row++) {
+		for (size_t col = 0; col < world.sectorsX * SECTOR_SIZE; col++) {
 			tile_t* tile = World_GetTile(&world, col, row);
 			if (tile->object) free(tile->object);
 		}

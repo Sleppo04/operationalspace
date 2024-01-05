@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../src/logic/lexer/lexer.h"
+#include "../src/common/lexer/lexer.h"
 
 int main(int argc, char** argv)
 {
