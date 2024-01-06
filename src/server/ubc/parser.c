@@ -451,39 +451,53 @@ bool _Types_MemberExists(ubccustomtype_t* type, char* name, size_t name_length)
 
 char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t* type, ubclvalue_t* member_path)
 {
-    ubccustomtype_t* current      = type;
-    ubclvalue_t      current_path = member_path[0];
+    ubccustomtype_t* current         = type;           // starting type
+    ubclvalue_t      current_path    = member_path[0]; // capture pointer value
+    char*            member_typename = type->name;     // Name of the current members type
 
-    size_t name_length;
-    char* next, *member_typename;
+    size_t name_length;     // size of a single name in-between dots
+    char* next;             // Pointer to the next member name start
 
     while (current_path.path_length != 0) {
+
         next = strnchr(current_path.variable_path, '.', current_path.path_length);
+        // Find the next dot separator, this indicated member access
+
+        // Found the next dot separator?
         if (next == NULL) {
+            // There is no further member access
             name_length = current_path.path_length;
         } else {
+            // the current member name length is the difference in the pointers
             name_length = (uintptr_t) next - (uintptr_t) current_path.variable_path;
         }
 
+        // Current type is builtin?
         if (_Types_IsBuiltInTypename(member_typename, strlen(member_typename))) {
             // Can't dive further into builtin types
+
+            // print detailed error message
             char* format_format = "Cannot access member path %%.%ds of built-in type %%.%ds";
-        char* format = _Parser_snprintf(parser, format_format, current_path.path_length, name_length);
-        if (format == NULL) {
-            // printing failed for memory reasons
-            _Parser_ReportTopTracebackError(parser, "Could not allocate detailed error message. Cannot access member of built-in type.");
+            char* format = _Parser_snprintf(parser, format_format, current_path.path_length, name_length);
+
+
+            if (format == NULL) {
+                // printing failed for memory reasons
+                _Parser_ReportTopTracebackError(parser, "Could not allocate detailed error message. Cannot access member of built-in type.");
+                return NULL;
+            }
+
+            if (_Parser_ReportFormattedTracebackError(parser, format, current_path.variable_path, member_typename)) {
+                // Need not free here, it is done below
+                _Parser_ReportTopTracebackError(parser, "Could not allocated detailed error message. Cannot access member of built-in type.");
+            }
+
+            // If you remove this free, add one to the if above
+            _Parser_Free(parser, format, strlen(format) + 1);
             return NULL;
         }
 
-        if (_Parser_ReportFormattedTracebackError(parser, format, current_path.variable_path, member_typename)) {
-            // Need not free here, it is done below
-            _Parser_ReportTopTracebackError(parser, "Could not allocated detailed error message. Cannot access member of built-in type.");
-        }
-
-        // If you remove this free, add one to the if above
-            _Parser_Free(parser, format, strlen(format) + 1);
-        return NULL;
-        }
+        // does the current type have a member named accordingly?
         if (! _Types_MemberExists(current, current_path.variable_path, name_length)) {
             return NULL;
         }
@@ -492,8 +506,8 @@ char* _Parser_TypeMemberPathResultTypename(ubcparser_t* parser, ubccustomtype_t*
         member_typename = _Types_GetMemberTypename(current, current_path.variable_path, name_length);
         current         = _Parser_GetTypeByName(parser, member_typename, strlen(member_typename));
 
-        current_path.path_length   -= name_length;
-        current_path.variable_path += name_length;
+        current_path.path_length   -= name_length; // reduce remaining string length
+        current_path.variable_path += name_length; // advance char* pointer
     }
 
     return current->name;
@@ -959,13 +973,13 @@ char* _Parser_ScopeLValueTypename(ubcparser_t* parser, ubcscope_t* scope, ubclva
     ubcvariable_t* variable = _Scope_GetVariable(scope, lvalue);
     if (variable == NULL) {
         char* format_format = "Reference to unknown variable \"%%.%ds\"";
-        char  format_buffer[strlen(format_format) + 10];
-        snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
-        int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
-        if (report_code) {
-            // Reporting formatted failed for memory reasons
-            _Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
-        }
+		char  format_buffer[strlen(format_format) + 10];
+		snprintf(format_buffer, strlen(format_format) + 10, format_format, variable_name_length);
+		int report_code = _Parser_ReportFormattedTracebackError(parser, format_buffer, lvalue->variable_path);
+		if (report_code) {
+			// Reporting formatted failed for memory reasons
+			_Parser_ReportTopTracebackError(parser, "Unable to allocate a detailed error message. Could not find variable in scope.");
+		}
         return NULL;
     }
 
@@ -985,7 +999,9 @@ char* _Parser_LValueTypename(ubcparser_t* parser, ubclvalue_t* lvalue)
     ubcscope_t* current_scope;
     for (size_t scope_index = 0; scope_index < scope_count; scope_index++) {
         current_scope = (ubcscope_t*) (parser->scopes.memory) + scope_index;
-        return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
+        if (_Scope_VariableExists(current_scope, lvalue)) {
+            return _Parser_ScopeLValueTypename(parser, current_scope, lvalue);
+        }
     }
 
     return NULL;
@@ -1281,6 +1297,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
         default:
             // None
             _Parser_ReportTopTracebackError(parser, "Cannot apply Division Operator \"None\" on integer division operands");
+            return EXIT_FAILURE;
             break;
         }
 
@@ -1300,7 +1317,7 @@ int _Parser_GenerateDivisionBytecode(ubcparser_t* parser, ubcdivisionexpression_
 
 /// Parsing Functions
 
-int _Parser_ParseLValue(ubcparser_t* parser, ubclvalue_t* lvalue)
+int _Parser_ParseLValue(ubcparser_t* parser, ubclvalue_t* lvlalue)
 {
     token_t lookahead;
     token_t last;
@@ -1336,8 +1353,8 @@ int _Parser_ParseLValue(ubcparser_t* parser, ubclvalue_t* lvalue)
         if (_Parser_LookAhead(parser, 0, &lookahead)) return EXIT_FAILURE;
     }
 
-    lvalue->path_length   = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
-    lvalue->variable_path = start.ptr;
+    lvlalue->path_length   = (uintptr_t) (last.ptr) - (uintptr_t)(start.ptr) + (uintptr_t)(start.value.length);
+    lvlalue->variable_path = start.ptr;
 
     return EXIT_SUCCESS;
 }
@@ -1623,6 +1640,7 @@ int _Parser_ExpressionNeedsParsing(ubcparser_t* parser, ubcexpression_t* express
         break;
 
     case UBCEXPRESSIONTYPE_VALUE:
+        ; // empty expression after label
         ubcvalueexpression_t* value = expression->as.value;
         destination[0] = value->base.needs_parsing;
         return EXIT_SUCCESS;
@@ -1957,28 +1975,28 @@ int _Parser_ExpandLogicExpression(ubcparser_t* parser, ubcexpression_t* expressi
     ubclogicexpression_t* logic = expression->as.logic;
 
     if (logic->base.needs_parsing) {
-        logic->base.needs_parsing = false;
+    	logic->base.needs_parsing = false;
     } else {
-        logic->former_operand_type = logic->child_expression.base.result_typename;
+    	logic->former_operand_type = logic->child_expression.base.result_typename;
 
-        token_t lookahead_1, lookahead_2;
-        _Parser_AssumeLookaheadFill(parser);
-        if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
-        _Parser_AssumeLookaheadFill(parser);
-        if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
+    	token_t lookahead_1, lookahead_2;
+    	_Parser_AssumeLookaheadFill(parser);
+    	if (_Parser_LookAhead(parser, 0, &lookahead_1)) return EXIT_FAILURE;
+    	_Parser_AssumeLookaheadFill(parser);
+    	if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
 
-        if (lookahead_1.type == TT_AMPERSAND && lookahead_2.type == TT_AMPERSAND) {
-            logic->operator = UBCLOGICOPERATOR_AND;
-            _Parser_ConsumeToken(parser);
-            _Parser_ConsumeToken(parser);
-        } else if (lookahead_1.type == TT_PIPE && lookahead_2.type == TT_PIPE) {
-            logic->operator = UBCLOGICOPERATOR_OR;
-            _Parser_ConsumeToken(parser);
-            _Parser_ConsumeToken(parser);
-        } else if (lookahead_1.type == TT_HAT) {
-            logic->operator = UBCLOGICOPERATOR_XOR;
-            _Parser_ConsumeToken(parser);
-        }
+    	if (lookahead_1.type == TT_AMPERSAND && lookahead_2.type == TT_AMPERSAND) {
+    		logic->operator = UBCLOGICOPERATOR_AND;
+        	_Parser_ConsumeToken(parser);
+        	_Parser_ConsumeToken(parser);
+		} else if (lookahead_1.type == TT_PIPE && lookahead_2.type == TT_PIPE) {
+    		logic->operator = UBCLOGICOPERATOR_OR;
+    		_Parser_ConsumeToken(parser);
+    		_Parser_ConsumeToken(parser);
+    	} else if (lookahead_1.type == TT_HAT) {
+    		logic->operator = UBCLOGICOPERATOR_XOR;
+    		_Parser_ConsumeToken(parser);
+    	}
     }
 
     _Expressions_InitializeCompareExpression(&(logic->child_expression));
@@ -2363,6 +2381,7 @@ int _Parser_FinalizeParsedLogicExpression(ubcparser_t* parser, ubcexpression_t* 
     uint32_t current_position;
     switch (logic->operator) {
         case UBCLOGICOPERATOR_AND:
+            ; // empty expression after label
             uint32_t first_failure_fixup;
             uint32_t second_failure_fixup;
             uint32_t skip_failure_fixup;
@@ -2535,22 +2554,22 @@ int _Parser_ParseExpression(ubcparser_t* parser, ubcexpression_t* starting_point
 int _Parser_ParseFunctionDefinition(ubcparser_t* parser)
 {
     // TODO: Implement
-    _Parser_ReportTopTracebackError(parser, "Function definitions aren't implemented yet");
+	_Parser_ReportTopTracebackError(parser, "Function definitions aren't implemented yet");
     return EXIT_FAILURE;
 }
 
 int _Parser_ParseVariableDefinition(ubcparser_t* parser)
 {
-    _Parser_ReportTopTracebackError(parser, "Variable definitions aren't implemented yet");
+	_Parser_ReportTopTracebackError(parser, "Variable definitions aren't implemented yet");
     // TODO: Implement
     return EXIT_FAILURE;
 }
 
 int _Parser_ParseAssignment(ubcparser_t* parser)
 {
-    // TODO: Implement
-    _Parser_ReportTopTracebackError(parser, "Assignments aren't implemented yet");
-    return EXIT_FAILURE;
+	// TODO: Implement
+	_Parser_ReportTopTracebackError(parser, "Assignments aren't implemented yet");
+	return EXIT_FAILURE;
 }
 
 int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
@@ -2558,9 +2577,6 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     ubclvalue_t lvalue;
     if (_Parser_ParseLValue(parser, &lvalue)) {
         return EXIT_FAILURE;
-    }
-    if (! _Parser_LValueExists(parser, &lvalue)) {
-      return EXIT_FAILURE;
     }
 
     // Decide whether it is going to be an assignment or an expression
@@ -2570,25 +2586,25 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     if (_Parser_LookAhead(parser, 1, &lookahead_2)) return EXIT_FAILURE;
 
     if (lookahead_1.type == TT_EQUALS && lookahead_2.type != TT_EQUALS) {
-        return _Parser_ParseAssignment(parser);
+    	return _Parser_ParseAssignment(parser);
     } else {
-        ubclogicexpression_t top_expression;
-        ubcexpression_t expression_ref;
+    	ubclogicexpression_t top_expression;
+    	ubcexpression_t expression_ref;
 
-        _Expressions_InitializeLogicExpression(&top_expression);
+    	_Expressions_InitializeLogicExpression(&top_expression);
 
-        top_expression.child_expression.child_expression.child_expression.child_expression.value.as.lvalue = lvalue;
-        top_expression.base.needs_parsing = false;
-        top_expression.child_expression.base.needs_parsing = false;
-        top_expression.child_expression.child_expression.base.needs_parsing = false;
-        top_expression.child_expression.child_expression.child_expression.base.needs_parsing = false;
-        top_expression.child_expression.child_expression.child_expression.child_expression.base.needs_parsing = false;
-        top_expression.child_expression.child_expression.child_expression.child_expression.value.base.needs_parsing = false;
+    	top_expression.child_expression.child_expression.child_expression.child_expression.value.as.lvalue = lvalue;
+    	top_expression.base.needs_parsing = false;
+    	top_expression.child_expression.base.needs_parsing = false;
+    	top_expression.child_expression.child_expression.base.needs_parsing = false;
+    	top_expression.child_expression.child_expression.child_expression.base.needs_parsing = false;
+    	top_expression.child_expression.child_expression.child_expression.child_expression.base.needs_parsing = false;
+    	top_expression.child_expression.child_expression.child_expression.child_expression.value.base.needs_parsing = false;
 
-        expression_ref.type     = UBCEXPRESSIONTYPE_VALUE;
-        expression_ref.as.value = &(top_expression.child_expression.child_expression.child_expression.child_expression.value);
+    	expression_ref.type     = UBCEXPRESSIONTYPE_VALUE;
+    	expression_ref.as.value = &(top_expression.child_expression.child_expression.child_expression.child_expression.value);
 
-        return _Parser_ParseExpression(parser, &expression_ref);
+    	return _Parser_ParseExpression(parser, &expression_ref);
     }
 
 
@@ -2596,7 +2612,7 @@ int _Parser_ParseAssignmentExpression(ubcparser_t* parser)
     return EXIT_FAILURE;
 }
 
-int _Parser_ParseTopLevelExpression(ubcparser_t* parser, void* data)
+int _Parser_ParseTopLevelExpression(ubcparser_t* parser)
 {
     ubclogicexpression_t expression;
     _Expressions_InitializeLogicExpression(&expression);
@@ -2634,7 +2650,7 @@ int _Parser_ParseTopLevelStatement(ubcparser_t* parser)
     else if (lookahead_token.type == TT_UBC_FUNCTION) {
         return _Parser_ParseFunctionDefinition(parser);
     } else if (lookahead_token.type != TT_IDENTIFIER) {
-        return _Parser_ParseTopLevelExpression(parser, NULL);
+        return _Parser_ParseTopLevelExpression(parser);
     } else {
         return _Parser_ParseAssignmentExpression(parser);
     }
